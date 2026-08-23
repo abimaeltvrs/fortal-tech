@@ -396,3 +396,51 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
     font-size:9px;
   }
 }
+
+/* ===== V1.3 - Ordens de Serviço ===== */
+.osList{display:flex;flex-direction:column}
+.osRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 3px;border-top:1px solid #1b2a3f}
+.osRow:first-child{border-top:0}
+.osMain{display:flex;align-items:center;gap:12px;min-width:0}
+.osNumber{background:#123028;color:#78e0b7;border:1px solid #23523f;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+.osMain b,.osMain span,.osMain em{display:block}.osMain span{font-size:12px;color:#8395aa;margin-top:3px}.osMain em{font-style:normal;font-size:10px;color:#fbbf24;margin-top:4px}
+.osActions{display:flex;align-items:center;gap:6px;flex:none}
+.osModal{width:min(980px,100%);padding-bottom:0}
+.osSection{border-top:1px solid #213148;padding:20px 0}.osSection:first-of-type{border-top:0}
+.osSection h3{font-size:15px;margin:0 0 15px}.osSection h4{font-size:13px;margin:14px 0 8px;color:#aab9ca}
+.systemGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.systemOption{display:flex;gap:9px;align-items:center;border:1px solid #26374e;background:#0a1423;padding:11px;border-radius:9px;cursor:pointer;color:#aebccc}
+.systemOption.selected{border-color:#2c6b55;background:#123028;color:#84e5bd}
+.systemOption input{accent-color:#13b981}
+.sectionToggle{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;background:transparent;color:#e5edf6;padding:0;font-weight:800;cursor:pointer}
+.checkGroups{margin-top:14px}
+.checkGroup{border-top:1px solid #1b2a3f;padding-top:3px}
+.checkRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid #162438}
+.checkRow:first-of-type{border-top:0}.checkText{font-size:12px;color:#b9c5d2;flex:1}
+.checkStates{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.state{border:1px solid #2a3a4e;background:#111e2f;color:#8190a5;border-radius:999px;padding:5px 8px;font-size:10px;cursor:pointer}
+.state.active.ok{background:#173b2e;color:#7de3b8;border-color:#28624d}
+.state.active.irregular{background:#482126;color:#fda4af;border-color:#6c3038}
+.state.active.nao_aplicavel{background:#30313a;color:#d2d4db;border-color:#494b57}
+.state.active.nao_verificado{background:#253044;color:#aebbd0;border-color:#3c4a61}
+.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.materialRow{display:grid;grid-template-columns:28px 1fr 90px 70px 34px;gap:7px;align-items:center;margin-top:8px}
+.materialRow>span{font-size:11px;color:#71849a;text-align:center}
+.materialRow input{width:100%;border:1px solid #26374e;background:#0a1423;color:#fff;border-radius:8px;padding:9px}
+.emptyInline{font-size:12px;color:#71849a;padding:8px 0}
+.checkboxField label{display:flex;align-items:center;gap:8px;font-size:13px;color:#d8e1ea}
+.checkboxField input{width:auto;accent-color:#13b981}
+.osSaveBar{position:sticky;bottom:0;background:#0f1c2e;border-top:1px solid #26374e;padding:13px 0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.saveHint{font-size:11px;color:#71849a;display:flex;align-items:center;gap:6px}.saveHint svg{color:#13b981}
+.modalActions.compact{margin:0;padding:0;border:0}
+
+@media(max-width:760px){
+  .osRow{align-items:flex-start;flex-direction:column}.osActions{width:100%;justify-content:flex-end}
+  .osModal{width:100%;max-height:calc(100dvh - 20px)}
+  .systemGrid{grid-template-columns:1fr}
+  .checkRow{align-items:flex-start;flex-direction:column}.checkStates{width:100%;justify-content:flex-start}
+  .materialRow{grid-template-columns:24px 1fr 65px 55px 34px;gap:5px}
+  .materialRow input{padding:8px 6px;font-size:11px}
+  .osSaveBar{flex-direction:column;align-items:stretch}.modalActions.compact{justify-content:stretch}.modalActions.compact button{flex:1;justify-content:center}
+  .saveHint{justify-content:center;text-align:center}
+}

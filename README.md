@@ -1,13 +1,31 @@
-# FORTAL TECH V1.2.4
+# FORTAL TECH V1.3
 
-Melhoria do indicador de conexão/sincronização.
+Nova etapa: Ordens de Serviço.
 
-Estados exibidos:
-- `Online` — conectado e sem pendências;
-- `Sincronizando...` — enviando/atualizando dados;
-- `Aguardando sincronização` — existem alterações locais pendentes;
-- `Modo offline` — sem internet.
+Inclui:
+- criação e edição de OS;
+- numeração automática;
+- cliente e técnico;
+- tipo de atendimento, prioridade, data e horários;
+- sistemas envolvidos;
+- checklist dinâmico por sistema;
+- estados OK / Irregular / N/A / Não verificado;
+- manutenção corretiva e diagnóstico;
+- materiais/peças utilizados;
+- pendências e recomendações;
+- indicação de necessidade de orçamento;
+- condição final;
+- funcionamento offline e fila de sincronização;
+- visual adaptado para celular/PWA.
 
-Quando a conexão com a internet retorna, o aplicativo inicia a sincronização automaticamente.
+Ainda não inclui:
+- fotos;
+- assinatura do cliente/técnico;
+- geração de PDF.
 
-Não há SQL novo nesta versão.
+Esses itens ficam para a próxima etapa.
+
+Antes de testar:
+1. Execute `supabase/v1.3_os.sql`.
+2. Atualize o GitHub.
+3. Aguarde a Vercel ficar Ready.

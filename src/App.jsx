@@ -8,6 +8,7 @@ import {supabase} from './supabase'
 import Login from './Login'
 import Clientes from './Clientes'
 import Agenda from './Agenda'
+import OrdensServico from './OrdensServico'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -145,6 +146,7 @@ export default function App(){
         {page==='dashboard'?<Dashboard session={session} profile={profile}/>:
          page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
+         page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>
