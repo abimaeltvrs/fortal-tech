@@ -1,3 +1,4 @@
+import NewsCarousel from './NewsCarousel'
 import React,{useEffect,useMemo,useState} from 'react'
 import {ClipboardList,CheckCircle2,Clock3,AlertTriangle,CalendarDays,Filter,RefreshCcw} from 'lucide-react'
 import {cacheOrdensServico,getCachedOrdensServico,getCachedClientes,cacheClientes} from './offline'
@@ -61,6 +62,8 @@ export default function DashboardReal({supabase,profile,session,onQuickCreate}){
       <div><span className="eyebrow">VISÃO GERAL</span><h2>Dashboard</h2><p>Controle real das Ordens de Serviço da FORTAL TECH.</p></div>
       <button className="primary" onClick={onQuickCreate}>+ Criar</button>
     </div>
+    <NewsCarousel/>
+
     <div className="dashboardFilters">
       <div><Filter size={15}/><select value={periodo} onChange={e=>setPeriodo(e.target.value)}>
         <option value="hoje">Hoje</option><option value="mes">Este mês</option>
