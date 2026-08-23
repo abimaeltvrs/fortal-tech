@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react'
-import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,CheckCircle2,Eraser,Image as ImageIcon,AlertTriangle,ChevronRight} from 'lucide-react'
+import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,CheckCircle2,Eraser,AlertTriangle} from 'lucide-react'
+import PdfPagePreview from './PdfPagePreview'
 
 export default function Manuais({supabase,profile}){
   const [lista,setLista]=useState([])
@@ -19,6 +20,7 @@ export default function Manuais({supabase,profile}){
     {role:'assistant',text:'Selecione um manual e faça sua pergunta. O Gemini vai analisar somente o PDF selecionado.'}
   ]
   const [mensagens,setMensagens]=useState(initialMessages)
+  const [previewUrls,setPreviewUrls]=useState({})
   const inputRef=useRef(null)
   const chatEnd=useRef(null)
   const admin=profile?.perfil==='admin'
@@ -95,28 +97,31 @@ export default function Manuais({supabase,profile}){
     setPerguntando(true)
     try{
       const signedUrl=await signed(m)
-      const r=await fetch('/api/gemini-manual-chat',{
+      const response=await fetch('/api/gemini-manual-chat',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
           question:q,signedUrl,
           fabricante:m.fabricante,modelo:m.modelo,nomeArquivo:m.nome_arquivo
         })
       })
-      const data=await r.json()
-      if(!r.ok)throw new Error(data.error||'Falha na consulta.')
-      const r=data.resposta||{}
+      const data=await response.json()
+      if(!response.ok)throw new Error(data.error||'Falha na consulta.')
+      const answer=data.resposta||{}
+      if(answer.visual_relevante&&answer.pagina){
+        setPreviewUrls(prev=>({...prev,[m.id]:signedUrl}))
+      }
       setMensagens(x=>[...x,{
         role:'assistant',
         structured:true,
-        resumo:r.resumo||'',
-        causa:r.causa||'',
-        procedimento:r.procedimento||[],
-        atencao:r.atencao||[],
-        secao:r.secao||'',
-        pagina:r.pagina||null,
-        figura:r.figura||'',
-        visual_relevante:Boolean(r.visual_relevante),
-        observacao:r.observacao||'',
+        resumo:answer.resumo||'',
+        causa:answer.causa||'',
+        procedimento:Array.isArray(answer.procedimento)?answer.procedimento:[],
+        atencao:Array.isArray(answer.atencao)?answer.atencao:[],
+        secao:answer.secao||'',
+        pagina:answer.pagina||null,
+        figura:answer.figura||'',
+        visual_relevante:Boolean(answer.visual_relevante),
+        observacao:answer.observacao||'',
         source:`${m.fabricante} ${m.modelo} • ${m.nome_arquivo}`,
         manualId:m.id
       }])
@@ -128,6 +133,7 @@ export default function Manuais({supabase,profile}){
 
   function limparConversa(){
     setMensagens([...initialMessages])
+    setPreviewUrls({})
     setErro('')
     setSucesso('')
   }
@@ -236,11 +242,13 @@ export default function Manuais({supabase,profile}){
                 {m.figura&&<em>Figura/diagrama: {m.figura}</em>}
               </div>
 
-              {m.visual_relevante&&m.pagina&&<button type="button" className="visualReferenceBtn" onClick={()=>abrirReferenciaVisual(m)}>
-                <ImageIcon size={17}/>
-                <div><b>Abrir referência visual</b><span>Ver página {m.pagina} do manual{m.figura?` • ${m.figura}`:''}</span></div>
-                <ChevronRight size={16}/>
-              </button>}
+              {m.visual_relevante&&m.pagina&&previewUrls[m.manualId]&&
+                <PdfPagePreview
+                  url={previewUrls[m.manualId]}
+                  page={m.pagina}
+                  label={m.figura}
+                  onOpen={()=>abrirReferenciaVisual(m)}
+                />}
             </>}
             {!m.structured&&m.source&&<small>{m.source}</small>}
           </div>)}

@@ -24,7 +24,9 @@ export default async function handler(req,res){
       'Se a informação não estiver claramente presente, diga isso e não invente.',
       'Não invente códigos de erro, bornes, tensões, configurações, procedimentos, páginas ou figuras.',
       'Para procedimentos elétricos, alta tensão, cerca elétrica ou equipamento energizado, destaque cuidados de segurança presentes no manual.',
-      'Se houver uma imagem, desenho, tabela, diagrama, esquema elétrico ou figura útil para a orientação, informe a página e o nome/número da figura quando conseguir identificá-los com segurança.',
+      'Se a pergunta pedir para MOSTRAR, LOCALIZAR, IDENTIFICAR VISUALMENTE, ver BORNES, LIGAÇÃO, DIAGRAMA, ESQUEMA, FIGURA ou COMPONENTE, procure obrigatoriamente no PDF uma página visualmente útil.',
+      'Se houver uma imagem, desenho, tabela, diagrama, esquema elétrico ou figura útil, informe a página e o nome/número da figura quando conseguir identificá-los com segurança.',
+      'Use como pagina o número da página do PDF que contém a melhor referência visual ou textual. Nunca invente.',
       'Se não houver referência visual relevante, retorne visual_relevante=false.',
       'Responda em português do Brasil, de forma objetiva e prática para um técnico de campo.',
       '',
@@ -105,6 +107,9 @@ export default async function handler(req,res){
       ? Number(parsed.pagina)
       : null
 
+    const visualIntent=/\b(mostre|mostrar|visual|imagem|figura|diagrama|esquema|borne|bornes|liga[cç][aã]o|onde fica|componente|conector|terminal)\b/i.test(question)
+    const visualRelevante=Boolean(pagina && (parsed.visual_relevante || visualIntent))
+
     return res.status(200).json({
       resposta:{
         resumo:String(parsed.resumo||'').trim(),
@@ -114,7 +119,7 @@ export default async function handler(req,res){
         secao:String(parsed.secao||'').trim(),
         pagina,
         figura:String(parsed.figura||'').trim(),
-        visual_relevante:Boolean(parsed.visual_relevante && pagina),
+        visual_relevante:visualRelevante,
         observacao:String(parsed.observacao||'').trim()
       },
       source:`${fabricante||''} ${modelo||''}`.trim(),

@@ -1158,3 +1158,82 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
 .answerSource{margin-top:8px;padding-top:8px;border-top:1px solid rgba(120,145,170,.18)}.answerSource span,.answerSource b,.answerSource em{display:block}.answerSource span{font-size:7px;text-transform:uppercase;color:#60748a}.answerSource b{font-size:8px;color:#899caf;margin-top:2px}.answerSource em{font-size:8px;color:#6d8197;font-style:normal;margin-top:2px}
 .visualReferenceBtn{width:100%;margin-top:8px;border:1px solid #28624d;background:#123329;color:#b6e8d5;border-radius:9px;padding:9px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;text-align:left;cursor:pointer}.visualReferenceBtn>svg:first-child{color:#7de3b8}.visualReferenceBtn b,.visualReferenceBtn span{display:block}.visualReferenceBtn b{font-size:10px}.visualReferenceBtn span{font-size:8px;color:#82a99a;margin-top:2px}
 @media(max-width:520px){.manualChatHead{grid-template-columns:auto 1fr}.clearChatBtn{grid-column:2;justify-self:end;margin-top:5px}.structuredAnswer{max-width:96%!important}}
+
+/* ===== V1.9.5 - Resposta técnica legível + imagem real do PDF ===== */
+.structuredAnswer{
+  background:#0b1727!important;
+  border:1px solid #26374e!important;
+  border-radius:12px!important;
+}
+.answerSummary{
+  background:#10271f;
+  border:1px solid #24533f!important;
+  border-radius:9px;
+  padding:9px!important;
+  margin-bottom:7px;
+}
+.answerSummary>b{color:#84e0ba!important}
+.answerBlock{padding:9px 2px!important}
+.answerBlock>b{font-size:10px!important}
+.answerBlock p,.answerBlock li{font-size:11px!important;line-height:1.55!important}
+.answerSource{
+  background:#09131f;
+  border:1px solid #1f3045;
+  border-radius:9px;
+  padding:9px!important;
+  margin-top:8px!important;
+}
+.pdfVisualPreview{
+  margin-top:10px;
+  border:1px solid #2c6550;
+  background:#0c1f1a;
+  border-radius:11px;
+  overflow:hidden;
+}
+.pdfVisualHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px;
+  border-bottom:1px solid #224b3d;
+}
+.pdfVisualHead b,.pdfVisualHead span{display:block}
+.pdfVisualHead b{font-size:10px;color:#b8ead7}
+.pdfVisualHead span{font-size:8px;color:#79a793;margin-top:2px}
+.pdfVisualHead button{
+  flex:none;
+  border:1px solid #2c6550;
+  background:#15372d;
+  color:#7de3b8;
+  border-radius:7px;
+  padding:7px 8px;
+  font-size:8px;
+  font-weight:800;
+}
+.pdfCanvasWrap{
+  min-height:160px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:auto;
+  background:#e8ebef;
+}
+.pdfCanvasWrap canvas{
+  display:block;
+  max-width:100%;
+  height:auto!important;
+}
+.pdfPreviewState{padding:30px 15px;color:#4e6070;font-size:10px;text-align:center}
+.pdfPreviewState.error{color:#9e454f}
+.hiddenCanvas{display:none!important}
+.pdfVisualPreview>small{
+  display:block;
+  padding:7px 10px;
+  color:#709485;
+  font-size:7px;
+}
+@media(max-width:520px){
+  .structuredAnswer{max-width:100%!important}
+  .pdfVisualHead{align-items:flex-start}
+}
