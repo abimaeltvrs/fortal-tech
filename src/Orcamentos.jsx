@@ -48,6 +48,8 @@ export default function Orcamentos({supabase,profile,session}){
   const [financeiroPorOrcamento,setFinanceiroPorOrcamento]=useState({})
   const [importandoOS,setImportandoOS]=useState(false)
   const [osImportada,setOsImportada]=useState('')
+  const [visualizacao,setVisualizacao]=useState(null)
+  const [itensVisualizacao,setItensVisualizacao]=useState([])
 
   async function carregar(){
     setErro('')
@@ -162,6 +164,24 @@ export default function Orcamentos({supabase,profile,session}){
     })
     setItens([])
     setModal(true)
+  }
+
+
+  async function visualizar(o){
+    setErro('')
+    const {data,error}=await supabase
+      .from('orcamento_itens')
+      .select('*')
+      .eq('orcamento_id',o.id)
+      .order('id')
+
+    if(error){
+      setErro(`Não foi possível abrir o orçamento: ${error.message}`)
+      return
+    }
+
+    setItensVisualizacao(data||[])
+    setVisualizacao(o)
   }
 
   async function editar(o){
@@ -550,7 +570,7 @@ export default function Orcamentos({supabase,profile,session}){
       {filtrados.length===0?
         <div className="emptySmall"><FileText size={36}/><b>Nenhum orçamento encontrado</b></div>:
         <div className="budgetList">
-          {filtrados.map(o=><div className="budgetRow" key={o.id}>
+          {filtrados.map(o=><div className="budgetRow clickableBudget" key={o.id} onClick={()=>visualizar(o)}>
             <div className="budgetTopLine">
               <div className="budgetMain">
                 <div className="budgetIcon"><BadgeDollarSign size={20}/></div>
@@ -567,7 +587,7 @@ export default function Orcamentos({supabase,profile,session}){
               </div>
             </div>
 
-            <div className="budgetActions">
+            <div className="budgetActions" onClick={e=>e.stopPropagation()}>
               {o.status==='enviado'&&<button className="approveBudgetBtn" title="Marcar como aprovado" onClick={()=>atualizarStatus(o,'aprovado')}><CheckCircle2 size={15}/> Aprovar</button>}
               {o.status==='aprovado'&&financeiroPorOrcamento[o.id]?.length>0&&
                 <button className="financeOpenBtn" title="Abrir Financeiro" onClick={()=>window.dispatchEvent(new CustomEvent('fortal:open-finance',{detail:o.id}))}>
@@ -680,6 +700,85 @@ export default function Orcamentos({supabase,profile,session}){
       </div>
     </div>}
   
+
+    {visualizacao&&<div className="modalBackdrop">
+      <div className="modal budgetViewModal">
+        <div className="modalHead">
+          <div>
+            <span className="eyebrow">ORÇAMENTO</span>
+            <h2>{visualizacao.numero}</h2>
+          </div>
+          <button className="iconBtn" onClick={()=>setVisualizacao(null)}><X/></button>
+        </div>
+
+        <div className="budgetViewStatus">
+          <span className={`statusBadge budget-${visualizacao.status}`}>{statusLabel[visualizacao.status]}</span>
+          <strong>{money(visualizacao.total)}</strong>
+        </div>
+
+        <div className="budgetViewInfo">
+          <div><span>Cliente</span><b>{clientes.find(c=>c.id===visualizacao.cliente_id)?.nome||'Cliente'}</b></div>
+          <div><span>Data</span><b>{br(visualizacao.data_orcamento)}</b></div>
+          <div><span>Validade</span><b>{br(visualizacao.validade)}</b></div>
+          <div><span>Pagamento</span><b>{({pix:'Pix',debito:'Cartão de débito',credito:'Cartão de crédito'})[visualizacao.metodo_pagamento]||'-'}{visualizacao.metodo_pagamento==='credito'&&Number(visualizacao.parcelas||1)>1?` • ${visualizacao.parcelas}x`:''}</b></div>
+        </div>
+
+        <section className="osSection">
+          <h3>OS relacionada</h3>
+          {visualizacao.os_id?(()=>{
+            const rel=ordens.find(x=>x.id===visualizacao.os_id)
+            return <div className="relatedOSCard">
+              <div>
+                <b>{rel?.numero||'OS vinculada'}</b>
+                <span>Status: {rel?.status||'-'}</span>
+              </div>
+              <button type="button" onClick={()=>{
+                setVisualizacao(null)
+                window.dispatchEvent(new CustomEvent('fortal:open-os',{detail:visualizacao.os_id}))
+              }}>Visualizar OS</button>
+            </div>
+          })():<div className="emptyInline">Este orçamento não possui OS relacionada.</div>}
+        </section>
+
+        <section className="osSection">
+          <h3>Itens do orçamento</h3>
+          {itensVisualizacao.length===0?<div className="emptyInline">Nenhum item.</div>:
+            <div className="budgetViewItems">
+              {itensVisualizacao.map((i,n)=><div key={i.id} className="budgetViewItem">
+                <span>{n+1}</span>
+                <div><b>{i.descricao}</b><small>{i.tipo==='material'?'Material':'Serviço'} • Qtd. {Number(i.quantidade||0).toLocaleString('pt-BR')}</small></div>
+                <strong>{money(Number(i.quantidade||0)*Number(i.valor_unitario||0))}</strong>
+              </div>)}
+            </div>}
+        </section>
+
+        <div className="budgetViewTotals">
+          <div><span>Subtotal</span><b>{money(itensVisualizacao.reduce((s,i)=>s+Number(i.quantidade||0)*Number(i.valor_unitario||0),0))}</b></div>
+          <div><span>Desconto</span><b>{money(visualizacao.desconto)}</b></div>
+          <div className="grand"><span>Total</span><b>{money(visualizacao.total)}</b></div>
+        </div>
+
+        {visualizacao.forma_pagamento&&<section className="osSection">
+          <h3>Condições de pagamento</h3>
+          <div className="clientNotes">{visualizacao.forma_pagamento}</div>
+        </section>}
+
+        {visualizacao.observacoes&&<section className="osSection">
+          <h3>Observações</h3>
+          <div className="clientNotes">{visualizacao.observacoes}</div>
+        </section>}
+
+        <div className="budgetViewActions">
+          <button className="ghost" onClick={()=>gerarPDF(visualizacao)}><FileDown size={16}/> Gerar PDF</button>
+          <button className="primary" onClick={()=>{
+            const item=visualizacao
+            setVisualizacao(null)
+            editar(item)
+          }}><Pencil size={16}/> Editar orçamento</button>
+        </div>
+      </div>
+    </div>}
+
     {envio&&<div className="modalBackdrop">
       <div className="sendBudgetModal">
         <div className="modalHead">

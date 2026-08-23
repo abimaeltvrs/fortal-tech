@@ -162,6 +162,16 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     return()=>window.removeEventListener('fortal:new-os',abrir)
   },[tecnicos,profile.perfil])
 
+  useEffect(()=>{
+    const abrirOS=(e)=>{
+      const id=e.detail
+      const item=lista.find(x=>x.id===id)
+      if(item) editar(item)
+    }
+    window.addEventListener('fortal:view-os-local',abrirOS)
+    return()=>window.removeEventListener('fortal:view-os-local',abrirOS)
+  },[lista])
+
   const filtradas=useMemo(()=>{
     const q=busca.toLowerCase().trim()
     if(!q)return lista

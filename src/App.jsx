@@ -157,6 +157,15 @@ export default function App(){
     return()=>window.removeEventListener('fortal:open-finance',openFinance)
   },[])
 
+  useEffect(()=>{
+    const openLinkedOS=(e)=>{
+      setOpenOSId(e.detail||null)
+      setPage('os')
+    }
+    window.addEventListener('fortal:open-os',openLinkedOS)
+    return()=>window.removeEventListener('fortal:open-os',openLinkedOS)
+  },[])
+
   const current=useMemo(()=>pages.find(p=>p[0]===page),[page])
   if(loading)return <div className="boot">Carregando FORTAL TECH...</div>
   if(!supabase)return <div className="boot errorBox">Supabase não configurado. Verifique as variáveis de ambiente.</div>

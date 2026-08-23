@@ -1071,3 +1071,23 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
   font-size:8px;
   color:#7de3b8;
 }
+
+/* ===== V1.6.6 - Visualização do orçamento ===== */
+.clickableBudget{cursor:pointer}
+.clickableBudget:hover{background:rgba(18,38,58,.3)}
+.budgetViewModal{width:min(820px,100%)}
+.budgetViewStatus{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:15px 0}
+.budgetViewStatus>strong{font-size:22px;color:#7de3b8}
+.budgetViewInfo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.budgetViewInfo>div{border:1px solid #213148;background:#0b1727;border-radius:9px;padding:11px}
+.budgetViewInfo span,.budgetViewInfo b{display:block}.budgetViewInfo span{font-size:9px;color:#71849a;margin-bottom:4px}.budgetViewInfo b{font-size:12px}
+.relatedOSCard{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #285947;background:#112a23;border-radius:10px;padding:11px}
+.relatedOSCard b,.relatedOSCard span{display:block}.relatedOSCard span{font-size:9px;color:#83a696;margin-top:3px}.relatedOSCard button{border:1px solid #28624d;background:#173b2e;color:#7de3b8;border-radius:8px;padding:8px 9px;font-size:9px;font-weight:800;cursor:pointer}
+.budgetViewItems{display:flex;flex-direction:column}.budgetViewItem{display:grid;grid-template-columns:25px 1fr auto;gap:9px;align-items:center;padding:9px 0;border-top:1px solid #1b2a3f}.budgetViewItem:first-child{border-top:0}.budgetViewItem>span{color:#71849a;font-size:10px}.budgetViewItem b,.budgetViewItem small{display:block}.budgetViewItem b{font-size:11px}.budgetViewItem small{font-size:9px;color:#71849a;margin-top:3px}.budgetViewItem strong{font-size:11px;white-space:nowrap}
+.budgetViewTotals{margin-left:auto;width:min(370px,100%);border:1px solid #26374e;border-radius:10px;overflow:hidden}.budgetViewTotals>div{display:flex;justify-content:space-between;padding:9px 11px;border-top:1px solid #1d2b3d}.budgetViewTotals>div:first-child{border-top:0}.budgetViewTotals span{font-size:10px;color:#8496aa}.budgetViewTotals .grand{background:#15372d}.budgetViewTotals .grand span,.budgetViewTotals .grand b{color:#7de3b8}
+.budgetViewActions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}
+@media(max-width:760px){
+ .budgetViewInfo{grid-template-columns:1fr}
+ .relatedOSCard{align-items:flex-start;flex-direction:column}.relatedOSCard button{width:100%}
+ .budgetViewActions{display:grid;grid-template-columns:1fr 1fr}.budgetViewActions button{justify-content:center}
+}
