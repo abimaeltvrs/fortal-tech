@@ -94,7 +94,13 @@ export default function App(){
   },[session])
 
   useEffect(()=>{
-    const on=async()=>{setOnline(true);if(supabase)await syncPendingChanges(supabase,setSyncStatus)}
+    const on=async()=>{
+      setOnline(true)
+      if(supabase){
+        setSyncStatus('syncing')
+        await syncPendingChanges(supabase,setSyncStatus)
+      }
+    }
     const off=()=>{setOnline(false);setSyncStatus('pending')}
     window.addEventListener('online',on);window.addEventListener('offline',off)
     return()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off)}
@@ -129,11 +135,11 @@ export default function App(){
       <header>
         <button className="menuBtn" onClick={()=>setOpen(!open)}><Menu/></button>
         <div><span className="eyebrow">FORTAL TECH</span><h1>{current?.[1]}</h1></div>
-        <button className={`connection ${online?'online':'offline'}`} onClick={()=>syncPendingChanges(supabase,setSyncStatus)}>
+        <div className={`connection ${online?'online':'offline'} ${syncStatus==='syncing'?'syncing':''}`} title="Status de conexão e sincronização">
           {online?<Cloud size={16}/>:<CloudOff size={16}/>}
-          {!online?'Offline':syncStatus==='syncing'?'Sincronizando...':syncStatus==='pending'?'Pendente':'Online'}
+          <span>{!online?'Modo offline':syncStatus==='syncing'?'Sincronizando...':syncStatus==='pending'?'Aguardando sincronização':'Online'}</span>
           {syncStatus==='syncing'&&<RefreshCcw className="spin" size={14}/>}
-        </button>
+        </div>
       </header>
       <div className="content">
         {page==='dashboard'?<Dashboard session={session} profile={profile}/>:

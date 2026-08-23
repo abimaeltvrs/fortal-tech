@@ -344,3 +344,55 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
     left:calc(-84vw - 24px);
   }
 }
+
+/* ===== V1.2.4 - Status textual de sincronização ===== */
+.connection{
+  cursor:default;
+  min-width:max-content;
+}
+.connection span{
+  display:inline;
+  white-space:nowrap;
+}
+.connection.syncing{
+  color:#f4c96b;
+}
+.connection.offline{
+  color:#f0a5a5;
+}
+
+@media(max-width:760px){
+  .connection{
+    width:auto;
+    min-width:0;
+    height:38px;
+    padding:0 9px;
+    gap:6px;
+    border-radius:10px;
+    font-size:10px;
+    line-height:1;
+  }
+  .connection span{
+    display:inline;
+    font-size:10px;
+  }
+  .connection svg{
+    width:15px;
+    height:15px;
+    flex:none;
+  }
+  .connection .spin{
+    width:12px;
+    height:12px;
+  }
+}
+
+@media(max-width:390px){
+  .connection{
+    padding:0 7px;
+    gap:4px;
+  }
+  .connection span{
+    font-size:9px;
+  }
+}

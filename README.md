@@ -1,12 +1,13 @@
-# FORTAL TECH V1.2.3
+# FORTAL TECH V1.2.4
 
-Hotfix do menu mobile/PWA.
+Melhoria do indicador de conexão/sincronização.
 
-Correções:
-- barra lateral volta a ficar fechada por padrão;
-- botão ☰ abre o menu;
-- tocar fora do menu fecha a barra lateral;
-- tocar em qualquer item do menu continua fechando automaticamente;
-- mantém o visual corrigido da V1.2.2.
+Estados exibidos:
+- `Online` — conectado e sem pendências;
+- `Sincronizando...` — enviando/atualizando dados;
+- `Aguardando sincronização` — existem alterações locais pendentes;
+- `Modo offline` — sem internet.
+
+Quando a conexão com a internet retorna, o aplicativo inicia a sincronização automaticamente.
 
 Não há SQL novo nesta versão.
