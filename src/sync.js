@@ -91,7 +91,8 @@ export async function syncPendingChanges(supabase,onStatus=()=>{}){
               os_id:osData.id,
               descricao:x.descricao,
               quantidade:Number(x.quantidade||1),
-              unidade:x.unidade||'un'
+              unidade:x.unidade||'un',
+              preco_unitario:Number(x.preco_unitario||0)
             }))
             const {data,error}=await supabase.from('os_materiais').insert(payload).select()
             if(error) throw error

@@ -1,8 +1,11 @@
 import React,{useEffect,useMemo,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
-  ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle
+  ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle,
+  FileDown
 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import {
   getCachedClientes,cacheClientes,getCachedOrdensServico,cacheOrdensServico,
   saveLocalOS,removeLocalOS,replaceLocalOSChildren,getLocalOSChildren,queueChange
@@ -70,6 +73,18 @@ function numeroOS(){
   return `OS-${y}-${stamp}`
 }
 
+function money(v){
+  return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+}
+function dataBR(v){
+  if(!v) return '-'
+  const [y,m,d]=String(v).slice(0,10).split('-')
+  return y&&m&&d?`${d}/${m}/${y}`:v
+}
+function statusChecklist(v){
+  return ({ok:'OK',irregular:'IRREGULAR',nao_aplicavel:'N/A',nao_verificado:'NÃO VERIFICADO'})[v]||v||'-'
+}
+
 export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   const [lista,setLista]=useState([])
   const [clientes,setClientes]=useState([])
@@ -82,6 +97,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   const [checklist,setChecklist]=useState([])
   const [materiais,setMateriais]=useState([])
   const [erro,setErro]=useState('')
+  const [sucesso,setSucesso]=useState('')
   const [expanded,setExpanded]=useState({})
 
   async function carregar(){
@@ -134,6 +150,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
     ].filter(Boolean).join(' ').toLowerCase().includes(q))
   },[lista,busca,clientes])
 
+  const totalMateriais=useMemo(()=>materiais.reduce((s,m)=>
+    s+(Number(m.quantidade||0)*Number(m.preco_unitario||0)),0
+  ),[materiais])
+
   function setSistema(cod,on){
     if(on){
       setSistemas(s=>[...s,{id:crypto.randomUUID(),os_id:edit?.id||'',sistema:cod,outro_descricao:null}])
@@ -152,6 +172,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   }
 
   function novo(){
+    setErro('')
+    setSucesso('')
     const now=new Date()
     setEdit(null)
     setForm({...empty,
@@ -166,6 +188,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   }
 
   async function editar(os){
+    setErro('')
+    setSucesso('')
     setEdit(os)
     setForm({...empty,...os})
     let children
@@ -189,7 +213,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   }
 
   function addMaterial(){
-    setMateriais(m=>[...m,{id:crypto.randomUUID(),os_id:edit?.id||'',descricao:'',quantidade:1,unidade:'un'}])
+    setMateriais(m=>[...m,{id:crypto.randomUUID(),os_id:edit?.id||'',descricao:'',quantidade:1,unidade:'un',preco_unitario:0}])
   }
 
   function updateMaterial(id,key,value){
@@ -231,7 +255,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
       os_id:osId,
       descricao:x.descricao.trim(),
       quantidade:Number(x.quantidade||1),
-      unidade:x.unidade||'un'
+      unidade:x.unidade||'un',
+      preco_unitario:Number(x.preco_unitario||0)
     }))
     const bundle={os:osPayload,sistemas:sistPayload,checklist:checkPayload,materiais:matPayload}
 
@@ -278,7 +303,15 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
         setSyncStatus('pending')
       }
       setModal(false)
+      setEdit(null)
+      setForm(empty)
+      setSistemas([])
+      setChecklist([])
+      setMateriais([])
+      setExpanded({})
       await carregar()
+      setSucesso(edit ? 'OS atualizada com sucesso.' : 'OS criada com sucesso.')
+      window.scrollTo({top:0,behavior:'smooth'})
     }catch(e){
       if(!navigator.onLine){
         await saveLocalOS(osPayload,'pending')
@@ -307,6 +340,174 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   const nomeCliente=id=>clientes.find(c=>c.id===id)?.nome||'Cliente'
   const labelSistema=cod=>sistemasCatalogo.find(x=>x[0]===cod)?.[1]||cod
 
+  async function gerarPDF(os){
+    setErro('')
+    try{
+      const cliente=clientes.find(c=>c.id===os.cliente_id)||{}
+      let children
+      if(navigator.onLine){
+        const [sr,cr,mr]=await Promise.all([
+          supabase.from('os_sistemas').select('*').eq('os_id',os.id),
+          supabase.from('os_checklist').select('*').eq('os_id',os.id).order('sistema').order('grupo'),
+          supabase.from('os_materiais').select('*').eq('os_id',os.id)
+        ])
+        if(sr.error) throw sr.error
+        if(cr.error) throw cr.error
+        if(mr.error) throw mr.error
+        children={sistemas:sr.data||[],checklist:cr.data||[],materiais:mr.data||[]}
+      }else{
+        children=await getLocalOSChildren(os.id)
+      }
+
+      const doc=new jsPDF({unit:'mm',format:'a4'})
+      const pageW=210
+      let y=16
+
+      const line=(label,value)=>{
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(`${label}:`,14,y)
+        doc.setFont('helvetica','normal')
+        const txt=doc.splitTextToSize(String(value||'-'),135)
+        doc.text(txt,55,y); y+=Math.max(6,txt.length*4.2)
+      }
+      const section=(title)=>{
+        if(y>270){doc.addPage();y=16}
+        y+=2
+        doc.setFillColor(15,28,46)
+        doc.rect(14,y-4,182,8,'F')
+        doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10)
+        doc.text(title,17,y+1)
+        doc.setTextColor(25,25,25)
+        y+=10
+      }
+      const paragraph=(label,value)=>{
+        if(!value) return
+        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(label,14,y);y+=4
+        doc.setFont('helvetica','normal')
+        const lines=doc.splitTextToSize(String(value),180)
+        if(y+lines.length*4.3>280){doc.addPage();y=16}
+        doc.text(lines,14,y);y+=lines.length*4.3+3
+      }
+
+      doc.setFillColor(8,17,31);doc.rect(0,0,pageW,30,'F')
+      doc.setTextColor(19,185,129);doc.setFont('helvetica','bold');doc.setFontSize(18)
+      doc.text('FORTAL TECH',14,13)
+      doc.setTextColor(255,255,255);doc.setFontSize(11)
+      doc.text('ORDEM DE SERVIÇO - MANUTENÇÃO PREVENTIVA E CORRETIVA',14,21)
+      doc.setTextColor(30,30,30)
+      y=38
+
+      line('Nº da OS',os.numero)
+      line('Data',dataBR(os.data_visita))
+      line('Tipo de atendimento',os.tipo_atendimento)
+      line('Prioridade',String(os.prioridade||'-').toUpperCase())
+      line('Status',os.status)
+
+      section('1. DADOS DO CLIENTE')
+      line('Cliente / Condomínio',cliente.nome)
+      line('CPF / CNPJ',cliente.documento)
+      line('Endereço',[cliente.endereco,cliente.numero,cliente.complemento,cliente.bairro,cliente.cidade,cliente.uf].filter(Boolean).join(', '))
+      line('Responsável',cliente.responsavel)
+      line('Telefone',cliente.telefone)
+      line('Data da visita',dataBR(os.data_visita))
+      line('Chegada',os.horario_chegada||'-')
+      line('Término',os.horario_termino||'-')
+
+      section('2. SOLICITAÇÃO / MOTIVO DO ATENDIMENTO')
+      paragraph('Descrição',os.motivo)
+      const sistemasPDF=(children.sistemas||[]).map(x=>labelSistema(x.sistema)).join(', ')
+      line('Sistema(s) envolvido(s)',sistemasPDF)
+
+      if((children.checklist||[]).length){
+        section('3. CHECKLIST TÉCNICO')
+        const rows=(children.checklist||[]).map(x=>[
+          labelSistema(x.sistema),x.grupo||'',x.item,statusChecklist(x.status),x.observacao||''
+        ])
+        autoTable(doc,{
+          startY:y,
+          head:[['Sistema','Grupo','Item','Status','Observação']],
+          body:rows,
+          styles:{fontSize:6.8,cellPadding:1.5,overflow:'linebreak'},
+          headStyles:{fillColor:[15,28,46]},
+          columnStyles:{0:{cellWidth:27},1:{cellWidth:30},2:{cellWidth:67},3:{cellWidth:24},4:{cellWidth:34}},
+          margin:{left:14,right:14}
+        })
+        y=doc.lastAutoTable.finalY+6
+      }
+
+      section('4. MANUTENÇÃO CORRETIVA / DIAGNÓSTICO')
+      paragraph('Problema relatado',os.problema_relatado)
+      paragraph('Diagnóstico técnico',os.diagnostico)
+      paragraph('Causa identificada',os.causa_identificada)
+      paragraph('Serviço executado',os.servico_executado)
+      paragraph('Equipamento/peça substituída',os.equipamento_substituido)
+      paragraph('Teste realizado após o reparo',os.teste_realizado)
+      line('Resultado',os.resultado)
+
+      section('5. MATERIAIS / PEÇAS UTILIZADOS')
+      const mats=children.materiais||[]
+      if(mats.length){
+        autoTable(doc,{
+          startY:y,
+          head:[['Item','Descrição','Qtd.','Un.','Preço unit.','Subtotal']],
+          body:mats.map((m,i)=>[
+            i+1,m.descricao,Number(m.quantidade||0).toLocaleString('pt-BR'),
+            m.unidade||'un',money(m.preco_unitario),
+            money(Number(m.quantidade||0)*Number(m.preco_unitario||0))
+          ]),
+          foot:[['','','','','TOTAL',money(mats.reduce((s,m)=>s+Number(m.quantidade||0)*Number(m.preco_unitario||0),0))]],
+          styles:{fontSize:7.5,cellPadding:1.8},
+          headStyles:{fillColor:[15,28,46]},
+          footStyles:{fillColor:[19,185,129],textColor:[3,17,12],fontStyle:'bold'},
+          margin:{left:14,right:14}
+        })
+        y=doc.lastAutoTable.finalY+6
+      }else{
+        paragraph('', 'Nenhum material informado.')
+      }
+
+      section('6. PENDÊNCIAS / RECOMENDAÇÕES')
+      paragraph('Pendências identificadas',os.pendencias)
+      paragraph('Recomendações técnicas',os.recomendacoes)
+      line('Necessita orçamento adicional',os.necessita_orcamento?'SIM':'NÃO')
+      paragraph('Descrição do orçamento recomendado',os.descricao_orcamento)
+      line('Prazo recomendado para correção',os.prazo_correcao)
+
+      section('7. CONDIÇÃO FINAL DO SISTEMA')
+      line('Condição final',os.condicao_final)
+      paragraph('Observações finais',os.observacoes_finais)
+
+      if(os.prioridade==='emergencial'){
+        if(y>250){doc.addPage();y=16}
+        y+=4
+        doc.setFillColor(253,230,138)
+        doc.roundedRect(14,y,182,20,2,2,'F')
+        doc.setTextColor(90,60,0);doc.setFont('helvetica','bold');doc.setFontSize(10)
+        doc.text('ATENDIMENTO EMERGENCIAL - CUSTO DOS MATERIAIS',18,y+7)
+        doc.setFontSize(14)
+        doc.text(money(mats.reduce((s,m)=>s+Number(m.quantidade||0)*Number(m.preco_unitario||0),0)),18,y+15)
+        doc.setTextColor(30,30,30);y+=26
+      }
+
+      if(y>250){doc.addPage();y=16}
+      y+=8
+      doc.setDrawColor(130);doc.line(14,y,90,y);doc.line(115,y,196,y)
+      doc.setFontSize(8);doc.text('Responsável pelo cliente',14,y+5);doc.text('Técnico responsável',115,y+5)
+      doc.setFontSize(7);doc.setTextColor(100)
+      doc.text('Assinaturas digitais serão incluídas na próxima atualização.',14,y+13)
+
+      const pages=doc.getNumberOfPages()
+      for(let p=1;p<=pages;p++){
+        doc.setPage(p)
+        doc.setFontSize(7);doc.setTextColor(120)
+        doc.text(`FORTAL TECH • ${os.numero} • Página ${p}/${pages}`,105,292,{align:'center'})
+      }
+
+      doc.save(`${os.numero}.pdf`)
+    }catch(e){
+      setErro(e.message||'Não foi possível gerar o PDF.')
+    }
+  }
+
   return <>
     <div className="toolbar">
       <div><h2>Ordens de Serviço</h2><p>Preventivas, corretivas, visitas técnicas e retornos.</p></div>
@@ -314,6 +515,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
     </div>
 
     {!navigator.onLine&&<div className="offlineNotice"><WifiOff size={17}/> Modo offline. A OS será sincronizada automaticamente quando a internet voltar.</div>}
+    {sucesso&&<div className="successBox">{sucesso}</div>}
     {erro&&<div className="warningBox">{erro}</div>}
 
     <section className="panel">
@@ -335,8 +537,9 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
             </div>
             <div className="osActions">
               <span className={`statusBadge status-${os.status}`}>{os.status}</span>
-              <button className="iconBtn" onClick={()=>editar(os)}><Pencil size={17}/></button>
-              <button className="iconBtn danger" onClick={()=>excluir(os)}><Trash2 size={17}/></button>
+              <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(os)}><FileDown size={17}/></button>
+              <button className="iconBtn" title="Editar" onClick={()=>editar(os)}><Pencil size={17}/></button>
+              <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(os)}><Trash2 size={17}/></button>
             </div>
           </div>)}
         </div>}
@@ -443,13 +646,24 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
           <div className="osSection">
             <div className="sectionHead"><h3>4. Materiais / peças utilizados</h3><button type="button" className="ghost" onClick={addMaterial}><PackagePlus size={16}/> Adicionar material</button></div>
             {materiais.length===0?<div className="emptyInline">Nenhum material informado.</div>:
-              materiais.map((m,i)=><div className="materialRow" key={m.id}>
-                <span>{i+1}</span>
-                <input placeholder="Descrição" value={m.descricao} onChange={e=>updateMaterial(m.id,'descricao',e.target.value)}/>
-                <input type="number" min="0" step="0.01" value={m.quantidade} onChange={e=>updateMaterial(m.id,'quantidade',e.target.value)}/>
-                <input placeholder="un" value={m.unidade||'un'} onChange={e=>updateMaterial(m.id,'unidade',e.target.value)}/>
-                <button type="button" className="iconBtn danger" onClick={()=>setMateriais(x=>x.filter(y=>y.id!==m.id))}><Trash2 size={16}/></button>
-              </div>)}
+              <>
+                <div className="materialHeader">
+                  <span>#</span><span>Nome do item</span><span>Qtd.</span><span>Un.</span><span>Preço</span><span>Subtotal</span><span></span>
+                </div>
+                {materiais.map((m,i)=><div className="materialRow priced" key={m.id}>
+                  <span>{i+1}</span>
+                  <input placeholder="Nome / descrição do item" value={m.descricao} onChange={e=>updateMaterial(m.id,'descricao',e.target.value)}/>
+                  <input type="number" min="0" step="0.01" value={m.quantidade} onChange={e=>updateMaterial(m.id,'quantidade',e.target.value)}/>
+                  <input placeholder="un" value={m.unidade||'un'} onChange={e=>updateMaterial(m.id,'unidade',e.target.value)}/>
+                  <input type="number" min="0" step="0.01" placeholder="0,00" value={m.preco_unitario??0} onChange={e=>updateMaterial(m.id,'preco_unitario',e.target.value)}/>
+                  <strong>{money(Number(m.quantidade||0)*Number(m.preco_unitario||0))}</strong>
+                  <button type="button" className="iconBtn danger" onClick={()=>setMateriais(x=>x.filter(y=>y.id!==m.id))}><Trash2 size={16}/></button>
+                </div>)}
+                <div className={`materialTotal ${form.prioridade==='emergencial'?'emergency':''}`}>
+                  <span>{form.prioridade==='emergencial'?'Total de materiais - OS Emergencial':'Total dos materiais'}</span>
+                  <strong>{money(totalMateriais)}</strong>
+                </div>
+              </>}
           </div>
 
           <div className="osSection">
