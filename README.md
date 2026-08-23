@@ -1,20 +1,35 @@
-# FORTAL TECH V1.6.8
+# FORTAL TECH V1.7
 
-Correção da integração OS → Orçamento.
+Novo módulo: Relatórios.
 
-Corrigido:
-- ao importar materiais/peças de uma OS, o sistema agora lê corretamente a coluna `preco_unitario`;
-- importa:
-  - item/descrição;
-  - quantidade;
-  - preço unitário;
-- o subtotal de cada item é calculado automaticamente;
-- o total do orçamento é recalculado com os valores importados.
+Filtros:
+- Hoje
+- Este mês
+- Este ano
+- Todo o período
+- Cliente
+- Tipo de atendimento
+- Status da OS
+- Busca textual
+
+Indicadores:
+- total de OS;
+- concluídas;
+- pendentes;
+- emergenciais;
+- valor de orçamentos aprovados;
+- valores a receber;
+- valores recebidos.
+
+Análises:
+- atendimentos por tipo;
+- clientes com mais atendimentos;
+- tabela detalhada de OS.
+
+PDF:
+- gera relatório gerencial respeitando os filtros selecionados;
+- inclui resumo operacional;
+- inclui resumo financeiro;
+- inclui relação das OS do período.
 
 Não há SQL novo nesta versão.
-
-Teste recomendado:
-1. Abra uma OS com material contendo preço.
-2. Crie um orçamento.
-3. Selecione essa OS.
-4. Confirme se item, quantidade e preço unitário foram preenchidos.

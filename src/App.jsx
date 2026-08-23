@@ -14,6 +14,7 @@ import DashboardReal from './DashboardReal'
 import NotificationCenter from './NotificationCenter'
 import Orcamentos from './Orcamentos'
 import Financeiro from './Financeiro'
+import Relatorios from './Relatorios'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -226,6 +227,7 @@ export default function App(){
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:
          page==='orcamentos'?<Orcamentos supabase={supabase} profile={profile} session={session}/>:
          page==='financeiro'?<Financeiro supabase={supabase} orcamentoFiltro={financeOrcamentoId} clearFiltro={()=>setFinanceOrcamentoId(null)}/>:
+         page==='relatorios'?<Relatorios supabase={supabase}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>
