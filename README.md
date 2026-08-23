@@ -1,22 +1,34 @@
-# FORTAL TECH V1.9.3
+# FORTAL TECH V1.9.4
 
-Correção do Assistente Técnico Gemini.
+Melhorias do Assistente Técnico.
 
-Alteração:
-- modelo trocado de `gemini-2.5-flash-lite` para `gemini-3.5-flash-lite`;
-- mantém o mesmo fluxo:
-  - PDF privado no Supabase;
-  - backend seguro na Vercel;
-  - `GEMINI_API_KEY` protegida;
-  - pergunta enviada junto com o PDF;
-  - resposta baseada somente no manual selecionado.
+Respostas:
+- formato organizado em:
+  - Resposta
+  - Causa
+  - Procedimento
+  - Atenção
+  - Observação
+  - Fonte
+- quando disponível, mostra:
+  - seção do manual;
+  - página;
+  - figura/diagrama.
+
+Referência visual:
+- quando o Gemini identifica uma imagem, desenho, tabela, esquema ou diagrama relevante;
+- aparece o botão `Abrir referência visual`;
+- o botão abre o PDF diretamente na página indicada;
+- utiliza o material real do fabricante, sem gerar diagramas técnicos inventados.
+
+Conversa:
+- novo botão `Limpar`;
+- limpa somente o histórico do chat;
+- não exclui manuais nem dados do sistema.
+
+Segurança:
+- o Gemini continua instruído a responder somente com base no PDF;
+- não deve inventar página ou figura;
+- se não identificar referência visual com segurança, o botão visual não aparece.
 
 Não há SQL novo nesta versão.
-
-Teste:
-1. Atualize o GitHub.
-2. Aguarde a Vercel ficar Ready.
-3. Abra Manuais / Assistente Técnico.
-4. Selecione o manual.
-5. Pergunte novamente, por exemplo:
-   `Erro 8, qual a causa?`

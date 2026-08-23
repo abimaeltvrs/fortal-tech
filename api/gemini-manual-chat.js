@@ -14,19 +14,32 @@ export default async function handler(req,res){
     const bytes=Buffer.from(await pdfResponse.arrayBuffer())
 
     if(bytes.length>50*1024*1024){
-      return res.status(413).json({error:'Este PDF ultrapassa 50 MB, limite usado pelo assistente Gemini.'})
+      return res.status(413).json({error:'Este PDF ultrapassa 50 MB, limite usado pelo Assistente Técnico.'})
     }
 
     const prompt=[
       'Você é o Assistente Técnico da FORTAL TECH.',
       `Manual selecionado: ${fabricante||''} ${modelo||''} (${nomeArquivo||''}).`,
       'Analise SOMENTE o PDF fornecido para responder.',
-      'Se a resposta não estiver claramente presente no manual, diga: "Não encontrei essa informação neste manual."',
-      'Não invente códigos de erro, bornes, tensões, configurações, procedimentos ou especificações.',
-      'Quando possível, cite a seção/título do manual que embasa a resposta.',
-      'Se conseguir identificar com segurança o número da página no conteúdo do documento, informe a página; caso contrário, não invente número de página.',
-      'Para procedimentos elétricos, alta tensão, cerca elétrica ou equipamento energizado, inclua os cuidados de segurança descritos no manual.',
+      'Se a informação não estiver claramente presente, diga isso e não invente.',
+      'Não invente códigos de erro, bornes, tensões, configurações, procedimentos, páginas ou figuras.',
+      'Para procedimentos elétricos, alta tensão, cerca elétrica ou equipamento energizado, destaque cuidados de segurança presentes no manual.',
+      'Se houver uma imagem, desenho, tabela, diagrama, esquema elétrico ou figura útil para a orientação, informe a página e o nome/número da figura quando conseguir identificá-los com segurança.',
+      'Se não houver referência visual relevante, retorne visual_relevante=false.',
       'Responda em português do Brasil, de forma objetiva e prática para um técnico de campo.',
+      '',
+      'RETORNE SOMENTE JSON VÁLIDO, SEM MARKDOWN, COM ESTA ESTRUTURA:',
+      JSON.stringify({
+        resumo:"resposta curta e direta",
+        causa:"causa provável segundo o manual ou vazio",
+        procedimento:["passo 1","passo 2"],
+        atencao:["cuidado 1"],
+        secao:"nome da seção do manual ou vazio",
+        pagina:null,
+        figura:"",
+        visual_relevante:false,
+        observacao:"informação adicional ou vazio"
+      }),
       '',
       `Pergunta do técnico: ${question.trim()}`
     ].join('\n')
@@ -35,13 +48,19 @@ export default async function handler(req,res){
       contents:[{
         role:'user',
         parts:[
-          {inline_data:{mime_type:contentType.includes('pdf')?'application/pdf':contentType,data:bytes.toString('base64')}},
+          {
+            inline_data:{
+              mime_type:contentType.includes('pdf')?'application/pdf':contentType,
+              data:bytes.toString('base64')
+            }
+          },
           {text:prompt}
         ]
       }],
       generationConfig:{
-        temperature:0.15,
-        maxOutputTokens:1800
+        temperature:0.1,
+        maxOutputTokens:2200,
+        responseMimeType:'application/json'
       }
     }
 
@@ -51,22 +70,53 @@ export default async function handler(req,res){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
     })
+
     const data=await r.json().catch(()=>({}))
     if(!r.ok){
-      const msg=data?.error?.message||`Gemini respondeu ${r.status}`
-      throw new Error(msg)
+      throw new Error(data?.error?.message||`Gemini respondeu ${r.status}`)
     }
 
-    const answer=(data.candidates?.[0]?.content?.parts||[])
+    const raw=(data.candidates?.[0]?.content?.parts||[])
       .map(p=>p.text||'')
       .filter(Boolean)
       .join('\n')
       .trim()
 
-    if(!answer) throw new Error('O Gemini não retornou uma resposta para este manual.')
+    if(!raw) throw new Error('O Gemini não retornou uma resposta para este manual.')
+
+    let parsed
+    try{
+      parsed=JSON.parse(raw.replace(/^```json\s*/i,'').replace(/```$/,'').trim())
+    }catch{
+      parsed={
+        resumo:raw,
+        causa:'',
+        procedimento:[],
+        atencao:[],
+        secao:'',
+        pagina:null,
+        figura:'',
+        visual_relevante:false,
+        observacao:''
+      }
+    }
+
+    const pagina=Number.isFinite(Number(parsed.pagina)) && Number(parsed.pagina)>0
+      ? Number(parsed.pagina)
+      : null
 
     return res.status(200).json({
-      answer,
+      resposta:{
+        resumo:String(parsed.resumo||'').trim(),
+        causa:String(parsed.causa||'').trim(),
+        procedimento:Array.isArray(parsed.procedimento)?parsed.procedimento.filter(Boolean).map(String):[],
+        atencao:Array.isArray(parsed.atencao)?parsed.atencao.filter(Boolean).map(String):[],
+        secao:String(parsed.secao||'').trim(),
+        pagina,
+        figura:String(parsed.figura||'').trim(),
+        visual_relevante:Boolean(parsed.visual_relevante && pagina),
+        observacao:String(parsed.observacao||'').trim()
+      },
       source:`${fabricante||''} ${modelo||''}`.trim(),
       filename:nomeArquivo||'Manual técnico',
       model:'gemini-3.5-flash-lite'

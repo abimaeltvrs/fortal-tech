@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react'
-import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,CheckCircle2} from 'lucide-react'
+import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,CheckCircle2,Eraser,Image as ImageIcon,AlertTriangle,ChevronRight} from 'lucide-react'
 
 export default function Manuais({supabase,profile}){
   const [lista,setLista]=useState([])
@@ -15,9 +15,10 @@ export default function Manuais({supabase,profile}){
   const [sucesso,setSucesso]=useState('')
   const [manualSelecionado,setManualSelecionado]=useState('')
   const [pergunta,setPergunta]=useState('')
-  const [mensagens,setMensagens]=useState([
+  const initialMessages=[
     {role:'assistant',text:'Selecione um manual e faça sua pergunta. O Gemini vai analisar somente o PDF selecionado.'}
-  ])
+  ]
+  const [mensagens,setMensagens]=useState(initialMessages)
   const inputRef=useRef(null)
   const chatEnd=useRef(null)
   const admin=profile?.perfil==='admin'
@@ -103,13 +104,44 @@ export default function Manuais({supabase,profile}){
       })
       const data=await r.json()
       if(!r.ok)throw new Error(data.error||'Falha na consulta.')
+      const r=data.resposta||{}
       setMensagens(x=>[...x,{
-        role:'assistant',text:data.answer,
-        source:`Fonte: ${m.fabricante} ${m.modelo} • ${m.nome_arquivo}`
+        role:'assistant',
+        structured:true,
+        resumo:r.resumo||'',
+        causa:r.causa||'',
+        procedimento:r.procedimento||[],
+        atencao:r.atencao||[],
+        secao:r.secao||'',
+        pagina:r.pagina||null,
+        figura:r.figura||'',
+        visual_relevante:Boolean(r.visual_relevante),
+        observacao:r.observacao||'',
+        source:`${m.fabricante} ${m.modelo} • ${m.nome_arquivo}`,
+        manualId:m.id
       }])
     }catch(e){
       setMensagens(x=>[...x,{role:'assistant',text:`Não consegui consultar o manual agora: ${e.message}`}])
     }finally{setPerguntando(false)}
+  }
+
+
+  function limparConversa(){
+    setMensagens([...initialMessages])
+    setErro('')
+    setSucesso('')
+  }
+
+  async function abrirReferenciaVisual(msg){
+    const manual=lista.find(x=>x.id===msg.manualId)
+    if(!manual)return
+    try{
+      const url=await signed(manual)
+      const page=msg.pagina?`#page=${msg.pagina}`:''
+      window.open(`${url}${page}`,'_blank','noopener,noreferrer')
+    }catch(e){
+      setErro(`Não foi possível abrir a referência visual: ${e.message}`)
+    }
   }
 
   const filtrados=useMemo(()=>{
@@ -161,10 +193,56 @@ export default function Manuais({supabase,profile}){
       </section>
 
       <section className="panel manualChat">
-        <div className="manualChatHead"><MessageSquare size={18}/><div><h3>Assistente Técnico</h3><span>{selected?`${selected.fabricante} ${selected.modelo} • Gemini`:'Selecione um manual'}</span></div></div>
+        <div className="manualChatHead">
+          <MessageSquare size={18}/>
+          <div className="manualChatTitle"><h3>Assistente Técnico</h3><span>{selected?`${selected.fabricante} ${selected.modelo} • Gemini`:'Selecione um manual'}</span></div>
+          <button type="button" className="clearChatBtn" onClick={limparConversa} title="Limpar conversa"><Eraser size={15}/> Limpar</button>
+        </div>
         <div className="chatMessages">
-          {mensagens.map((m,i)=><div key={i} className={`chatBubble ${m.role}`}>
-            <div>{m.text}</div>{m.source&&<small>{m.source}</small>}
+          {mensagens.map((m,i)=><div key={i} className={`chatBubble ${m.role} ${m.structured?'structuredAnswer':''}`}>
+            {!m.structured&&<div>{m.text}</div>}
+
+            {m.structured&&<>
+              {m.resumo&&<div className="answerBlock answerSummary">
+                <b>Resposta</b>
+                <p>{m.resumo}</p>
+              </div>}
+
+              {m.causa&&<div className="answerBlock">
+                <b>Causa</b>
+                <p>{m.causa}</p>
+              </div>}
+
+              {m.procedimento?.length>0&&<div className="answerBlock">
+                <b>Procedimento</b>
+                <ol>{m.procedimento.map((x,n)=><li key={n}>{x}</li>)}</ol>
+              </div>}
+
+              {m.atencao?.length>0&&<div className="answerBlock warningAnswer">
+                <b><AlertTriangle size={13}/> Atenção</b>
+                <ul>{m.atencao.map((x,n)=><li key={n}>{x}</li>)}</ul>
+              </div>}
+
+              {m.observacao&&<div className="answerBlock">
+                <b>Observação</b>
+                <p>{m.observacao}</p>
+              </div>}
+
+              <div className="answerSource">
+                <span>Fonte</span>
+                <b>{m.source}</b>
+                {m.secao&&<em>Seção: {m.secao}</em>}
+                {m.pagina&&<em>Página: {m.pagina}</em>}
+                {m.figura&&<em>Figura/diagrama: {m.figura}</em>}
+              </div>
+
+              {m.visual_relevante&&m.pagina&&<button type="button" className="visualReferenceBtn" onClick={()=>abrirReferenciaVisual(m)}>
+                <ImageIcon size={17}/>
+                <div><b>Abrir referência visual</b><span>Ver página {m.pagina} do manual{m.figura?` • ${m.figura}`:''}</span></div>
+                <ChevronRight size={16}/>
+              </button>}
+            </>}
+            {!m.structured&&m.source&&<small>{m.source}</small>}
           </div>)}
           {perguntando&&<div className="chatBubble assistant typing"><Loader2 className="spin" size={15}/> Consultando o manual...</div>}
           <div ref={chatEnd}/>
