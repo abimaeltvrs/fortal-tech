@@ -1933,3 +1933,236 @@ input:focus,select:focus,textarea:focus,
 .mobileBottomNav button.active svg{
   color:var(--ft-gold)!important;
 }
+
+/* ==========================================================
+   FORTAL TECH V1.12.3 — Correção final Dashboard Mobile
+   ========================================================== */
+
+/* NOTIFICAÇÃO — dourado como identidade */
+.notifButton{
+  background:#0b0e11!important;
+  border:1px solid #5f4d05!important;
+  color:var(--ft-gold)!important;
+}
+.notifButton svg{
+  color:var(--ft-gold)!important;
+}
+.notifButton>span{
+  background:var(--ft-gold)!important;
+  color:#171200!important;
+  border:2px solid #070809!important;
+  box-shadow:0 2px 8px rgba(247,200,0,.22)!important;
+}
+.notifPanel{
+  background:linear-gradient(145deg,#0c0f12,#090b0d)!important;
+  border-color:#554607!important;
+}
+.notifHead{
+  border-bottom:1px solid #2d2a1e!important;
+}
+.notifHead .eyebrow{
+  color:var(--ft-gold)!important;
+}
+.notifIcon.agenda,
+.notifIcon.os{
+  background:rgba(247,200,0,.09)!important;
+  color:var(--ft-gold)!important;
+  border:1px solid rgba(247,200,0,.18)!important;
+}
+.notifItem{
+  border-color:#262a2f!important;
+}
+.notifItem:hover{
+  background:rgba(247,200,0,.045)!important;
+}
+.markReadBtn{
+  color:var(--ft-gold)!important;
+}
+.markReadBtn:disabled{
+  color:#646a72!important;
+}
+.notifEmpty svg{
+  color:var(--ft-gold)!important;
+}
+
+/* CARROSSEL — substituir todos os verdes restantes */
+.newsWidget{
+  background:linear-gradient(145deg,#0d1013,#090c0f)!important;
+  border-color:#4a400f!important;
+}
+.newsTitle>svg{
+  color:var(--ft-gold)!important;
+}
+.newsTools button{
+  background:#0c0f12!important;
+  border-color:#594904!important;
+  color:var(--ft-gold)!important;
+}
+.newsTools button:hover{
+  background:rgba(247,200,0,.07)!important;
+  border-color:var(--ft-gold)!important;
+}
+.topicChips button{
+  background:#111418!important;
+  color:#9298a1!important;
+  border-color:#3a3f45!important;
+}
+.topicChips button.active{
+  background:linear-gradient(135deg,var(--ft-gold-2),var(--ft-gold))!important;
+  color:#171200!important;
+  border-color:#f5ca13!important;
+  font-weight:900!important;
+}
+.newsCarousel{
+  border-top-color:#332c12!important;
+}
+.newsMeta span{
+  color:var(--ft-gold)!important;
+}
+.newsNav{
+  color:#7b8087!important;
+}
+.newsNav:hover{
+  color:var(--ft-gold)!important;
+  background:rgba(247,200,0,.055)!important;
+}
+.newsBottom>button{
+  color:var(--ft-gold)!important;
+}
+.newsBottom>button svg{
+  color:var(--ft-gold)!important;
+}
+.newsDots button{
+  background:#3a3e43!important;
+}
+.newsDots button.active{
+  background:var(--ft-gold)!important;
+  box-shadow:0 0 7px rgba(247,200,0,.22)!important;
+}
+.newsEmpty svg{
+  color:var(--ft-gold)!important;
+}
+.newsSettingsModal{
+  background:#0c0f12!important;
+  border-color:#534507!important;
+}
+.topicManage>div>button:first-child{
+  background:#0a0d10!important;
+  border-color:#343940!important;
+  color:#b6bbc2!important;
+}
+.topicManage>div>button.selected{
+  background:rgba(247,200,0,.09)!important;
+  border-color:#675400!important;
+  color:var(--ft-gold)!important;
+}
+
+/* FILTROS DO DASHBOARD */
+.dashboardFilters>div{
+  background:#0b0e11!important;
+  border-color:#5b4b06!important;
+  color:var(--ft-gold)!important;
+}
+.dashboardFilters>div>svg{
+  color:var(--ft-gold)!important;
+}
+.dashboardFilters select{
+  color:#ebedf0!important;
+  background-color:transparent!important;
+}
+.dashboardFilters select:focus{
+  color:#fff!important;
+}
+.dashboardFilters .iconBtn{
+  color:var(--ft-gold)!important;
+  background:#0b0e11!important;
+  border-color:#5b4b06!important;
+}
+.dashboardFilters .iconBtn:hover{
+  border-color:var(--ft-gold)!important;
+  background:rgba(247,200,0,.06)!important;
+}
+/* seta dourada dos selects */
+.dashboardFilters select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:28px!important;
+  background-image:
+    linear-gradient(45deg,transparent 50%,#f7c800 50%),
+    linear-gradient(135deg,#f7c800 50%,transparent 50%)!important;
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 8px) 50%!important;
+  background-size:4px 4px,4px 4px!important;
+  background-repeat:no-repeat!important;
+}
+
+/* MENU MOBILE ÚNICO
+   No telefone, o hamburger do header desaparece.
+   O menu completo abre somente por "Mais" na barra inferior. */
+@media(max-width:760px){
+  header .menuBtn{
+    display:none!important;
+  }
+  header{
+    grid-template-columns:minmax(0,1fr) auto!important;
+  }
+  .pageIdentity{
+    min-width:0!important;
+    padding-left:1px!important;
+  }
+
+  .mobileBottomNav button:last-child{
+    color:#8b9199!important;
+  }
+  .mobileBottomNav button:last-child:hover,
+  .mobileBottomNav button:last-child:focus-visible{
+    color:var(--ft-gold)!important;
+  }
+
+  /* Dashboard filters alinhados à referência */
+  .dashboardFilters{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) 46px!important;
+    gap:8px!important;
+  }
+  .dashboardFilters>div{
+    min-height:46px!important;
+    padding:0 10px!important;
+    border-radius:10px!important;
+  }
+  .dashboardFilters select{
+    min-height:44px!important;
+    font-size:10px!important;
+    padding-left:3px!important;
+  }
+  .dashboardFilters>.iconBtn{
+    width:46px!important;
+    height:46px!important;
+    border-radius:10px!important;
+  }
+
+  .notifButton{
+    width:42px!important;
+    height:42px!important;
+  }
+
+  .newsWidget{
+    border-radius:14px!important;
+  }
+  .newsTools button{
+    width:38px!important;
+    height:38px!important;
+    border-radius:9px!important;
+  }
+  .topicChips button{
+    padding:7px 12px!important;
+    font-size:9px!important;
+  }
+}
+
+/* Desktop continua com hamburger para abrir/recolher o menu */
+@media(min-width:761px){
+  header .menuBtn{
+    display:grid!important;
+  }
+}
