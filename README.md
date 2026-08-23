@@ -1,15 +1,32 @@
-# FORTAL TECH V1.5.2
+# FORTAL TECH V1.6
 
-Correções:
-- restaura e reforça a geração/download do PDF da OS;
-- adiciona fallback de download caso `doc.save()` falhe no navegador/PWA;
-- mensagem de sucesso ao gerar o PDF;
-- erro técnico de PDF aparece no app se ainda houver falha.
+Novo módulo: Orçamentos.
 
-Regra de atendimento corretivo:
-- `Manutenção corretiva / diagnóstico` só aparece quando o tipo de atendimento for `Manutenção Corretiva`;
-- nos demais tipos esse bloco não aparece e não precisa ser preenchido;
-- a numeração das seções se ajusta automaticamente;
-- o PDF também só inclui a seção corretiva quando a OS for realmente corretiva.
+Inclui:
+- criar, editar e excluir orçamento;
+- vincular orçamento a cliente;
+- vincular orçamento a uma Ordem de Serviço;
+- itens do tipo Serviço ou Material;
+- quantidade e valor unitário;
+- subtotal automático;
+- desconto;
+- total final;
+- validade;
+- forma de pagamento;
+- status:
+  - Em elaboração
+  - Enviado
+  - Aprovado
+  - Recusado
+  - Expirado
+- PDF profissional do orçamento;
+- botão `Orçamento` em OS que estiver marcada como `Necessita orçamento`;
+- atalho `Criar > Novo orçamento` agora abre o módulo real.
 
-Não há SQL novo nesta versão.
+Acesso:
+- módulo permanece restrito ao Administrador.
+
+Antes de testar:
+1. Execute `supabase/v1.6_orcamentos.sql`.
+2. Atualize o GitHub.
+3. Aguarde a Vercel ficar Ready.

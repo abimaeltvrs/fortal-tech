@@ -845,6 +845,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     }
   }
 
+  function gerarOrcamentoDaOS(os){
+    window.dispatchEvent(new CustomEvent('fortal:orcamento-from-os',{detail:os}))
+    window.dispatchEvent(new CustomEvent('fortal:navigate',{detail:'orcamentos'}))
+  }
+
   return <>
     <div className="toolbar">
       <div><h2>Ordens de Serviço</h2><p>Preventivas, corretivas, visitas técnicas e retornos.</p></div>
@@ -895,6 +900,9 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
               </div>
 
               <div className="osActionButtons">
+                {os.necessita_orcamento&&<button className="budgetFromOSBtn" title="Criar orçamento desta OS" onClick={()=>{
+                  window.dispatchEvent(new CustomEvent('fortal:go-orcamento',{detail:os}))
+                }}>Orçamento</button>}
                 <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(os)}><FileDown size={17}/></button>
                 <button className="iconBtn" title="Editar OS completa" onClick={()=>editar(os)}><Pencil size={17}/></button>
                 <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(os)}><Trash2 size={17}/></button>

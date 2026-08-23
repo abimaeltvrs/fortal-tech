@@ -12,6 +12,7 @@ import Agenda from './Agenda'
 import OrdensServico from './OrdensServico'
 import DashboardReal from './DashboardReal'
 import NotificationCenter from './NotificationCenter'
+import Orcamentos from './Orcamentos'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -101,7 +102,7 @@ export default function App(){
     }
     if(tipo==='orcamento'){
       setPage('orcamentos')
-      setTimeout(()=>alert('O módulo de Orçamentos será ativado na próxima etapa.'),80)
+      setTimeout(()=>window.dispatchEvent(new Event('fortal:new-orcamento')),50)
     }
     if(tipo==='financeiro'){
       setPage('financeiro')
@@ -135,6 +136,15 @@ export default function App(){
     const off=()=>{setOnline(false);setSyncStatus('pending')}
     window.addEventListener('online',on);window.addEventListener('offline',off)
     return()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off)}
+  },[])
+
+  useEffect(()=>{
+    const go=(e)=>{
+      setPage('orcamentos')
+      setTimeout(()=>window.dispatchEvent(new CustomEvent('fortal:orcamento-from-os',{detail:e.detail})),80)
+    }
+    window.addEventListener('fortal:go-orcamento',go)
+    return()=>window.removeEventListener('fortal:go-orcamento',go)
   },[])
 
   const current=useMemo(()=>pages.find(p=>p[0]===page),[page])
@@ -195,6 +205,7 @@ export default function App(){
          page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openAgendaId} clearOpenItem={()=>setOpenAgendaId(null)}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:
+         page==='orcamentos'?<Orcamentos supabase={supabase} profile={profile} session={session}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>
