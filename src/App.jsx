@@ -13,6 +13,7 @@ import OrdensServico from './OrdensServico'
 import DashboardReal from './DashboardReal'
 import NotificationCenter from './NotificationCenter'
 import Orcamentos from './Orcamentos'
+import Financeiro from './Financeiro'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -106,7 +107,6 @@ export default function App(){
     }
     if(tipo==='financeiro'){
       setPage('financeiro')
-      setTimeout(()=>alert('O módulo Financeiro será ativado em uma próxima etapa.'),80)
     }
   }
 
@@ -206,6 +206,7 @@ export default function App(){
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:
          page==='orcamentos'?<Orcamentos supabase={supabase} profile={profile} session={session}/>:
+         page==='financeiro'?<Financeiro supabase={supabase}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>

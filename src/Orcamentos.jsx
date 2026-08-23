@@ -8,7 +8,7 @@ import autoTable from 'jspdf-autotable'
 
 const empty={
   cliente_id:'',os_id:'',data_orcamento:'',validade:'',
-  status:'elaboracao',desconto:0,total:0,forma_pagamento:'',observacoes:''
+  status:'elaboracao',desconto:0,total:0,forma_pagamento:'',metodo_pagamento:'pix',parcelas:1,observacoes:''
 }
 
 function money(v){
@@ -25,7 +25,7 @@ function numero(){
 }
 const statusLabel={
   elaboracao:'Em elaboração',
-  enviado:'Enviado',
+  enviado:'Enviado / Aguardando aprovação',
   aprovado:'Aprovado',
   recusado:'Recusado',
   expirado:'Expirado'
@@ -121,6 +121,84 @@ export default function Orcamentos({supabase,profile,session}){
     setItens(x=>x.map(i=>i.id===id?{...i,[key]:val}:i))
   }
 
+
+  function addMonths(date,months){
+    const d=new Date(date)
+    const day=d.getDate()
+    d.setMonth(d.getMonth()+months)
+    if(d.getDate()<day)d.setDate(0)
+    return d
+  }
+
+  async function gerarFinanceiroDoOrcamento(orcamento){
+    const existing=await supabase.from('financeiro_lancamentos').select('id').eq('orcamento_id',orcamento.id)
+    if(existing.error)throw existing.error
+    if(existing.data?.length)return
+
+    const parcelas=Math.max(1,Number(orcamento.parcelas||1))
+    const metodo=orcamento.metodo_pagamento||'pix'
+    const total=Number(orcamento.total||0)
+    const baseDate=new Date()
+    const valorBase=Math.floor((total/parcelas)*100)/100
+    let acumulado=0
+    const rows=[]
+
+    for(let i=1;i<=parcelas;i++){
+      const valor=i===parcelas ? Math.round((total-acumulado)*100)/100 : valorBase
+      acumulado+=valor
+
+      let venc=new Date(baseDate)
+      if(metodo==='credito' && parcelas>1) venc=addMonths(baseDate,i-1)
+      rows.push({
+        cliente_id:orcamento.cliente_id,
+        orcamento_id:orcamento.id,
+        tipo:'receita',
+        descricao:`Orçamento ${orcamento.numero}${parcelas>1?` - parcela ${i}/${parcelas}`:''}`,
+        valor,
+        metodo_pagamento:metodo,
+        parcela_numero:i,
+        parcela_total:parcelas,
+        vencimento:venc.toISOString().slice(0,10),
+        status:'pendente'
+      })
+    }
+
+    const {error}=await supabase.from('financeiro_lancamentos').insert(rows)
+    if(error)throw error
+  }
+
+  async function atualizarStatus(o,novoStatus){
+    setErro('');setSucesso('')
+    try{
+      const patch={status:novoStatus,updated_at:new Date().toISOString()}
+      if(novoStatus==='aprovado') patch.aprovado_em=new Date().toISOString()
+      const {data,error}=await supabase.from('orcamentos').update(patch).eq('id',o.id).select().single()
+      if(error)throw error
+      if(novoStatus==='aprovado'){
+        await gerarFinanceiroDoOrcamento(data)
+        setSucesso(`${o.numero} aprovado e lançado no Financeiro.`)
+      }else{
+        setSucesso(`Status do ${o.numero} atualizado.`)
+      }
+      await carregar()
+    }catch(e){
+      setErro(`Não foi possível atualizar o status: ${e.message}`)
+    }
+  }
+
+  async function marcarComoEnviado(o,canal){
+    const agora=new Date().toISOString()
+    const {data,error}=await supabase.from('orcamentos').update({
+      status:'enviado',
+      enviado_em:agora,
+      canal_envio:canal,
+      updated_at:agora
+    }).eq('id',o.id).select().single()
+    if(error)throw error
+    await carregar()
+    return data
+  }
+
   async function salvar(e){
     e.preventDefault()
     setErro('');setSucesso('')
@@ -138,6 +216,8 @@ export default function Orcamentos({supabase,profile,session}){
       os_id:form.os_id||null,
       desconto:Number(form.desconto||0),
       total,
+      metodo_pagamento:form.metodo_pagamento||'pix',
+      parcelas:Math.max(1,Number(form.parcelas||1)),
       data_orcamento:form.data_orcamento||new Date().toISOString().slice(0,10),
       validade:form.validade||null,
       updated_at:new Date().toISOString()
@@ -227,8 +307,11 @@ export default function Orcamentos({supabase,profile,session}){
       })
 
       y=doc.lastAutoTable.finalY+9
+      const metodo=({pix:'Pix',debito:'Cartão de débito',credito:'Cartão de crédito'})[o.metodo_pagamento]||o.metodo_pagamento||'-'
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('Forma de pagamento:',14,y)
+      doc.setFont('helvetica','normal');doc.text(`${metodo}${o.metodo_pagamento==='credito'&&Number(o.parcelas||1)>1?` • ${o.parcelas}x`:''}`,55,y);y+=7
       if(o.forma_pagamento){
-        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('Forma de pagamento:',14,y)
+        doc.setFont('helvetica','bold');doc.text('Condições:',14,y)
         doc.setFont('helvetica','normal');doc.text(o.forma_pagamento,55,y);y+=7
       }
       if(o.observacoes){
@@ -298,8 +381,9 @@ export default function Orcamentos({supabase,profile,session}){
     try{
       const shared=await compartilharPDF(o)
       if(shared){
+        await marcarComoEnviado(o,'whatsapp')
         setEnvio(null)
-        setSucesso('Orçamento encaminhado para compartilhamento.')
+        setSucesso('Orçamento enviado e aguardando aprovação.')
         return
       }
 
@@ -310,7 +394,8 @@ export default function Orcamentos({supabase,profile,session}){
       )
       const numeroBR=fone.startsWith('55')?fone:`55${fone}`
       window.open(`https://wa.me/${numeroBR}?text=${texto}`,'_blank')
-      setSucesso('WhatsApp aberto com a mensagem do orçamento.')
+      await marcarComoEnviado(o,'whatsapp')
+      setSucesso('WhatsApp aberto. Orçamento marcado como Enviado / Aguardando aprovação.')
       setEnvio(null)
     }finally{
       setEnviando(false)
@@ -328,8 +413,9 @@ export default function Orcamentos({supabase,profile,session}){
     try{
       const shared=await compartilharPDF(o)
       if(shared){
+        await marcarComoEnviado(o,'email')
         setEnvio(null)
-        setSucesso('Orçamento encaminhado para compartilhamento.')
+        setSucesso('Orçamento enviado e aguardando aprovação.')
         return
       }
 
@@ -341,6 +427,7 @@ export default function Orcamentos({supabase,profile,session}){
         `Validade: ${br(o.validade)}\n\n`+
         `Atenciosamente,\nFORTAL TECH`
       )
+      await marcarComoEnviado(o,'email')
       window.location.href=`mailto:${cliente.email}?subject=${assunto}&body=${corpo}`
       setEnvio(null)
     }finally{
@@ -379,7 +466,8 @@ export default function Orcamentos({supabase,profile,session}){
             </div>
             <div className="budgetActions">
               <span className={`statusBadge budget-${o.status}`}>{statusLabel[o.status]}</span>
-              <button className="sendBudgetBtn" title="Enviar orçamento" onClick={()=>setEnvio(o)}><Send size={15}/> Enviar</button>
+              {o.status==='enviado'&&<button className="approveBudgetBtn" title="Marcar como aprovado" onClick={()=>atualizarStatus(o,'aprovado')}><CheckCircle2 size={15}/> Aprovar</button>}
+              {o.status!=='aprovado'&&<button className="sendBudgetBtn" title="Enviar orçamento" onClick={()=>setEnvio(o)}><Send size={15}/> Enviar</button>}
               <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(o)}><FileDown size={17}/></button>
               <button className="iconBtn" title="Editar" onClick={()=>editar(o)}><Pencil size={17}/></button>
               <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(o)}><Trash2 size={17}/></button>
@@ -417,7 +505,22 @@ export default function Orcamentos({supabase,profile,session}){
                 {Object.entries(statusLabel).map(([v,l])=><option key={v} value={v}>{l}</option>)}
               </select>
             </div>
-            <div className="field"><label>Forma de pagamento</label><input value={form.forma_pagamento||''} onChange={e=>setForm({...form,forma_pagamento:e.target.value})} placeholder="Ex.: Pix, 50% entrada..."/></div>
+            <div className="field"><label>Forma de pagamento</label>
+              <select value={form.metodo_pagamento||'pix'} onChange={e=>{
+                const metodo=e.target.value
+                setForm({...form,metodo_pagamento:metodo,parcelas:metodo==='credito'?Math.max(1,Number(form.parcelas||1)):1})
+              }}>
+                <option value="pix">Pix</option>
+                <option value="debito">Cartão de débito</option>
+                <option value="credito">Cartão de crédito</option>
+              </select>
+            </div>
+            <div className="field"><label>Parcelas</label>
+              <select disabled={form.metodo_pagamento!=='credito'} value={form.parcelas||1} onChange={e=>setForm({...form,parcelas:Number(e.target.value)})}>
+                {Array.from({length:12},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}x</option>)}
+              </select>
+            </div>
+            <div className="field span2"><label>Condições / observação de pagamento</label><input value={form.forma_pagamento||''} onChange={e=>setForm({...form,forma_pagamento:e.target.value})} placeholder="Ex.: vencimento, entrada, observação adicional..."/></div>
           </div>
 
           <div className="osSection">
@@ -487,8 +590,14 @@ export default function Orcamentos({supabase,profile,session}){
           <button disabled={enviando} onClick={async()=>{
             setEnviando(true)
             const ok=await compartilharPDF(envio)
+            if(ok){
+              await marcarComoEnviado(envio,'compartilhar')
+              setSucesso('Orçamento enviado e aguardando aprovação.')
+              setEnvio(null)
+            }else{
+              gerarPDF(envio)
+            }
             setEnviando(false)
-            if(!ok) gerarPDF(envio)
           }}>
             <Share2 size={23}/>
             <div><b>Compartilhar</b><span>Abrir o compartilhamento do celular</span></div>
