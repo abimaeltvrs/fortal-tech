@@ -1,32 +1,20 @@
-# FORTAL TECH V1.6.7
+# FORTAL TECH V1.6.8
 
-Visualização de Ordens de Serviço.
+Correção da integração OS → Orçamento.
 
-Agora:
-- tocar em uma OS da lista abre uma tela somente leitura;
-- não entra automaticamente no modo Editar;
-- mostra:
-  - número da OS;
-  - cliente;
-  - data da visita;
-  - horários;
-  - prioridade;
-  - status;
-  - solicitação;
-  - sistemas envolvidos;
-  - checklist;
-  - diagnóstico corretivo quando aplicável;
-  - materiais e valores;
-  - fotos;
-  - pendências;
-  - recomendações;
-  - condição final;
-  - assinaturas.
-- ações disponíveis na visualização:
-  - Gerar PDF;
-  - Criar/Abrir orçamento quando necessário;
-  - Editar OS.
-
-O botão Editar continua separado para alterações.
+Corrigido:
+- ao importar materiais/peças de uma OS, o sistema agora lê corretamente a coluna `preco_unitario`;
+- importa:
+  - item/descrição;
+  - quantidade;
+  - preço unitário;
+- o subtotal de cada item é calculado automaticamente;
+- o total do orçamento é recalculado com os valores importados.
 
 Não há SQL novo nesta versão.
+
+Teste recomendado:
+1. Abra uma OS com material contendo preço.
+2. Crie um orçamento.
+3. Selecione essa OS.
+4. Confirme se item, quantidade e preço unitário foram preenchidos.

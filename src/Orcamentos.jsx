@@ -129,7 +129,7 @@ export default function Orcamentos({supabase,profile,session}){
         tipo:'material',
         descricao:x.nome_item||x.item||x.descricao||x.nome||'Material da OS',
         quantidade:Number(x.quantidade||1),
-        valor_unitario:Number(x.preco||x.valor_unitario||x.valor||0),
+        valor_unitario:Number(x.preco_unitario??x.preco??x.valor_unitario??x.valor??0),
         origem_os_item_id:x.id
       }))
 
@@ -144,7 +144,7 @@ export default function Orcamentos({supabase,profile,session}){
         return [...atual,...importados.filter(i=>!existentes.has(i.origem_os_item_id))]
       })
       setOsImportada(osId)
-      setSucesso(`${importados.length} item(ns) da ${os.numero} importado(s) para o orçamento.`)
+      setSucesso(`${importados.length} item(ns) da ${os.numero} importado(s) com quantidade e preço para o orçamento.`)
     }catch(e){
       setErro(`Não foi possível importar os itens da OS: ${e.message||'erro não identificado.'}`)
     }finally{
