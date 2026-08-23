@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react'
 import {
   Plus,FileText,Search,Pencil,Trash2,X,Save,FileDown,
-  BadgeDollarSign,CheckCircle2,Clock3
+  BadgeDollarSign,CheckCircle2,Clock3,Send,Mail,MessageCircle,Share2
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -43,6 +43,8 @@ export default function Orcamentos({supabase,profile,session}){
   const [erro,setErro]=useState('')
   const [sucesso,setSucesso]=useState('')
   const [salvando,setSalvando]=useState(false)
+  const [envio,setEnvio]=useState(null)
+  const [enviando,setEnviando]=useState(false)
 
   async function carregar(){
     setErro('')
@@ -132,6 +134,8 @@ export default function Orcamentos({supabase,profile,session}){
       ...form,
       id,
       numero:edit?.numero||numero(),
+      cliente_id:form.cliente_id,
+      os_id:form.os_id||null,
       desconto:Number(form.desconto||0),
       total,
       data_orcamento:form.data_orcamento||new Date().toISOString().slice(0,10),
@@ -173,8 +177,7 @@ export default function Orcamentos({supabase,profile,session}){
     await carregar()
   }
 
-  async function gerarPDF(o){
-    try{
+  async function montarPDF(o){
       const cliente=clientes.find(c=>c.id===o.cliente_id)||{}
       const {data:rows,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id)
       if(error)throw error
@@ -240,10 +243,108 @@ export default function Orcamentos({supabase,profile,session}){
         doc.setPage(p);doc.setFontSize(7);doc.setTextColor(120)
         doc.text(`FORTAL TECH • ${o.numero} • Página ${p}/${pages}`,105,292,{align:'center'})
       }
+      return doc
+  }
+
+  async function gerarPDF(o){
+    try{
+      const doc=await montarPDF(o)
       doc.save(`${o.numero}.pdf`)
       setSucesso(`PDF do ${o.numero} gerado.`)
     }catch(e){
       setErro(`Não foi possível gerar o PDF: ${e.message}`)
+    }
+  }
+
+  function clienteDoOrcamento(o){
+    return clientes.find(c=>c.id===o.cliente_id)||{}
+  }
+
+  function telefoneWhatsApp(raw=''){
+    return String(raw).replace(/\D/g,'')
+  }
+
+  async function compartilharPDF(o){
+    try{
+      const doc=await montarPDF(o)
+      const blob=doc.output('blob')
+      const file=new File([blob],`${o.numero}.pdf`,{type:'application/pdf'})
+      const cliente=clienteDoOrcamento(o)
+      const shareData={
+        title:`Orçamento ${o.numero} - FORTAL TECH`,
+        text:`Olá ${cliente.responsavel||cliente.nome||''}, segue o orçamento ${o.numero} da FORTAL TECH no valor de ${money(o.total)}.`,
+        files:[file]
+      }
+      if(navigator.canShare?.({files:[file]}) && navigator.share){
+        await navigator.share(shareData)
+        return true
+      }
+      return false
+    }catch(e){
+      console.error(e)
+      return false
+    }
+  }
+
+  async function enviarWhatsApp(o){
+    const cliente=clienteDoOrcamento(o)
+    const fone=telefoneWhatsApp(cliente.telefone)
+    if(!fone){
+      setErro('Este cliente não possui telefone cadastrado.')
+      return
+    }
+
+    setEnviando(true)
+    try{
+      const shared=await compartilharPDF(o)
+      if(shared){
+        setEnvio(null)
+        setSucesso('Orçamento encaminhado para compartilhamento.')
+        return
+      }
+
+      const texto=encodeURIComponent(
+        `Olá ${cliente.responsavel||cliente.nome||''}, segue o orçamento ${o.numero} da FORTAL TECH.\n`+
+        `Valor total: ${money(o.total)}\n`+
+        `Validade: ${br(o.validade)}`
+      )
+      const numeroBR=fone.startsWith('55')?fone:`55${fone}`
+      window.open(`https://wa.me/${numeroBR}?text=${texto}`,'_blank')
+      setSucesso('WhatsApp aberto com a mensagem do orçamento.')
+      setEnvio(null)
+    }finally{
+      setEnviando(false)
+    }
+  }
+
+  async function enviarEmail(o){
+    const cliente=clienteDoOrcamento(o)
+    if(!cliente.email){
+      setErro('Este cliente não possui e-mail cadastrado.')
+      return
+    }
+
+    setEnviando(true)
+    try{
+      const shared=await compartilharPDF(o)
+      if(shared){
+        setEnvio(null)
+        setSucesso('Orçamento encaminhado para compartilhamento.')
+        return
+      }
+
+      const assunto=encodeURIComponent(`Orçamento ${o.numero} - FORTAL TECH`)
+      const corpo=encodeURIComponent(
+        `Olá ${cliente.responsavel||cliente.nome||''},\n\n`+
+        `Segue o orçamento ${o.numero} da FORTAL TECH.\n`+
+        `Valor total: ${money(o.total)}\n`+
+        `Validade: ${br(o.validade)}\n\n`+
+        `Atenciosamente,\nFORTAL TECH`
+      )
+      window.location.href=`mailto:${cliente.email}?subject=${assunto}&body=${corpo}`
+      setEnvio(null)
+    }finally{
+      setEnviando(false)
     }
   }
 
@@ -278,6 +379,7 @@ export default function Orcamentos({supabase,profile,session}){
             </div>
             <div className="budgetActions">
               <span className={`statusBadge budget-${o.status}`}>{statusLabel[o.status]}</span>
+              <button className="sendBudgetBtn" title="Enviar orçamento" onClick={()=>setEnvio(o)}><Send size={15}/> Enviar</button>
               <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(o)}><FileDown size={17}/></button>
               <button className="iconBtn" title="Editar" onClick={()=>editar(o)}><Pencil size={17}/></button>
               <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(o)}><Trash2 size={17}/></button>
@@ -357,5 +459,47 @@ export default function Orcamentos({supabase,profile,session}){
         </form>
       </div>
     </div>}
+  
+    {envio&&<div className="modalBackdrop">
+      <div className="sendBudgetModal">
+        <div className="modalHead">
+          <div><span className="eyebrow">ENVIAR ORÇAMENTO</span><h2>{envio.numero}</h2></div>
+          <button className="iconBtn" onClick={()=>setEnvio(null)}><X/></button>
+        </div>
+
+        <div className="sendClientSummary">
+          <b>{clienteDoOrcamento(envio).nome||'Cliente'}</b>
+          <span>{clienteDoOrcamento(envio).email||'E-mail não cadastrado'}</span>
+          <span>{clienteDoOrcamento(envio).telefone||'Telefone não cadastrado'}</span>
+        </div>
+
+        <p>Escolha como deseja encaminhar o orçamento. Em celulares compatíveis, o aplicativo tenta compartilhar também o PDF.</p>
+
+        <div className="sendOptions">
+          <button disabled={enviando} onClick={()=>enviarWhatsApp(envio)}>
+            <MessageCircle size={23}/>
+            <div><b>WhatsApp</b><span>Enviar para o telefone cadastrado</span></div>
+          </button>
+          <button disabled={enviando} onClick={()=>enviarEmail(envio)}>
+            <Mail size={23}/>
+            <div><b>E-mail</b><span>Usar o e-mail cadastrado do cliente</span></div>
+          </button>
+          <button disabled={enviando} onClick={async()=>{
+            setEnviando(true)
+            const ok=await compartilharPDF(envio)
+            setEnviando(false)
+            if(!ok) gerarPDF(envio)
+          }}>
+            <Share2 size={23}/>
+            <div><b>Compartilhar</b><span>Abrir o compartilhamento do celular</span></div>
+          </button>
+        </div>
+
+        <div className="sendNote">
+          No navegador/PWA, o envio por e-mail abre o aplicativo de e-mail do aparelho já com destinatário e mensagem preenchidos. Envio automático sem abrir o e-mail será ativado quando configurarmos um serviço de e-mail no backend.
+        </div>
+      </div>
+    </div>}
+
   </>
 }

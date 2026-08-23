@@ -805,3 +805,53 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
  .budgetItemRow{grid-template-columns:1fr 1fr;grid-template-areas:"type type" "desc desc" "qty value" "sub del";border:1px solid #213148;border-radius:10px;padding:8px}
  .budgetItemRow select{grid-area:type}.budgetItemRow input:nth-of-type(1){grid-area:desc}.budgetItemRow input:nth-of-type(2){grid-area:qty}.budgetItemRow input:nth-of-type(3){grid-area:value}.budgetItemRow strong{grid-area:sub;text-align:left}.budgetItemRow button{grid-area:del;justify-self:end}
 }
+
+/* ===== V1.6.1 - Envio de orçamento ===== */
+.sendBudgetBtn{
+  border:1px solid #285947;
+  background:#15372d;
+  color:#7de3b8;
+  border-radius:8px;
+  padding:8px 9px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.sendBudgetModal{
+  width:min(520px,100%);
+  background:#0f1c2e;
+  border:1px solid #26374e;
+  border-radius:16px;
+  padding:20px;
+}
+.sendClientSummary{
+  margin:15px 0;
+  background:#0a1423;
+  border:1px solid #213148;
+  border-radius:10px;
+  padding:12px;
+}
+.sendClientSummary b,.sendClientSummary span{display:block}
+.sendClientSummary span{font-size:10px;color:#7f91a5;margin-top:4px}
+.sendBudgetModal>p{font-size:11px;color:#8193a7;line-height:1.5}
+.sendOptions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
+.sendOptions>button{
+  border:1px solid #26374e;
+  background:#0b1727;
+  color:#d6e0ea;
+  border-radius:10px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+}
+.sendOptions>button:hover{border-color:#2d6f57;background:#113026}
+.sendOptions>button>svg{color:#13b981;flex:none}
+.sendOptions b,.sendOptions span{display:block}
+.sendOptions b{font-size:12px}.sendOptions span{font-size:9px;color:#7b8da2;margin-top:3px}
+.sendNote{font-size:9px;line-height:1.45;color:#66798e;margin-top:13px;padding-top:11px;border-top:1px solid #1e2e42}
