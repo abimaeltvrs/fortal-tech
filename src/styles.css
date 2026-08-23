@@ -702,3 +702,9 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
   .notifText{min-width:calc(100% - 48px)}
   .markReadBtn{margin-left:44px}
 }
+
+/* ===== V1.4.3 - PDF do histórico do cliente ===== */
+.historyHeadActions{display:flex;align-items:center;gap:7px}
+.pdfHistoryBtn{display:flex;align-items:center;gap:6px;border:1px solid #28624d;background:#173b2e;color:#7de3b8;border-radius:8px;padding:8px 10px;font-size:10px;font-weight:800;cursor:pointer}
+.pdfHistoryBtn:hover{background:#1d4939}
+@media(max-width:600px){.pdfHistoryBtn{padding:8px}.pdfHistoryBtn svg{flex:none}}

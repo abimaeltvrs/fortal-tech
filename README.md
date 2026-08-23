@@ -1,13 +1,19 @@
-# FORTAL TECH V1.4.2
+# FORTAL TECH V1.4.3
 
-Melhorias da central de notificações:
+Adicionado PDF no Histórico do Cliente.
 
-- cada notificação pode ser marcada como lida;
-- contador do sino mostra somente notificações não lidas;
-- notificações lidas ficam visualmente discretas;
-- ao clicar numa notificação de Agenda, o aplicativo abre aquele agendamento;
-- ao clicar numa notificação de OS, o aplicativo abre aquela OS;
-- a notificação é marcada automaticamente como lida ao ser aberta;
-- estado de leitura fica salvo localmente no aplicativo.
+O relatório inclui:
+- dados cadastrais;
+- responsável e contatos;
+- endereço;
+- observações;
+- resumo do período selecionado;
+- quantidade de OS;
+- OS concluídas e pendentes;
+- relação das atividades/OS;
+- materiais e peças utilizados;
+- preço unitário, subtotal e total de materiais.
+
+O PDF respeita o filtro selecionado no histórico: mês, ano ou todo o período.
 
 Não há SQL novo nesta versão.
