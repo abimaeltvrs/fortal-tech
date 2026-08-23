@@ -985,3 +985,65 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
     grid-column:span 3;
   }
 }
+
+/* ===== V1.6.4 - Vínculo orçamento x Financeiro ===== */
+.budgetStatusStack{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+}
+.financeLinkedBadge{
+  font-size:8px;
+  color:#7de3b8;
+  border:1px solid #28624d;
+  background:#15372d;
+  border-radius:999px;
+  padding:4px 7px;
+  white-space:nowrap;
+}
+.financeOpenBtn{
+  border:1px solid #285947;
+  background:#15372d;
+  color:#7de3b8;
+  border-radius:8px;
+  padding:8px 9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.financeFilterNotice{
+  margin:0 0 12px;
+  border:1px solid #285947;
+  background:#15372d;
+  color:#a8e9cf;
+  border-radius:9px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-size:10px;
+}
+.financeFilterNotice button{
+  border:0;
+  background:transparent;
+  color:#7de3b8;
+  font-weight:800;
+  cursor:pointer;
+}
+@media(max-width:760px){
+  .budgetStatusStack{align-items:flex-start}
+  .financeLinkedBadge{font-size:8px}
+  .budgetActions .financeOpenBtn{
+    grid-column:span 2;
+    width:100%;
+  }
+}
+@media(max-width:420px){
+  .budgetActions .financeOpenBtn{grid-column:span 3}
+}

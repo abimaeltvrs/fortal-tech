@@ -1,23 +1,24 @@
-# FORTAL TECH V1.6.3
+# FORTAL TECH V1.6.4
 
-Correções funcionais:
-- garante a criação da tabela `financeiro_lancamentos`;
-- garante todas as colunas usadas no fluxo de aprovação;
-- corrige bases antigas que ainda tenham `empresa_id`;
-- recria a política RLS para Administrador;
-- força atualização do schema do Supabase;
-- mensagem mais clara caso o Financeiro ainda não esteja disponível.
+Fechamento do vínculo Orçamento → Financeiro.
 
-Correções visuais:
-- status do orçamento não ultrapassa mais o card;
-- status `Enviado / Aguardando aprovação` quebra linha corretamente;
-- ações ficam organizadas no celular;
-- Aprovar e Enviar ganham mais espaço;
-- PDF, editar e excluir ficam alinhados;
-- card se adapta melhor a telas pequenas.
+Aprovação:
+- ao aprovar, o sistema verifica primeiro se já existem lançamentos;
+- se já existirem, não duplica;
+- se não existirem, cria automaticamente;
+- se a criação financeira falhar, o orçamento volta automaticamente para:
+  `Enviado / Aguardando aprovação`;
+- evita ficar `Aprovado` sem lançamento financeiro.
+
+Banco:
+- índice único protege contra duplicar a mesma parcela do mesmo orçamento.
+
+Visual:
+- orçamento aprovado mostra `Lançado no Financeiro`;
+- botão `Financeiro` abre diretamente os lançamentos daquele orçamento;
+- Financeiro exibe um aviso de filtro e opção `Mostrar todos`.
 
 Antes de testar:
-1. Execute `supabase/v1.6.3_hotfix_financeiro.sql`.
-2. Atualize o GitHub com esta versão.
+1. Execute `supabase/v1.6.4_protecao_financeiro.sql`.
+2. Atualize o GitHub.
 3. Aguarde a Vercel ficar Ready.
-4. Teste `Aprovar` em um orçamento Enviado.

@@ -45,18 +45,26 @@ export default function Orcamentos({supabase,profile,session}){
   const [salvando,setSalvando]=useState(false)
   const [envio,setEnvio]=useState(null)
   const [enviando,setEnviando]=useState(false)
+  const [financeiroPorOrcamento,setFinanceiroPorOrcamento]=useState({})
 
   async function carregar(){
     setErro('')
-    const [or,cr,osr]=await Promise.all([
+    const [or,cr,osr,fr]=await Promise.all([
       supabase.from('orcamentos').select('*,clientes(nome)').order('created_at',{ascending:false}),
       supabase.from('clientes').select('*').order('nome'),
-      supabase.from('ordens_servico').select('id,numero,cliente_id,status,necessita_orcamento').order('created_at',{ascending:false})
+      supabase.from('ordens_servico').select('id,numero,cliente_id,status,necessita_orcamento').order('created_at',{ascending:false}),
+      supabase.from('financeiro_lancamentos').select('id,orcamento_id,status,valor')
     ])
     if(or.error){setErro(or.error.message);return}
     setLista(or.data||[])
     setClientes(cr.data||[])
     setOrdens(osr.data||[])
+    const map={}
+    for(const f of (fr.data||[])){
+      if(!f.orcamento_id)continue
+      ;(map[f.orcamento_id] ||= []).push(f)
+    }
+    setFinanceiroPorOrcamento(map)
   }
 
   useEffect(()=>{carregar()},[])
@@ -131,9 +139,13 @@ export default function Orcamentos({supabase,profile,session}){
   }
 
   async function gerarFinanceiroDoOrcamento(orcamento){
-    const existing=await supabase.from('financeiro_lancamentos').select('id').eq('orcamento_id',orcamento.id)
-    if(existing.error)throw existing.error
-    if(existing.data?.length)return
+    const {data:existing,error:existingError}=await supabase
+      .from('financeiro_lancamentos')
+      .select('id')
+      .eq('orcamento_id',orcamento.id)
+
+    if(existingError)throw existingError
+    if(existing?.length)return {created:false,count:existing.length}
 
     const parcelas=Math.max(1,Number(orcamento.parcelas||1))
     const metodo=orcamento.metodo_pagamento||'pix'
@@ -146,9 +158,9 @@ export default function Orcamentos({supabase,profile,session}){
     for(let i=1;i<=parcelas;i++){
       const valor=i===parcelas ? Math.round((total-acumulado)*100)/100 : valorBase
       acumulado+=valor
-
       let venc=new Date(baseDate)
       if(metodo==='credito' && parcelas>1) venc=addMonths(baseDate,i-1)
+
       rows.push({
         cliente_id:orcamento.cliente_id,
         orcamento_id:orcamento.id,
@@ -163,8 +175,13 @@ export default function Orcamentos({supabase,profile,session}){
       })
     }
 
-    const {error}=await supabase.from('financeiro_lancamentos').insert(rows)
+    const {data,error}=await supabase
+      .from('financeiro_lancamentos')
+      .insert(rows)
+      .select()
+
     if(error)throw error
+    return {created:true,count:data?.length||0}
   }
 
   async function atualizarStatus(o,novoStatus){
@@ -172,11 +189,25 @@ export default function Orcamentos({supabase,profile,session}){
     try{
       const patch={status:novoStatus,updated_at:new Date().toISOString()}
       if(novoStatus==='aprovado') patch.aprovado_em=new Date().toISOString()
+
       const {data,error}=await supabase.from('orcamentos').update(patch).eq('id',o.id).select().single()
       if(error)throw error
+
       if(novoStatus==='aprovado'){
-        await gerarFinanceiroDoOrcamento(data)
-        setSucesso(`${o.numero} aprovado e lançado no Financeiro.`)
+        try{
+          const result=await gerarFinanceiroDoOrcamento(data)
+          setSucesso(result.created
+            ? `${o.numero} aprovado e lançado automaticamente no Financeiro.`
+            : `${o.numero} aprovado. O lançamento financeiro já existia e não foi duplicado.`
+          )
+        }catch(finError){
+          await supabase.from('orcamentos').update({
+            status:'enviado',
+            aprovado_em:null,
+            updated_at:new Date().toISOString()
+          }).eq('id',o.id)
+          throw new Error(`Falha ao lançar no Financeiro. O orçamento voltou para Aguardando aprovação. ${finError.message||''}`)
+        }
       }else{
         setSucesso(`Status do ${o.numero} atualizado.`)
       }
@@ -474,11 +505,19 @@ export default function Orcamentos({supabase,profile,session}){
                   <small>{money(o.total)}</small>
                 </div>
               </div>
-              <span className={`statusBadge budget-${o.status}`}>{statusLabel[o.status]}</span>
+              <div className="budgetStatusStack">
+                <span className={`statusBadge budget-${o.status}`}>{statusLabel[o.status]}</span>
+                {o.status==='aprovado'&&financeiroPorOrcamento[o.id]?.length>0&&
+                  <span className="financeLinkedBadge">Lançado no Financeiro</span>}
+              </div>
             </div>
 
             <div className="budgetActions">
               {o.status==='enviado'&&<button className="approveBudgetBtn" title="Marcar como aprovado" onClick={()=>atualizarStatus(o,'aprovado')}><CheckCircle2 size={15}/> Aprovar</button>}
+              {o.status==='aprovado'&&financeiroPorOrcamento[o.id]?.length>0&&
+                <button className="financeOpenBtn" title="Abrir Financeiro" onClick={()=>window.dispatchEvent(new CustomEvent('fortal:open-finance',{detail:o.id}))}>
+                  <BadgeDollarSign size={15}/> Financeiro
+                </button>}
               {o.status!=='aprovado'&&<button className="sendBudgetBtn" title="Enviar orçamento" onClick={()=>setEnvio(o)}><Send size={15}/> Enviar</button>}
               <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(o)}><FileDown size={17}/></button>
               <button className="iconBtn" title="Editar" onClick={()=>editar(o)}><Pencil size={17}/></button>

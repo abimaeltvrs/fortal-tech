@@ -86,6 +86,7 @@ export default function App(){
   const [quickCreate,setQuickCreate]=useState(false)
   const [openAgendaId,setOpenAgendaId]=useState(null)
   const [openOSId,setOpenOSId]=useState(null)
+  const [financeOrcamentoId,setFinanceOrcamentoId]=useState(null)
 
   function abrirCriacao(tipo){
     setQuickCreate(false)
@@ -147,6 +148,15 @@ export default function App(){
     return()=>window.removeEventListener('fortal:go-orcamento',go)
   },[])
 
+  useEffect(()=>{
+    const openFinance=(e)=>{
+      setFinanceOrcamentoId(e.detail||null)
+      setPage('financeiro')
+    }
+    window.addEventListener('fortal:open-finance',openFinance)
+    return()=>window.removeEventListener('fortal:open-finance',openFinance)
+  },[])
+
   const current=useMemo(()=>pages.find(p=>p[0]===page),[page])
   if(loading)return <div className="boot">Carregando FORTAL TECH...</div>
   if(!supabase)return <div className="boot errorBox">Supabase não configurado. Verifique as variáveis de ambiente.</div>
@@ -206,7 +216,7 @@ export default function App(){
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:
          page==='orcamentos'?<Orcamentos supabase={supabase} profile={profile} session={session}/>:
-         page==='financeiro'?<Financeiro supabase={supabase}/>:
+         page==='financeiro'?<Financeiro supabase={supabase} orcamentoFiltro={financeOrcamentoId} clearFiltro={()=>setFinanceOrcamentoId(null)}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>

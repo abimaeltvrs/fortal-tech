@@ -10,11 +10,12 @@ function br(v){
 const statusLabel={pendente:'Pendente',recebido:'Recebido',cancelado:'Cancelado'}
 const metodoLabel={pix:'Pix',debito:'Débito',credito:'Cartão de crédito'}
 
-export default function Financeiro({supabase}){
+export default function Financeiro({supabase,orcamentoFiltro,clearFiltro}){
   const [lista,setLista]=useState([])
   const [busca,setBusca]=useState('')
   const [erro,setErro]=useState('')
   const [loading,setLoading]=useState(false)
+  const [filtroOrcamento,setFiltroOrcamento]=useState(orcamentoFiltro||'')
 
   async function carregar(){
     setLoading(true);setErro('')
@@ -27,14 +28,21 @@ export default function Financeiro({supabase}){
     setLoading(false)
   }
   useEffect(()=>{carregar()},[])
+  useEffect(()=>{
+    if(orcamentoFiltro)setFiltroOrcamento(orcamentoFiltro)
+  },[orcamentoFiltro])
 
   const filtrados=useMemo(()=>{
     const q=busca.toLowerCase().trim()
     if(!q)return lista
-    return lista.filter(x=>[
-      x.descricao,x.clientes?.nome,x.orcamentos?.numero,metodoLabel[x.metodo_pagamento],statusLabel[x.status]
-    ].filter(Boolean).join(' ').toLowerCase().includes(q))
-  },[lista,busca])
+    return lista.filter(x=>{
+      if(filtroOrcamento && x.orcamento_id!==filtroOrcamento)return false
+      if(!q)return true
+      return [
+        x.descricao,x.clientes?.nome,x.orcamentos?.numero,metodoLabel[x.metodo_pagamento],statusLabel[x.status]
+      ].filter(Boolean).join(' ').toLowerCase().includes(q)
+    })
+  },[lista,busca,filtroOrcamento])
 
   const aReceber=lista.filter(x=>x.status==='pendente').reduce((s,x)=>s+Number(x.valor||0),0)
   const recebido=lista.filter(x=>x.status==='recebido').reduce((s,x)=>s+Number(x.valor||0),0)
@@ -60,6 +68,11 @@ export default function Financeiro({supabase}){
       <div className="card"><Clock3/><div><span>A receber</span><strong>{money(aReceber)}</strong></div></div>
       <div className="card"><CheckCircle2/><div><span>Recebido</span><strong>{money(recebido)}</strong></div></div>
     </div>
+
+    {filtroOrcamento&&<div className="financeFilterNotice">
+      <span>Mostrando lançamentos do orçamento selecionado.</span>
+      <button onClick={()=>{setFiltroOrcamento('');clearFiltro?.()}}>Mostrar todos</button>
+    </div>}
 
     <section className="panel">
       <div className="searchBar"><Search size={18}/><input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar cliente, orçamento, forma de pagamento..."/></div>
