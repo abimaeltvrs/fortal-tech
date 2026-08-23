@@ -1,24 +1,27 @@
-# FORTAL TECH V1.4
+# FORTAL TECH V1.4.1
 
-Dashboard e histórico gerencial.
+Novidades:
+- clicar no cliente abre o perfil completo;
+- perfil mostra dados cadastrais, responsável, endereço e observações;
+- botão para abrir rota no perfil;
+- acesso ao histórico completo do cliente;
+- sino de notificações dentro do aplicativo;
+- notificações internas para:
+  - agendamentos próximos;
+  - OS abertas;
+  - OS agendadas;
+  - OS em atendimento;
+  - OS aguardando material;
+  - OS aguardando orçamento;
+- opção `Ativar lembrete` no agendamento;
+- antecedência configurável: 15 min, 30 min, 1h, 2h ou 1 dia;
+- central atualiza automaticamente enquanto o aplicativo estiver aberto.
 
-Dashboard:
-- passa a consultar as Ordens de Serviço reais;
-- OS `aberta` passa a contar como OS ativa;
-- filtros: Hoje, Este mês, Este ano e Todo o período;
-- filtro por cliente;
-- indicadores de OS ativas, concluídas, pendentes e emergenciais;
-- resumo por status;
-- lista das OS do período.
+Importante:
+Esses lembretes são internos ao aplicativo.
+Push notification com o app totalmente fechado pode ser adicionado posteriormente.
 
-Clientes:
-- botão `Histórico` no cadastro/listagem;
-- histórico de OS por cliente;
-- filtro mensal, anual e todo período;
-- quantidade de OS;
-- agendamentos;
-- custo de materiais utilizados;
-- pendências;
-- atividades realizadas.
-
-Não há SQL novo nesta versão.
+Antes de testar:
+1. Execute `supabase/v1.4.1_lembretes.sql`.
+2. Atualize o GitHub.
+3. Aguarde a Vercel ficar Ready.

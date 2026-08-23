@@ -29,7 +29,7 @@ function statusLabel(s){ return ({agendado:'Agendado',confirmado:'Confirmado',em
 const empty={
   cliente_id:'',tecnico_id:'',titulo:'',tipo_atendimento:'Visita Técnica',
   prioridade:'media',sistema:'CFTV',inicio:'',fim_previsto:'',
-  endereco_atendimento:'',status:'agendado',observacoes:''
+  endereco_atendimento:'',status:'agendado',observacoes:'',lembrete_ativo:true,lembrete_minutos:60
 }
 
 export default function Agenda({supabase,profile,session,setSyncStatus}){
@@ -293,6 +293,16 @@ export default function Agenda({supabase,profile,session,setSyncStatus}){
               </select>
             </div>}
             <div className="field span2"><label>Endereço do atendimento</label><input value={form.endereco_atendimento||''} onChange={e=>setForm({...form,endereco_atendimento:e.target.value})}/></div>
+            <div className="field span2 reminderBox">
+              <label><input type="checkbox" checked={!!form.lembrete_ativo} onChange={e=>setForm({...form,lembrete_ativo:e.target.checked})}/> Ativar lembrete dentro do aplicativo</label>
+              {form.lembrete_ativo&&<select value={form.lembrete_minutos||60} onChange={e=>setForm({...form,lembrete_minutos:Number(e.target.value)})}>
+                <option value="15">15 minutos antes</option>
+                <option value="30">30 minutos antes</option>
+                <option value="60">1 hora antes</option>
+                <option value="120">2 horas antes</option>
+                <option value="1440">1 dia antes</option>
+              </select>}
+            </div>
             <div className="field span2"><label>Título / resumo</label><input value={form.titulo||''} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex.: Preventiva mensal CFTV"/></div>
             <div className="field span2"><label>Observações</label><textarea rows="4" value={form.observacoes||''} onChange={e=>setForm({...form,observacoes:e.target.value})}/></div>
           </div>

@@ -11,6 +11,7 @@ import Clientes from './Clientes'
 import Agenda from './Agenda'
 import OrdensServico from './OrdensServico'
 import DashboardReal from './DashboardReal'
+import NotificationCenter from './NotificationCenter'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -172,10 +173,13 @@ export default function App(){
       <header>
         <button className="menuBtn" onClick={()=>setOpen(!open)}><Menu/></button>
         <div><span className="eyebrow">FORTAL TECH</span><h1>{current?.[1]}</h1></div>
+        <div className="headerRight">
+          <NotificationCenter supabase={supabase} profile={profile} session={session}/>
         <div className={`connection ${online?'online':'offline'} ${syncStatus==='syncing'?'syncing':''}`} title="Status de conexão e sincronização">
           {online?<Cloud size={16}/>:<CloudOff size={16}/>}
           <span>{!online?'Modo offline':syncStatus==='syncing'?'Sincronizando...':syncStatus==='pending'?'Aguardando sincronização':'Online'}</span>
           {syncStatus==='syncing'&&<RefreshCcw className="spin" size={14}/>}
+        </div>
         </div>
       </header>
       <div className="content">

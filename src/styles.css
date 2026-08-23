@@ -646,3 +646,32 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
  .dashboardFilters{display:grid;grid-template-columns:1fr 1fr auto}.dashboardFilters>div{min-width:0}.dashboardFilters select{width:100%;min-width:0;font-size:10px}
  .historyStats{grid-template-columns:1fr 1fr}.historyRow{align-items:flex-start}
 }
+
+/* ===== V1.4.1 - Perfil cliente + notificações internas ===== */
+.clientMain.clickable{cursor:pointer}
+.clientMain.clickable:hover b{color:#7de3b8}
+.clientProfileModal{width:min(760px,100%)}
+.clientProfileGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.profileCard{border:1px solid #213148;background:#0b1727;border-radius:10px;padding:13px}
+.profileCard svg{width:17px;color:#13b981}.profileCard span,.profileCard b,.profileCard small{display:block}
+.profileCard span{font-size:10px;color:#8192a6;margin:6px 0 3px}.profileCard b{font-size:13px}.profileCard small{font-size:10px;color:#6c7e92;margin-top:2px}
+.clientAddress{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#aebccc;font-size:12px}
+.clientNotes{background:#0a1423;border:1px solid #213148;border-radius:9px;padding:12px;color:#aebccc;font-size:12px;white-space:pre-wrap;min-height:65px}
+.profileActions{display:flex;justify-content:flex-end;margin-top:16px}
+.headerRight{display:flex;align-items:center;gap:8px}
+.notifButton{position:relative;width:38px;height:38px;border:1px solid #25374c;background:#111f31;color:#aebccc;border-radius:10px;display:grid;place-items:center;cursor:pointer}
+.notifButton>span{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#13b981;color:#03110c;font-size:9px;font-weight:900;display:grid;place-items:center}
+.notifOverlay{position:fixed;inset:0;z-index:49;border:0;background:rgba(2,8,18,.35)}
+.notifPanel{position:fixed;z-index:50;top:76px;right:20px;width:min(380px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#0f1c2e;border:1px solid #26374e;border-radius:14px;padding:12px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.notifHead{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 4px 10px}.notifHead h3{margin:2px 0 0}
+.notifList{display:flex;flex-direction:column}.notifItem{display:flex;gap:10px;padding:10px 5px;border-top:1px solid #1b2a3f}.notifItem:first-child{border-top:0}
+.notifIcon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none}.notifIcon.agenda{background:#173047;color:#82c9ff}.notifIcon.os{background:#3b2e16;color:#f5cf69}
+.notifItem b,.notifItem span{display:block}.notifItem b{font-size:12px}.notifItem span{font-size:10px;color:#7e90a5;margin-top:3px}
+.notifEmpty{display:grid;place-items:center;text-align:center;padding:35px 10px;color:#6f8298;gap:6px}.notifEmpty svg{color:#13b981}.notifEmpty b{color:#cfd9e4}
+.reminderBox{border:1px solid #26374e;background:#0b1727;border-radius:10px;padding:11px;margin-top:8px}
+.reminderBox label{display:flex;align-items:center;gap:8px;margin:0}.reminderBox input{width:auto;accent-color:#13b981}.reminderBox select{margin-top:10px}
+@media(max-width:760px){
+ .clientProfileGrid{grid-template-columns:1fr}.clientAddress{align-items:flex-start;flex-direction:column}
+ .notifPanel{top:70px;right:12px}
+ .headerRight{gap:5px}.notifButton{width:36px;height:36px}
+}
