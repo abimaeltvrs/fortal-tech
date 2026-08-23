@@ -1,38 +1,23 @@
-# FORTAL TECH V1.6.2
+# FORTAL TECH V1.6.3
 
-Fluxo de orçamento e financeiro.
+Correções funcionais:
+- garante a criação da tabela `financeiro_lancamentos`;
+- garante todas as colunas usadas no fluxo de aprovação;
+- corrige bases antigas que ainda tenham `empresa_id`;
+- recria a política RLS para Administrador;
+- força atualização do schema do Supabase;
+- mensagem mais clara caso o Financeiro ainda não esteja disponível.
 
-Envio:
-- depois do envio por WhatsApp, E-mail ou Compartilhar:
-  - status muda automaticamente para `Enviado / Aguardando aprovação`;
-  - registra `enviado_em`;
-  - registra o canal utilizado.
-
-Pagamento:
-- forma de pagamento estruturada:
-  - Pix
-  - Cartão de débito
-  - Cartão de crédito
-- no crédito, permite escolher de 1x a 12x.
-
-Aprovação:
-- orçamento enviado ganha botão `Aprovar`;
-- ao aprovar:
-  - status passa para `Aprovado`;
-  - registra `aprovado_em`;
-  - cria automaticamente lançamentos no Financeiro.
-
-Financeiro:
-- Pix: 1 lançamento;
-- Débito: 1 lançamento;
-- Crédito parcelado: cria 1 lançamento por parcela;
-- parcelas são distribuídas mensalmente;
-- total das parcelas respeita exatamente o total do orçamento;
-- lançamentos iniciam como `Pendente`;
-- botão `Recebido` baixa cada lançamento;
-- cards de `A receber` e `Recebido`.
+Correções visuais:
+- status do orçamento não ultrapassa mais o card;
+- status `Enviado / Aguardando aprovação` quebra linha corretamente;
+- ações ficam organizadas no celular;
+- Aprovar e Enviar ganham mais espaço;
+- PDF, editar e excluir ficam alinhados;
+- card se adapta melhor a telas pequenas.
 
 Antes de testar:
-1. Execute `supabase/v1.6.2_financeiro.sql`.
-2. Atualize o GitHub.
+1. Execute `supabase/v1.6.3_hotfix_financeiro.sql`.
+2. Atualize o GitHub com esta versão.
 3. Aguarde a Vercel ficar Ready.
+4. Teste `Aprovar` em um orçamento Enviado.

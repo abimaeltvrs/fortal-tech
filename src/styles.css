@@ -878,3 +878,110 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
 @media(max-width:760px){
  .financeRow{align-items:flex-start;flex-direction:column}.financeActions{width:100%;justify-content:flex-end;flex-wrap:wrap}
 }
+
+/* ===== V1.6.3 - Correção visual dos Orçamentos no mobile ===== */
+.budgetRow{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+.budgetTopLine{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.budgetMain{
+  flex:1;
+  min-width:0;
+}
+.budgetText{
+  min-width:0;
+  flex:1;
+}
+.budgetText b,
+.budgetText span,
+.budgetText small{
+  display:block;
+  min-width:0;
+}
+.budgetText b{
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.budgetText span{
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.budgetText small{
+  color:#8596aa;
+  margin-top:4px;
+}
+.budgetTopLine>.statusBadge{
+  flex:none;
+  max-width:220px;
+  white-space:normal;
+  text-align:center;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
+.budgetActions{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.budgetActions .approveBudgetBtn,
+.budgetActions .sendBudgetBtn{
+  min-height:34px;
+}
+@media(max-width:760px){
+  .budgetRow{
+    gap:11px;
+    padding:15px 3px;
+  }
+  .budgetTopLine{
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+  .budgetTopLine>.statusBadge{
+    align-self:flex-start;
+    max-width:100%;
+    font-size:9px;
+    padding:6px 8px;
+  }
+  .budgetActions{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+  }
+  .budgetActions .approveBudgetBtn,
+  .budgetActions .sendBudgetBtn{
+    grid-column:span 2;
+    justify-content:center;
+    width:100%;
+    padding:8px 6px;
+    white-space:nowrap;
+  }
+  .budgetActions .iconBtn{
+    width:100%;
+    min-width:0;
+    height:36px;
+  }
+}
+@media(max-width:420px){
+  .budgetActions{
+    grid-template-columns:repeat(3,1fr);
+  }
+  .budgetActions .approveBudgetBtn,
+  .budgetActions .sendBudgetBtn{
+    grid-column:span 3;
+  }
+}

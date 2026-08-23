@@ -182,7 +182,12 @@ export default function Orcamentos({supabase,profile,session}){
       }
       await carregar()
     }catch(e){
-      setErro(`Não foi possível atualizar o status: ${e.message}`)
+      const msg=String(e.message||'')
+      if(msg.includes('financeiro_lancamentos')){
+        setErro('Não foi possível concluir a aprovação porque a tabela financeira ainda não está disponível no Supabase. Execute o SQL da V1.6.3.')
+      }else{
+        setErro(`Não foi possível atualizar o status: ${msg}`)
+      }
     }
   }
 
@@ -460,12 +465,19 @@ export default function Orcamentos({supabase,profile,session}){
         <div className="emptySmall"><FileText size={36}/><b>Nenhum orçamento encontrado</b></div>:
         <div className="budgetList">
           {filtrados.map(o=><div className="budgetRow" key={o.id}>
-            <div className="budgetMain">
-              <div className="budgetIcon"><BadgeDollarSign size={20}/></div>
-              <div><b>{o.numero}</b><span>{o.clientes?.nome||'Cliente'} • {br(o.data_orcamento)}</span><small>{statusLabel[o.status]} • {money(o.total)}</small></div>
-            </div>
-            <div className="budgetActions">
+            <div className="budgetTopLine">
+              <div className="budgetMain">
+                <div className="budgetIcon"><BadgeDollarSign size={20}/></div>
+                <div className="budgetText">
+                  <b>{o.numero}</b>
+                  <span>{o.clientes?.nome||'Cliente'} • {br(o.data_orcamento)}</span>
+                  <small>{money(o.total)}</small>
+                </div>
+              </div>
               <span className={`statusBadge budget-${o.status}`}>{statusLabel[o.status]}</span>
+            </div>
+
+            <div className="budgetActions">
               {o.status==='enviado'&&<button className="approveBudgetBtn" title="Marcar como aprovado" onClick={()=>atualizarStatus(o,'aprovado')}><CheckCircle2 size={15}/> Aprovar</button>}
               {o.status!=='aprovado'&&<button className="sendBudgetBtn" title="Enviar orçamento" onClick={()=>setEnvio(o)}><Send size={15}/> Enviar</button>}
               <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(o)}><FileDown size={17}/></button>
