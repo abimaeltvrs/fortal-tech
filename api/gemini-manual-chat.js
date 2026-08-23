@@ -45,7 +45,7 @@ export default async function handler(req,res){
       }
     }
 
-    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`
     const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -69,7 +69,7 @@ export default async function handler(req,res){
       answer,
       source:`${fabricante||''} ${modelo||''}`.trim(),
       filename:nomeArquivo||'Manual técnico',
-      model:'gemini-2.5-flash-lite'
+      model:'gemini-3.5-flash-lite'
     })
   }catch(e){
     console.error('Gemini manual chat:',e)
