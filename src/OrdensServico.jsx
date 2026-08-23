@@ -2,13 +2,15 @@ import React,{useEffect,useMemo,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
   ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle,
-  FileDown
+  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import SignaturePad from './SignaturePad'
 import {
   getCachedClientes,cacheClientes,getCachedOrdensServico,cacheOrdensServico,
-  saveLocalOS,removeLocalOS,replaceLocalOSChildren,getLocalOSChildren,queueChange
+  saveLocalOS,removeLocalOS,replaceLocalOSChildren,getLocalOSChildren,queueChange,
+  saveLocalOSMedia,getLocalOSMedia,removeLocalOSMedia,replaceLocalOSSignatures,getLocalOSSignatures
 } from './offline'
 import {syncPendingChanges} from './sync'
 
@@ -101,6 +103,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [expanded,setExpanded]=useState({})
   const [statusRapido,setStatusRapido]=useState({})
   const [statusSalvando,setStatusSalvando]=useState(null)
+  const [fotos,setFotos]=useState([])
+  const [assinaturaCliente,setAssinaturaCliente]=useState('')
+  const [assinaturaTecnico,setAssinaturaTecnico]=useState('')
+  const [nomeAceiteCliente,setNomeAceiteCliente]=useState('')
+  const [cargoAceiteCliente,setCargoAceiteCliente]=useState('')
 
   async function carregar(){
     setErro('')
@@ -197,6 +204,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setSistemas([])
     setChecklist([])
     setMateriais([])
+    setFotos([])
+    setAssinaturaCliente('')
+    setAssinaturaTecnico('')
+    setNomeAceiteCliente('')
+    setCargoAceiteCliente('')
     setExpanded({})
     setModal(true)
   }
@@ -219,6 +231,33 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setSistemas(children.sistemas)
     setChecklist(children.checklist)
     setMateriais(children.materiais)
+
+    let media=[]
+    let assin=[]
+    if(navigator.onLine){
+      const [fr,ar]=await Promise.all([
+        supabase.from('os_fotos').select('*').eq('os_id',os.id).order('created_at'),
+        supabase.from('os_assinaturas').select('*').eq('os_id',os.id)
+      ])
+      media=fr.data||[]
+      assin=ar.data||[]
+      for(const f of media){
+        if(f.arquivo_path){
+          const {data}=await supabase.storage.from('os-arquivos').createSignedUrl(f.arquivo_path,3600)
+          f.preview_url=data?.signedUrl||''
+        }
+      }
+    }else{
+      media=await getLocalOSMedia(os.id)
+      assin=await getLocalOSSignatures(os.id)
+    }
+    setFotos(media)
+    const ac=assin.find(x=>x.tipo==='cliente')
+    const at=assin.find(x=>x.tipo==='tecnico')
+    setAssinaturaCliente(ac?.assinatura_data||ac?.preview_data||'')
+    setNomeAceiteCliente(ac?.nome||'')
+    setCargoAceiteCliente(ac?.cargo||'')
+    setAssinaturaTecnico(at?.assinatura_data||at?.preview_data||'')
     setModal(true)
   }
 
@@ -232,6 +271,97 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
   function updateMaterial(id,key,value){
     setMateriais(m=>m.map(x=>x.id===id?{...x,[key]:value}:x))
+  }
+
+
+  async function fileToDataUrl(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader()
+      reader.onload=()=>resolve(reader.result)
+      reader.onerror=reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  async function adicionarFotos(tipo,fileList){
+    const files=[...fileList].slice(0,8)
+    const novas=[]
+    for(const file of files){
+      const data=await fileToDataUrl(file)
+      novas.push({
+        id:crypto.randomUUID(),
+        os_id:edit?.id||'',
+        tipo,
+        arquivo_path:'',
+        preview_data:data,
+        preview_url:data,
+        legenda:'',
+        created_at:new Date().toISOString(),
+        _new:true
+      })
+    }
+    setFotos(f=>[...f,...novas])
+  }
+
+  async function excluirFoto(foto){
+    if(foto.arquivo_path&&navigator.onLine){
+      await supabase.storage.from('os-arquivos').remove([foto.arquivo_path])
+      await supabase.from('os_fotos').delete().eq('id',foto.id)
+    }
+    await removeLocalOSMedia(foto.id)
+    setFotos(x=>x.filter(y=>y.id!==foto.id))
+  }
+
+  async function salvarMidiasEAssinaturas(osId){
+    const salvas=[]
+    for(const foto of fotos){
+      if(foto.arquivo_path&&!foto._new){
+        salvas.push(foto)
+        continue
+      }
+      if(navigator.onLine){
+        const blob=await (await fetch(foto.preview_data||foto.preview_url)).blob()
+        const ext=(blob.type.split('/')[1]||'jpg').replace('jpeg','jpg')
+        const path=`${osId}/${foto.tipo}/${foto.id}.${ext}`
+        const {error:upErr}=await supabase.storage.from('os-arquivos').upload(path,blob,{upsert:true,contentType:blob.type})
+        if(upErr) throw upErr
+        const row={
+          id:foto.id,os_id:osId,tipo:foto.tipo,arquivo_path:path,
+          legenda:foto.legenda||'',created_at:foto.created_at||new Date().toISOString()
+        }
+        const {error}=await supabase.from('os_fotos').upsert(row,{onConflict:'id'})
+        if(error) throw error
+        salvas.push({...row,preview_url:foto.preview_data||foto.preview_url})
+      }else{
+        const row={...foto,os_id:osId,_syncStatus:'pending'}
+        await saveLocalOSMedia(row,'pending')
+        salvas.push(row)
+      }
+    }
+
+    const assinaturas=[
+      assinaturaCliente?{
+        id:crypto.randomUUID(),os_id:osId,tipo:'cliente',
+        nome:nomeAceiteCliente||'',cargo:cargoAceiteCliente||'',
+        assinatura_data:assinaturaCliente,created_at:new Date().toISOString()
+      }:null,
+      assinaturaTecnico?{
+        id:crypto.randomUUID(),os_id:osId,tipo:'tecnico',
+        nome:profile.nome||'',cargo:'Técnico',
+        assinatura_data:assinaturaTecnico,created_at:new Date().toISOString()
+      }:null
+    ].filter(Boolean)
+
+    if(navigator.onLine){
+      await supabase.from('os_assinaturas').delete().eq('os_id',osId)
+      if(assinaturas.length){
+        const {error}=await supabase.from('os_assinaturas').insert(assinaturas)
+        if(error) throw error
+      }
+    }else{
+      await replaceLocalOSSignatures(osId,assinaturas.map(x=>({...x,_syncStatus:'pending'})))
+    }
+    return {fotos:salvas,assinaturas}
   }
 
   async function salvar(e){
@@ -318,12 +448,19 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         await queueChange('ordens_servico','upsert_bundle',bundle)
         setSyncStatus('pending')
       }
+      await salvarMidiasEAssinaturas(osId)
+
       setModal(false)
       setEdit(null)
       setForm(empty)
       setSistemas([])
       setChecklist([])
       setMateriais([])
+      setFotos([])
+      setAssinaturaCliente('')
+      setAssinaturaTecnico('')
+      setNomeAceiteCliente('')
+      setCargoAceiteCliente('')
       setExpanded({})
       await carregar()
       setSucesso(edit ? 'OS atualizada com sucesso.' : 'OS criada com sucesso.')
@@ -351,6 +488,23 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     }
     await removeLocalOS(os.id)
     await carregar()
+  }
+
+
+  async function finalizarOSAtual(){
+    if(!edit)return
+    if(!assinaturaCliente)return setErro('Para finalizar, registre a assinatura do responsável pelo cliente.')
+    if(!assinaturaTecnico)return setErro('Para finalizar, registre a assinatura do técnico.')
+    const agora=new Date()
+    const hh=String(agora.getHours()).padStart(2,'0')
+    const mm=String(agora.getMinutes()).padStart(2,'0')
+    setForm(f=>({
+      ...f,
+      status:'concluida',
+      horario_termino:`${hh}:${mm}`,
+      encerrada_em:agora.toISOString()
+    }))
+    setSucesso('OS preparada para conclusão. Toque em “Salvar OS” para registrar definitivamente.')
   }
 
   async function salvarStatusRapido(os){
@@ -419,17 +573,21 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       const cliente=clientes.find(c=>c.id===os.cliente_id)||{}
       let children
       if(navigator.onLine){
-        const [sr,cr,mr]=await Promise.all([
+        const [sr,cr,mr,fr,ar]=await Promise.all([
           supabase.from('os_sistemas').select('*').eq('os_id',os.id),
           supabase.from('os_checklist').select('*').eq('os_id',os.id).order('sistema').order('grupo'),
-          supabase.from('os_materiais').select('*').eq('os_id',os.id)
+          supabase.from('os_materiais').select('*').eq('os_id',os.id),
+          supabase.from('os_fotos').select('*').eq('os_id',os.id).order('created_at'),
+          supabase.from('os_assinaturas').select('*').eq('os_id',os.id)
         ])
         if(sr.error) throw sr.error
         if(cr.error) throw cr.error
         if(mr.error) throw mr.error
-        children={sistemas:sr.data||[],checklist:cr.data||[],materiais:mr.data||[]}
+        children={sistemas:sr.data||[],checklist:cr.data||[],materiais:mr.data||[],fotos:fr.data||[],assinaturas:ar.data||[]}
       }else{
         children=await getLocalOSChildren(os.id)
+        children.fotos=await getLocalOSMedia(os.id)
+        children.assinaturas=await getLocalOSSignatures(os.id)
       }
 
       const doc=new jsPDF({unit:'mm',format:'a4'})
@@ -561,12 +719,59 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         doc.setTextColor(30,30,30);y+=26
       }
 
-      if(y>250){doc.addPage();y=16}
-      y+=8
-      doc.setDrawColor(130);doc.line(14,y,90,y);doc.line(115,y,196,y)
-      doc.setFontSize(8);doc.text('Responsável pelo cliente',14,y+5);doc.text('Técnico responsável',115,y+5)
-      doc.setFontSize(7);doc.setTextColor(100)
-      doc.text('Assinaturas digitais serão incluídas na próxima atualização.',14,y+13)
+
+      const fotosPDF=children.fotos||[]
+      if(fotosPDF.length){
+        if(y>225){doc.addPage();y=16}
+        section('8. REGISTRO FOTOGRÁFICO')
+        for(const foto of fotosPDF.slice(0,6)){
+          try{
+            let src=foto.preview_data||foto.preview_url||''
+            if(!src&&foto.arquivo_path&&navigator.onLine){
+              const {data}=await supabase.storage.from('os-arquivos').createSignedUrl(foto.arquivo_path,600)
+              src=data?.signedUrl||''
+            }
+            if(src){
+              const img=await new Promise((resolve,reject)=>{
+                const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src
+              })
+              const canvas=document.createElement('canvas')
+              const maxW=900
+              const scale=Math.min(1,maxW/img.width)
+              canvas.width=img.width*scale;canvas.height=img.height*scale
+              canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
+              const dataUrl=canvas.toDataURL('image/jpeg',0.72)
+              if(y>225){doc.addPage();y=16}
+              doc.addImage(dataUrl,'JPEG',14,y,58,42)
+              doc.setFontSize(8);doc.setTextColor(80)
+              doc.text(String(foto.tipo||'foto').toUpperCase(),76,y+8)
+              y+=47
+            }
+          }catch{}
+        }
+      }
+
+      const ass=children.assinaturas||[]
+      const ac=ass.find(x=>x.tipo==='cliente')
+      const at=ass.find(x=>x.tipo==='tecnico')
+      if(y>235){doc.addPage();y=16}
+      section('9. ACEITE DO SERVIÇO')
+      doc.setFontSize(8);doc.setTextColor(40)
+      doc.text('Declaro que acompanhei a execução dos serviços descritos nesta Ordem de Serviço e fui informado sobre as condições, serviços, pendências e recomendações registradas.',14,y,{maxWidth:180})
+      y+=14
+      if(ac?.assinatura_data){
+        try{doc.addImage(ac.assinatura_data,'PNG',14,y,70,25)}catch{}
+      }
+      if(at?.assinatura_data){
+        try{doc.addImage(at.assinatura_data,'PNG',112,y,70,25)}catch{}
+      }
+      y+=28
+      doc.setDrawColor(130);doc.line(14,y,90,y);doc.line(112,y,188,y)
+      doc.setFontSize(8)
+      doc.text(ac?.nome||'Responsável pelo cliente',14,y+5)
+      doc.text(at?.nome||'Técnico responsável',112,y+5)
+      if(ac?.cargo)doc.text(ac.cargo,14,y+10)
+
 
       const pages=doc.getNumberOfPages()
       for(let p=1;p<=pages;p++){
@@ -761,8 +966,44 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
               </>}
           </div>
 
+
           <div className="osSection">
-            <h3>5. Pendências / recomendações</h3>
+            <h3>5. Registro fotográfico</h3>
+            <p className="sectionHelp">Adicione fotos antes, durante e depois do serviço. No celular você pode usar a câmera ou a galeria.</p>
+            <div className="photoTypeGrid">
+              {[
+                ['antes','Antes do serviço'],
+                ['durante','Durante o serviço'],
+                ['depois','Depois do serviço'],
+                ['irregularidade','Irregularidade']
+              ].map(([tipo,label])=><label className="photoAdd" key={tipo}>
+                <Camera size={17}/><span>{label}</span>
+                <input type="file" accept="image/*" capture="environment" multiple onChange={e=>adicionarFotos(tipo,e.target.files)}/>
+              </label>)}
+            </div>
+            {fotos.length>0&&<div className="photoGrid">
+              {fotos.map(f=><div className="photoCard" key={f.id}>
+                <img src={f.preview_url||f.preview_data} alt={f.tipo}/>
+                <span>{f.tipo}</span>
+                <button type="button" onClick={()=>excluirFoto(f)}><Trash size={14}/></button>
+              </div>)}
+            </div>}
+          </div>
+
+          <div className="osSection">
+            <h3>6. Aceite e assinaturas</h3>
+            <div className="formGrid">
+              <div className="field"><label>Responsável pelo cliente</label><input value={nomeAceiteCliente} onChange={e=>setNomeAceiteCliente(e.target.value)}/></div>
+              <div className="field"><label>Cargo / Função</label><input value={cargoAceiteCliente} onChange={e=>setCargoAceiteCliente(e.target.value)}/></div>
+            </div>
+            <div className="signatureGrid">
+              <SignaturePad label="Assinatura do cliente" value={assinaturaCliente} onChange={setAssinaturaCliente}/>
+              <SignaturePad label="Assinatura do técnico" value={assinaturaTecnico} onChange={setAssinaturaTecnico}/>
+            </div>
+          </div>
+
+          <div className="osSection">
+            <h3>7. Pendências / recomendações</h3>
             <div className="formGrid">
               <div className="field span2"><label>Pendências identificadas</label><textarea rows="3" value={form.pendencias||''} onChange={e=>setForm({...form,pendencias:e.target.value})}/></div>
               <div className="field span2"><label>Recomendações técnicas</label><textarea rows="3" value={form.recomendacoes||''} onChange={e=>setForm({...form,recomendacoes:e.target.value})}/></div>
@@ -775,7 +1016,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>
 
           <div className="osSection">
-            <h3>6. Condição final do sistema</h3>
+            <h3>8. Condição final do sistema</h3>
             <div className="formGrid">
               <div className="field span2"><label>Condição final</label>
                 <select value={form.condicao_final||''} onChange={e=>setForm({...form,condicao_final:e.target.value})}>
@@ -787,8 +1028,9 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>
 
           <div className="osSaveBar">
-            <div className="saveHint"><CheckCircle2 size={17}/> Fotos, assinatura e PDF entram na próxima etapa.</div>
+            <div className="saveHint"><CheckCircle2 size={17}/> Fotos e assinaturas ficam vinculadas ao histórico desta OS.</div>
             <div className="modalActions compact">
+              {edit&&form.status!=='concluida'&&<button type="button" className="finalizeBtn" onClick={finalizarOSAtual}><Flag size={16}/> Finalizar OS</button>}
               <button type="button" className="ghost" onClick={()=>setModal(false)}>Cancelar</button>
               <button className="primary"><Save size={17}/> Salvar OS</button>
             </div>

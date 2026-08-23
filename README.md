@@ -1,30 +1,31 @@
-# FORTAL TECH V1.4.4
+# FORTAL TECH V1.5
 
-Novo módulo no Dashboard: Notícias & Mercado.
+Fechamento do fluxo técnico da Ordem de Serviço.
 
 Inclui:
-- carrossel de notícias no Dashboard;
-- atualização automática a cada acesso ao assunto;
-- rotação automática das notícias;
-- navegação manual;
-- botão `Ler notícia`;
-- temas padrão:
-  - CFTV
-  - Controle de Acesso
-  - Segurança Eletrônica
-  - Redes e Infraestrutura
-  - Sistema de Alarme
-  - Nobreak e Energia
-- permite adicionar qualquer assunto personalizado;
-- permite remover assuntos;
-- botão de configuração diretamente no carrossel;
-- cache local das últimas notícias por assunto;
-- quando estiver offline, mostra as últimas notícias armazenadas;
-- ao voltar a internet, atualiza novamente.
+- fotos `Antes`, `Durante`, `Depois` e `Irregularidade`;
+- câmera/galeria no celular;
+- armazenamento das fotos no Supabase Storage;
+- assinatura do responsável pelo cliente;
+- nome e cargo do responsável;
+- assinatura do técnico;
+- botão `Finalizar OS`;
+- para finalizar, exige assinatura do cliente e do técnico;
+- conclusão registra horário e data/hora de encerramento;
+- PDF da OS passa a incluir:
+  - fotos;
+  - assinatura do cliente;
+  - assinatura do técnico;
+  - aceite do serviço;
+  - materiais e valores;
+  - checklists e diagnóstico.
 
-Implementação:
-- `/api/news.js` funciona como endpoint server-side na Vercel;
-- o navegador não acessa diretamente a fonte RSS;
-- não é necessária chave de API.
+Offline:
+- fotos e assinaturas podem ficar registradas localmente no aparelho.
+- a sincronização estruturada da OS continua funcionando.
+- o envio automático de mídias pendentes será reforçado em uma próxima revisão específica.
 
-Não há SQL novo nesta versão.
+Antes de testar:
+1. Execute `supabase/v1.5_fotos_assinaturas.sql`.
+2. Atualize o GitHub.
+3. Aguarde a Vercel ficar Ready.

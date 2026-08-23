@@ -23,6 +23,18 @@ offlineDB.version(3).stores({
   syncQueue: '++queueId,entity,action,createdAt'
 })
 
+offlineDB.version(4).stores({
+  clientes: 'id,nome,documento,telefone,email,updated_at,_syncStatus',
+  agendamentos: 'id,cliente_id,tecnico_id,inicio,status,_syncStatus',
+  ordensServico: 'id,numero,cliente_id,tecnico_id,status,data_visita,updated_at,_syncStatus',
+  osSistemas: 'id,os_id,sistema',
+  osChecklist: 'id,os_id,sistema,grupo,status',
+  osMateriais: 'id,os_id,descricao',
+  osMidia: 'id,os_id,tipo,_syncStatus',
+  osAssinaturas: 'id,os_id,tipo,_syncStatus',
+  syncQueue: '++queueId,entity,action,createdAt'
+})
+
 export async function cacheClientes(clientes = []) {
   await offlineDB.transaction('rw', offlineDB.clientes, async () => {
     for (const c of clientes) await offlineDB.clientes.put({...c,_syncStatus:'synced'})
@@ -74,4 +86,23 @@ export async function getLocalOSChildren(osId){
     offlineDB.osMateriais.where('os_id').equals(osId).toArray()
   ])
   return {sistemas,checklist,materiais}
+}
+
+export async function saveLocalOSMedia(item,status='pending'){
+  return offlineDB.osMidia.put({...item,_syncStatus:status})
+}
+export async function getLocalOSMedia(osId){
+  return offlineDB.osMidia.where('os_id').equals(osId).toArray()
+}
+export async function removeLocalOSMedia(id){
+  return offlineDB.osMidia.delete(id)
+}
+export async function replaceLocalOSSignatures(osId,items=[]){
+  await offlineDB.transaction('rw',offlineDB.osAssinaturas,async()=>{
+    await offlineDB.osAssinaturas.where('os_id').equals(osId).delete()
+    if(items.length) await offlineDB.osAssinaturas.bulkPut(items)
+  })
+}
+export async function getLocalOSSignatures(osId){
+  return offlineDB.osAssinaturas.where('os_id').equals(osId).toArray()
 }
