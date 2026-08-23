@@ -752,3 +752,33 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
 @media(max-width:760px){
  .photoTypeGrid{grid-template-columns:1fr 1fr}.photoGrid{grid-template-columns:1fr 1fr}.signatureGrid{grid-template-columns:1fr}
 }
+
+/* ===== V1.5.1 - Validação visual e persistência de assinatura ===== */
+.invalidField input,
+.invalidField select,
+.invalidField textarea,
+.invalidField .signatureCanvas{
+  border-color:#f59e0b !important;
+  box-shadow:0 0 0 2px rgba(245,158,11,.13);
+}
+.invalidField label,
+.invalidField .signatureHead b{color:#fbbf24}
+.invalidSection{
+  border:1px solid #8a6417 !important;
+  background:rgba(84,58,12,.13);
+  border-radius:11px;
+  padding-left:12px;
+  padding-right:12px;
+}
+.invalidSection h3{color:#fbbf24}
+.missingList{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.missingList button{
+  border:1px solid #765617;
+  background:#3a2c11;
+  color:#f9d874;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:9px;
+  cursor:pointer;
+}
+.modalActions button:disabled{opacity:.55;cursor:default}

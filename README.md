@@ -1,31 +1,29 @@
-# FORTAL TECH V1.5
+# FORTAL TECH V1.5.1
 
-Fechamento do fluxo técnico da Ordem de Serviço.
+Correções da criação/edição da Ordem de Serviço.
 
-Inclui:
-- fotos `Antes`, `Durante`, `Depois` e `Irregularidade`;
-- câmera/galeria no celular;
-- armazenamento das fotos no Supabase Storage;
-- assinatura do responsável pelo cliente;
-- nome e cargo do responsável;
-- assinatura do técnico;
-- botão `Finalizar OS`;
-- para finalizar, exige assinatura do cliente e do técnico;
-- conclusão registra horário e data/hora de encerramento;
-- PDF da OS passa a incluir:
-  - fotos;
-  - assinatura do cliente;
-  - assinatura do técnico;
-  - aceite do serviço;
-  - materiais e valores;
-  - checklists e diagnóstico.
+Salvamento:
+- valida os campos obrigatórios antes de tentar gravar;
+- informa exatamente quais itens estão faltando;
+- evidencia os campos pendentes em amarelo;
+- rola automaticamente para o primeiro campo faltante;
+- cada item da mensagem pode ser tocado para ir direto ao campo;
+- botão muda para `Salvando...` durante a gravação;
+- se o Supabase retornar erro, a mensagem técnica aparece dentro da OS.
 
-Offline:
-- fotos e assinaturas podem ficar registradas localmente no aparelho.
-- a sincronização estruturada da OS continua funcionando.
-- o envio automático de mídias pendentes será reforçado em uma próxima revisão específica.
+Ao concluir uma OS também são exigidos:
+- condição final;
+- nome do responsável do cliente;
+- assinatura do cliente;
+- assinatura do técnico.
+
+Assinaturas:
+- componente refeito com Pointer Events para celular;
+- assinatura fica preservada ao alterar outros campos;
+- redesenho automático após mudanças de layout;
+- mantém a assinatura armazenada no estado até salvar.
 
 Antes de testar:
-1. Execute `supabase/v1.5_fotos_assinaturas.sql`.
+1. Execute `supabase/v1.5.1_hotfix.sql`.
 2. Atualize o GitHub.
 3. Aguarde a Vercel ficar Ready.

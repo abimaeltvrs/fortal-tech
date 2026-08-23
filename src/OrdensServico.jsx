@@ -1,8 +1,8 @@
-import React,{useEffect,useMemo,useState} from 'react'
+import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
   ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle,
-  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck
+  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck,RefreshCcw
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -108,6 +108,9 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [assinaturaTecnico,setAssinaturaTecnico]=useState('')
   const [nomeAceiteCliente,setNomeAceiteCliente]=useState('')
   const [cargoAceiteCliente,setCargoAceiteCliente]=useState('')
+  const [pendenciasFormulario,setPendenciasFormulario]=useState([])
+  const [salvandoOS,setSalvandoOS]=useState(false)
+  const modalRef=useRef(null)
 
   async function carregar(){
     setErro('')
@@ -192,6 +195,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   function novo(){
     setErro('')
     setSucesso('')
+    setPendenciasFormulario([])
     const now=new Date()
     const hh=String(now.getHours()).padStart(2,'0')
     const mm=String(now.getMinutes()).padStart(2,'0')
@@ -216,6 +220,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   async function editar(os){
     setErro('')
     setSucesso('')
+    setPendenciasFormulario([])
     setEdit(os)
     setForm({...empty,...os})
     let children
@@ -364,14 +369,42 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     return {fotos:salvas,assinaturas}
   }
 
+
+  function validarFormulario(){
+    const faltas=[]
+    if(!form.cliente_id) faltas.push({id:'cliente',label:'Cliente'})
+    if(!form.data_visita) faltas.push({id:'data_visita',label:'Data da visita'})
+    if(!form.horario_chegada) faltas.push({id:'horario_chegada',label:'Horário de chegada'})
+    if(!sistemas.length) faltas.push({id:'sistemas',label:'Sistema(s) envolvido(s)'})
+
+    if(form.status==='concluida'){
+      if(!form.condicao_final) faltas.push({id:'condicao_final',label:'Condição final do sistema'})
+      if(!nomeAceiteCliente.trim()) faltas.push({id:'nome_aceite',label:'Nome do responsável pelo cliente'})
+      if(!assinaturaCliente) faltas.push({id:'assinatura_cliente',label:'Assinatura do cliente'})
+      if(!assinaturaTecnico) faltas.push({id:'assinatura_tecnico',label:'Assinatura do técnico'})
+    }
+
+    setPendenciasFormulario(faltas)
+
+    if(faltas.length){
+      setErro(`Faltam ${faltas.length} item(ns) para salvar: ${faltas.map(x=>x.label).join(', ')}.`)
+      setTimeout(()=>{
+        const el=document.querySelector(`[data-field="${faltas[0].id}"]`)
+        el?.scrollIntoView({behavior:'smooth',block:'center'})
+        el?.querySelector?.('input,select,textarea')?.focus?.()
+      },80)
+      return false
+    }
+    return true
+  }
+
   async function salvar(e){
     e.preventDefault()
     setErro('')
-    if(!form.cliente_id) return setErro('Selecione um cliente.')
-    if(!form.data_visita) return setErro('Informe a data da visita.')
-    if(!form.horario_chegada) return setErro('Informe o horário de chegada.')
-    if(!sistemas.length) return setErro('Selecione pelo menos um sistema envolvido.')
+    setSucesso('')
+    if(!validarFormulario()) return
 
+    setSalvandoOS(true)
     const osId=edit?.id||crypto.randomUUID()
     const osPayload={
       ...form,
@@ -473,7 +506,14 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         setSyncStatus('pending')
         setModal(false)
         await carregar()
-      }else setErro(e.message||'Não foi possível salvar a OS.')
+      }else {
+        setErro(`Não foi possível salvar a OS: ${e.message||'erro não identificado.'}`)
+        setTimeout(()=>{
+          modalRef.current?.scrollTo?.({top:0,behavior:'smooth'})
+        },50)
+      }
+    }finally{
+      setSalvandoOS(false)
     }
   }
 
@@ -846,19 +886,28 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     </section>
 
     {modal&&<div className="modalBackdrop">
-      <div className="modal osModal">
+      <div className="modal osModal" ref={modalRef}>
         <div className="modalHead">
           <div><span className="eyebrow">FORTAL TECH</span><h2>{edit?edit.numero:'Nova Ordem de Serviço'}</h2></div>
           <button className="iconBtn" onClick={()=>setModal(false)}><X/></button>
         </div>
 
-        {erro&&<div className="warningBox modalError">{erro}</div>}
+        {erro&&<div className="warningBox modalError">
+          <b>{erro}</b>
+          {pendenciasFormulario.length>0&&<div className="missingList">
+            {pendenciasFormulario.map(x=><button type="button" key={x.id} onClick={()=>{
+              const el=document.querySelector(`[data-field="${x.id}"]`)
+              el?.scrollIntoView({behavior:'smooth',block:'center'})
+              el?.querySelector?.('input,select,textarea')?.focus?.()
+            }}>{x.label}</button>)}
+          </div>}
+        </div>}
 
         <form onSubmit={salvar}>
           <div className="osSection">
             <h3>1. Dados do atendimento</h3>
             <div className="formGrid">
-              <div className="field span2"><label>Cliente *</label>
+              <div data-field="cliente" className={`field span2 ${pendenciasFormulario.some(x=>x.id==='cliente')?'invalidField':''}`}><label>Cliente *</label>
                 <select required value={form.cliente_id} onChange={e=>setForm({...form,cliente_id:e.target.value})}>
                   <option value="">Selecione...</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
@@ -873,13 +922,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                   <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="emergencial">Emergencial</option>
                 </select>
               </div>
-              <div className="field"><label>Data da visita *</label><input required type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
+              <div data-field="data_visita" className={`field ${pendenciasFormulario.some(x=>x.id==='data_visita')?'invalidField':''}`}><label>Data da visita *</label><input required type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
               <div className="field"><label>Status</label>
                 <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
                   <option value="aberta">Aberta</option><option value="agendada">Agendada</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_material">Aguardando material</option><option value="aguardando_orcamento">Aguardando orçamento</option><option value="concluida">Concluída</option><option value="cancelada">Cancelada</option>
                 </select>
               </div>
-              <div className="field"><label>Horário de chegada *</label><input required type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
+              <div data-field="horario_chegada" className={`field ${pendenciasFormulario.some(x=>x.id==='horario_chegada')?'invalidField':''}`}><label>Horário de chegada *</label><input required type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
               <div className="field"><label>Horário de término</label><input type="time" value={form.horario_termino||''} onChange={e=>setForm({...form,horario_termino:e.target.value})}/></div>
               {profile.perfil==='admin'&&<div className="field span2"><label>Técnico responsável</label>
                 <select value={form.tecnico_id||''} onChange={e=>setForm({...form,tecnico_id:e.target.value})}>
@@ -890,7 +939,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             </div>
           </div>
 
-          <div className="osSection">
+          <div data-field="sistemas" className={`osSection ${pendenciasFormulario.some(x=>x.id==='sistemas')?'invalidSection':''}`}>
             <h3>2. Sistemas envolvidos *</h3>
             <div className="systemGrid">
               {sistemasCatalogo.map(([cod,label])=>{
@@ -993,12 +1042,12 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           <div className="osSection">
             <h3>6. Aceite e assinaturas</h3>
             <div className="formGrid">
-              <div className="field"><label>Responsável pelo cliente</label><input value={nomeAceiteCliente} onChange={e=>setNomeAceiteCliente(e.target.value)}/></div>
+              <div data-field="nome_aceite" className={`field ${pendenciasFormulario.some(x=>x.id==='nome_aceite')?'invalidField':''}`}><label>Responsável pelo cliente</label><input value={nomeAceiteCliente} onChange={e=>setNomeAceiteCliente(e.target.value)}/></div>
               <div className="field"><label>Cargo / Função</label><input value={cargoAceiteCliente} onChange={e=>setCargoAceiteCliente(e.target.value)}/></div>
             </div>
             <div className="signatureGrid">
-              <SignaturePad label="Assinatura do cliente" value={assinaturaCliente} onChange={setAssinaturaCliente}/>
-              <SignaturePad label="Assinatura do técnico" value={assinaturaTecnico} onChange={setAssinaturaTecnico}/>
+              <div data-field="assinatura_cliente"><SignaturePad invalid={pendenciasFormulario.some(x=>x.id==='assinatura_cliente')} label="Assinatura do cliente" value={assinaturaCliente} onChange={setAssinaturaCliente}/></div>
+              <div data-field="assinatura_tecnico"><SignaturePad invalid={pendenciasFormulario.some(x=>x.id==='assinatura_tecnico')} label="Assinatura do técnico" value={assinaturaTecnico} onChange={setAssinaturaTecnico}/></div>
             </div>
           </div>
 
@@ -1018,7 +1067,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           <div className="osSection">
             <h3>8. Condição final do sistema</h3>
             <div className="formGrid">
-              <div className="field span2"><label>Condição final</label>
+              <div data-field="condicao_final" className={`field span2 ${pendenciasFormulario.some(x=>x.id==='condicao_final')?'invalidField':''}`}><label>Condição final</label>
                 <select value={form.condicao_final||''} onChange={e=>setForm({...form,condicao_final:e.target.value})}>
                   <option value="">Selecione...</option><option>Sistema funcionando normalmente</option><option>Sistema funcionando parcialmente</option><option>Equipamento permanece com falha</option><option>Necessário substituição de equipamento</option><option>Necessário novo atendimento</option><option>Aguardando aprovação de orçamento</option>
                 </select>
@@ -1032,7 +1081,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             <div className="modalActions compact">
               {edit&&form.status!=='concluida'&&<button type="button" className="finalizeBtn" onClick={finalizarOSAtual}><Flag size={16}/> Finalizar OS</button>}
               <button type="button" className="ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="primary"><Save size={17}/> Salvar OS</button>
+              <button className="primary" disabled={salvandoOS}>{salvandoOS?<><RefreshCcw className="spin" size={17}/> Salvando...</>:<><Save size={17}/> Salvar OS</>}</button>
             </div>
           </div>
         </form>
