@@ -116,8 +116,11 @@ export default function App(){
       <div className="sidebarInstall"><InstallApp/></div>
       <div className="profile">
         <div className="avatar">{(profile.nome||session.user.email||'US').slice(0,2).toUpperCase()}</div>
-        <div className="profileText"><b>{profile.nome||session.user.email}</b><span>{role}</span></div>
-        <button className="logoutBtn" title="Sair" onClick={()=>supabase.auth.signOut()}><LogOut size={17}/></button>
+        <div className="profileText">
+          <b>{profile.nome||session.user.email}</b>
+          <span>{role}</span>
+          <button className="simpleLogout" onClick={()=>supabase.auth.signOut()}><LogOut size={14}/> Sair</button>
+        </div>
       </div>
     </aside>
 
