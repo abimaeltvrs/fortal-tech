@@ -1,28 +1,32 @@
-# FORTAL TECH V1.6.6
+# FORTAL TECH V1.6.7
 
-Visualização de Orçamento.
+Visualização de Ordens de Serviço.
 
 Agora:
-- tocar em qualquer orçamento da lista abre uma tela somente de visualização;
+- tocar em uma OS da lista abre uma tela somente leitura;
 - não entra automaticamente no modo Editar;
-- visualização mostra:
-  - número;
+- mostra:
+  - número da OS;
   - cliente;
-  - data;
-  - validade;
+  - data da visita;
+  - horários;
+  - prioridade;
   - status;
-  - forma de pagamento;
-  - parcelas;
-  - itens;
-  - quantidades;
-  - valores;
-  - desconto;
-  - total;
-  - condições de pagamento;
-  - observações;
-- mostra a OS relacionada, quando existir;
-- botão `Visualizar OS` abre diretamente a Ordem de Serviço vinculada;
-- `Gerar PDF` disponível dentro da visualização;
-- botão `Editar orçamento` permanece separado.
+  - solicitação;
+  - sistemas envolvidos;
+  - checklist;
+  - diagnóstico corretivo quando aplicável;
+  - materiais e valores;
+  - fotos;
+  - pendências;
+  - recomendações;
+  - condição final;
+  - assinaturas.
+- ações disponíveis na visualização:
+  - Gerar PDF;
+  - Criar/Abrir orçamento quando necessário;
+  - Editar OS.
+
+O botão Editar continua separado para alterações.
 
 Não há SQL novo nesta versão.

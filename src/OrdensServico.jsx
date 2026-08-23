@@ -110,6 +110,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [cargoAceiteCliente,setCargoAceiteCliente]=useState('')
   const [pendenciasFormulario,setPendenciasFormulario]=useState([])
   const [salvandoOS,setSalvandoOS]=useState(false)
+  const [visualizacao,setVisualizacao]=useState(null)
+  const [viewChildren,setViewChildren]=useState({sistemas:[],checklist:[],materiais:[],fotos:[],assinaturas:[]})
   const modalRef=useRef(null)
 
   async function carregar(){
@@ -225,6 +227,50 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setCargoAceiteCliente('')
     setExpanded({})
     setModal(true)
+  }
+
+
+  async function visualizar(os){
+    setErro('')
+    try{
+      let children
+      if(navigator.onLine){
+        const [sr,cr,mr,fr,ar]=await Promise.all([
+          supabase.from('os_sistemas').select('*').eq('os_id',os.id),
+          supabase.from('os_checklist').select('*').eq('os_id',os.id).order('sistema').order('grupo'),
+          supabase.from('os_materiais').select('*').eq('os_id',os.id),
+          supabase.from('os_fotos').select('*').eq('os_id',os.id).order('created_at'),
+          supabase.from('os_assinaturas').select('*').eq('os_id',os.id)
+        ])
+        if(sr.error)throw sr.error
+        if(cr.error)throw cr.error
+        if(mr.error)throw mr.error
+        children={
+          sistemas:sr.data||[],
+          checklist:cr.data||[],
+          materiais:mr.data||[],
+          fotos:fr.data||[],
+          assinaturas:ar.data||[]
+        }
+        for(const f of children.fotos){
+          if(f.arquivo_path){
+            const {data}=await supabase.storage.from('os-arquivos').createSignedUrl(f.arquivo_path,3600)
+            f.preview_url=data?.signedUrl||''
+          }
+        }
+      }else{
+        const c=await getLocalOSChildren(os.id)
+        children={
+          ...c,
+          fotos:await getLocalOSMedia(os.id),
+          assinaturas:await getLocalOSSignatures(os.id)
+        }
+      }
+      setViewChildren(children)
+      setVisualizacao(os)
+    }catch(e){
+      setErro(`Não foi possível abrir a OS: ${e.message||'erro não identificado.'}`)
+    }
   }
 
   async function editar(os){
@@ -879,7 +925,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       {filtradas.length===0?
         <div className="emptySmall"><ClipboardList size={36}/><b>Nenhuma OS encontrada</b><span>Crie a primeira Ordem de Serviço.</span></div>:
         <div className="osList">
-          {filtradas.map(os=><div className="osRow" key={os.id}>
+          {filtradas.map(os=><div className="osRow clickableOS" key={os.id} onClick={()=>visualizar(os)}>
             <div className="osMain">
               <div className="osNumber">{os.numero}</div>
               <div><b>{os.clientes?.nome||nomeCliente(os.cliente_id)}</b>
@@ -887,7 +933,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                 {os._syncStatus==='pending'&&<em>Aguardando sincronização</em>}
               </div>
             </div>
-            <div className="osActions">
+            <div className="osActions" onClick={e=>e.stopPropagation()}>
               <div className="quickStatus">
                 <select
                   value={statusRapido[os.id]??os.status}
@@ -921,6 +967,122 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>)}
         </div>}
     </section>
+
+
+    {visualizacao&&<div className="modalBackdrop">
+      <div className="modal osViewModal">
+        <div className="modalHead">
+          <div>
+            <span className="eyebrow">ORDEM DE SERVIÇO</span>
+            <h2>{visualizacao.numero}</h2>
+          </div>
+          <button className="iconBtn" onClick={()=>setVisualizacao(null)}><X/></button>
+        </div>
+
+        <div className="osViewStatus">
+          <span className={`statusBadge status-${visualizacao.status}`}>{visualizacao.status}</span>
+          <strong>{visualizacao.tipo_atendimento||'Atendimento'}</strong>
+        </div>
+
+        <div className="osViewInfo">
+          <div><span>Cliente</span><b>{nomeCliente(visualizacao.cliente_id)}</b></div>
+          <div><span>Data da visita</span><b>{visualizacao.data_visita||'-'}</b></div>
+          <div><span>Chegada</span><b>{visualizacao.horario_chegada||'-'}</b></div>
+          <div><span>Término</span><b>{visualizacao.horario_termino||'-'}</b></div>
+          <div><span>Prioridade</span><b>{visualizacao.prioridade||'-'}</b></div>
+          <div><span>Status</span><b>{visualizacao.status||'-'}</b></div>
+        </div>
+
+        {visualizacao.motivo&&<section className="osSection">
+          <h3>Solicitação / motivo do atendimento</h3>
+          <div className="clientNotes">{visualizacao.motivo}</div>
+        </section>}
+
+        <section className="osSection">
+          <h3>Sistemas envolvidos</h3>
+          <div className="viewSystemChips">
+            {(viewChildren.sistemas||[]).map(s=><span key={s.id}>{labelSistema(s.sistema)}</span>)}
+          </div>
+        </section>
+
+        {(viewChildren.checklist||[]).length>0&&<section className="osSection">
+          <h3>Checklist técnico</h3>
+          <div className="viewChecklist">
+            {(viewChildren.checklist||[]).map(i=><div key={i.id}>
+              <span>{i.item}</span>
+              <b className={`viewCheckStatus ${i.status}`}>{i.status==='ok'?'OK':i.status==='irregular'?'Irregular':i.status==='nao_aplicavel'?'N/A':'Não verificado'}</b>
+            </div>)}
+          </div>
+        </section>}
+
+        {visualizacao.tipo_atendimento==='Manutenção Corretiva'&&<section className="osSection">
+          <h3>Manutenção corretiva / diagnóstico</h3>
+          <div className="viewTextGrid">
+            <div><span>Problema relatado</span><b>{visualizacao.problema_relatado||'-'}</b></div>
+            <div><span>Diagnóstico técnico</span><b>{visualizacao.diagnostico||'-'}</b></div>
+            <div><span>Causa identificada</span><b>{visualizacao.causa_identificada||'-'}</b></div>
+            <div><span>Serviço executado</span><b>{visualizacao.servico_executado||'-'}</b></div>
+          </div>
+        </section>}
+
+        <section className="osSection">
+          <h3>Materiais / peças utilizados</h3>
+          {(viewChildren.materiais||[]).length===0?<div className="emptyInline">Nenhum material registrado.</div>:
+          <div className="viewMaterials">
+            {(viewChildren.materiais||[]).map((m,i)=><div key={m.id}>
+              <span>{i+1}</span>
+              <div><b>{m.descricao}</b><small>Qtd. {Number(m.quantidade||0).toLocaleString('pt-BR')} {m.unidade||'un'}</small></div>
+              <strong>{money(Number(m.quantidade||0)*Number(m.preco_unitario||0))}</strong>
+            </div>)}
+          </div>}
+        </section>
+
+        {(viewChildren.fotos||[]).length>0&&<section className="osSection">
+          <h3>Registro fotográfico</h3>
+          <div className="photoGrid">
+            {(viewChildren.fotos||[]).map(f=><div className="photoCard" key={f.id}>
+              <img src={f.preview_url||f.preview_data} alt={f.tipo}/>
+              <span>{f.tipo}</span>
+            </div>)}
+          </div>
+        </section>}
+
+        <section className="osSection">
+          <h3>Pendências / recomendações</h3>
+          <div className="viewTextGrid">
+            <div><span>Pendências</span><b>{visualizacao.pendencias||'-'}</b></div>
+            <div><span>Recomendações</span><b>{visualizacao.recomendacoes||'-'}</b></div>
+            <div><span>Necessita orçamento</span><b>{visualizacao.necessita_orcamento?'Sim':'Não'}</b></div>
+            <div><span>Condição final</span><b>{visualizacao.condicao_final||'-'}</b></div>
+          </div>
+        </section>
+
+        {(viewChildren.assinaturas||[]).length>0&&<section className="osSection">
+          <h3>Assinaturas</h3>
+          <div className="viewSignatures">
+            {(viewChildren.assinaturas||[]).map(a=><div key={a.id}>
+              <b>{a.tipo==='cliente'?'Responsável pelo cliente':'Técnico responsável'}</b>
+              {a.assinatura_data&&<img src={a.assinatura_data} alt={`Assinatura ${a.tipo}`}/>}
+              <span>{a.nome||'-'} {a.cargo?`• ${a.cargo}`:''}</span>
+            </div>)}
+          </div>
+        </section>}
+
+        <div className="osViewActions">
+          <button className="ghost" onClick={()=>gerarPDF(visualizacao)}><FileDown size={16}/> Gerar PDF</button>
+          {visualizacao.necessita_orcamento&&<button className="ghost" onClick={()=>{
+            const item=visualizacao
+            setVisualizacao(null)
+            window.dispatchEvent(new CustomEvent('fortal:go-orcamento',{detail:item}))
+          }}>Orçamento</button>}
+          <button className="primary" onClick={()=>{
+            const item=visualizacao
+            setVisualizacao(null)
+            editar(item)
+          }}><Pencil size={16}/> Editar OS</button>
+        </div>
+      </div>
+    </div>}
 
     {modal&&<div className="modalBackdrop">
       <div className="modal osModal" ref={modalRef}>
