@@ -110,6 +110,7 @@ export default function App(){
   const visible=pages.filter(([id])=>profile.perfil==='admin'||!['financeiro','relatorios','usuarios','configuracoes','orcamentos'].includes(id))
 
   return <div className="app">
+    {open && <button className="sidebarOverlay" aria-label="Fechar menu" onClick={()=>setOpen(false)}></button>}
     <aside className={open?'sidebar open':'sidebar'}>
       <div className="brand"><div className="logo">FT</div><div><b>FORTAL TECH</b><span>Gestão Técnica</span></div></div>
       <nav>{visible.map(([id,l,I])=><button key={id} className={page===id?'active':''} onClick={()=>{setPage(id);setOpen(false)}}><I size={19}/>{l}</button>)}</nav>

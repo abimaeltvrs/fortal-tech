@@ -305,3 +305,42 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
   header{padding-left:12px;padding-right:12px}
   .sidebar{width:84vw}
 }
+
+/* ===== V1.2.3 - Correção abertura/fechamento do menu ===== */
+.sidebarOverlay{display:none}
+
+@media(max-width:760px){
+  .sidebar{
+    left:calc(-1 * min(82vw,300px) - 24px);
+    transition:left .22s ease;
+    z-index:30;
+    box-shadow:18px 0 40px rgba(0,0,0,.28);
+  }
+
+  .sidebar.open{
+    left:0;
+  }
+
+  .sidebarOverlay{
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:29;
+    border:0;
+    padding:0;
+    margin:0;
+    background:rgba(2,8,18,.62);
+    cursor:pointer;
+  }
+
+  .menuBtn{
+    position:relative;
+    z-index:2;
+  }
+}
+
+@media(max-width:390px){
+  .sidebar{
+    left:calc(-84vw - 24px);
+  }
+}
