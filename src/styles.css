@@ -568,3 +568,63 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
   .materialRow.priced button{grid-area:del}
   .materialTotal{width:100%}
 }
+
+/* ===== V1.3.4 - Status rápido da OS ===== */
+.osActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.quickStatus{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.quickStatus select{
+  min-width:165px;
+  border:1px solid #2a3a4e;
+  background:#111e2f;
+  color:#cbd5e1;
+  border-radius:8px;
+  padding:8px 9px;
+  font-size:11px;
+}
+.saveStatusBtn{
+  border:1px solid #28624d;
+  background:#173b2e;
+  color:#7de3b8;
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.saveStatusBtn:hover{background:#1d4939}
+.saveStatusBtn:disabled{opacity:.6;cursor:default}
+.osActionButtons{
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+
+@media(max-width:760px){
+  .osActions{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+  }
+  .quickStatus{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr auto;
+  }
+  .quickStatus select{
+    width:100%;
+    min-width:0;
+  }
+  .osActionButtons{
+    justify-content:flex-end;
+  }
+}

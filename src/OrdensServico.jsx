@@ -99,6 +99,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   const [erro,setErro]=useState('')
   const [sucesso,setSucesso]=useState('')
   const [expanded,setExpanded]=useState({})
+  const [statusRapido,setStatusRapido]=useState({})
+  const [statusSalvando,setStatusSalvando]=useState(null)
 
   async function carregar(){
     setErro('')
@@ -175,10 +177,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
     setErro('')
     setSucesso('')
     const now=new Date()
+    const hh=String(now.getHours()).padStart(2,'0')
+    const mm=String(now.getMinutes()).padStart(2,'0')
     setEdit(null)
     setForm({...empty,
       tecnico_id:profile.perfil==='admin'?(tecnicos[0]?.id||session.user.id):session.user.id,
-      data_visita:now.toISOString().slice(0,10)
+      data_visita:now.toISOString().slice(0,10),
+      horario_chegada:`${hh}:${mm}`
     })
     setSistemas([])
     setChecklist([])
@@ -224,6 +229,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
     e.preventDefault()
     setErro('')
     if(!form.cliente_id) return setErro('Selecione um cliente.')
+    if(!form.data_visita) return setErro('Informe a data da visita.')
+    if(!form.horario_chegada) return setErro('Informe o horário de chegada.')
     if(!sistemas.length) return setErro('Selecione pelo menos um sistema envolvido.')
 
     const osId=edit?.id||crypto.randomUUID()
@@ -335,6 +342,63 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
     }
     await removeLocalOS(os.id)
     await carregar()
+  }
+
+  async function salvarStatusRapido(os){
+    const novoStatus=statusRapido[os.id]||os.status
+    setErro('')
+    setSucesso('')
+    setStatusSalvando(os.id)
+
+    const agora=new Date()
+    const hh=String(agora.getHours()).padStart(2,'0')
+    const mm=String(agora.getMinutes()).padStart(2,'0')
+    const ss=String(agora.getSeconds()).padStart(2,'0')
+
+    const patch={status:novoStatus,updated_at:agora.toISOString()}
+
+    if(novoStatus==='concluida'){
+      patch.horario_termino=`${hh}:${mm}:${ss}`
+      patch.encerrada_em=agora.toISOString()
+    }else if(os.status==='concluida' && novoStatus!=='concluida'){
+      patch.encerrada_em=null
+      patch.horario_termino=null
+    }
+
+    try{
+      if(navigator.onLine){
+        const {data,error}=await supabase.from('ordens_servico')
+          .update(patch).eq('id',os.id).select().single()
+        if(error) throw error
+        await saveLocalOS(data,'synced')
+      }else{
+        const local={...os,...patch,_syncStatus:'pending'}
+        await saveLocalOS(local,'pending')
+        await queueChange('ordens_servico','upsert_bundle',{
+          os:local,
+          sistemas:(await getLocalOSChildren(os.id)).sistemas,
+          checklist:(await getLocalOSChildren(os.id)).checklist,
+          materiais:(await getLocalOSChildren(os.id)).materiais
+        })
+        setSyncStatus('pending')
+      }
+
+      setStatusRapido(x=>{
+        const n={...x}
+        delete n[os.id]
+        return n
+      })
+      await carregar()
+      setSucesso(
+        novoStatus==='concluida'
+          ? `OS ${os.numero} concluída às ${hh}:${mm}.`
+          : `Status da ${os.numero} atualizado.`
+      )
+    }catch(e){
+      setErro(e.message||'Não foi possível atualizar o status da OS.')
+    }finally{
+      setStatusSalvando(null)
+    }
   }
 
   const nomeCliente=id=>clientes.find(c=>c.id===id)?.nome||'Cliente'
@@ -536,10 +600,32 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
               </div>
             </div>
             <div className="osActions">
-              <span className={`statusBadge status-${os.status}`}>{os.status}</span>
-              <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(os)}><FileDown size={17}/></button>
-              <button className="iconBtn" title="Editar" onClick={()=>editar(os)}><Pencil size={17}/></button>
-              <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(os)}><Trash2 size={17}/></button>
+              <div className="quickStatus">
+                <select
+                  value={statusRapido[os.id]??os.status}
+                  onChange={e=>setStatusRapido(x=>({...x,[os.id]:e.target.value}))}
+                >
+                  <option value="agendada">Agendada</option>
+                  <option value="em_atendimento">Em atendimento</option>
+                  <option value="aguardando_material">Aguardando material</option>
+                  <option value="aguardando_orcamento">Aguardando orçamento</option>
+                  <option value="concluida">Concluída</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+                <button
+                  className="saveStatusBtn"
+                  disabled={statusSalvando===os.id}
+                  onClick={()=>salvarStatusRapido(os)}
+                >
+                  {statusSalvando===os.id?'Salvando...':'Salvar status'}
+                </button>
+              </div>
+
+              <div className="osActionButtons">
+                <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(os)}><FileDown size={17}/></button>
+                <button className="iconBtn" title="Editar OS completa" onClick={()=>editar(os)}><Pencil size={17}/></button>
+                <button className="iconBtn danger" title="Excluir" onClick={()=>excluir(os)}><Trash2 size={17}/></button>
+              </div>
             </div>
           </div>)}
         </div>}
@@ -573,13 +659,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
                   <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="emergencial">Emergencial</option>
                 </select>
               </div>
-              <div className="field"><label>Data da visita</label><input type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
+              <div className="field"><label>Data da visita *</label><input required type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
               <div className="field"><label>Status</label>
                 <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
                   <option value="aberta">Aberta</option><option value="agendada">Agendada</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_material">Aguardando material</option><option value="aguardando_orcamento">Aguardando orçamento</option><option value="concluida">Concluída</option><option value="cancelada">Cancelada</option>
                 </select>
               </div>
-              <div className="field"><label>Horário de chegada</label><input type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
+              <div className="field"><label>Horário de chegada *</label><input required type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
               <div className="field"><label>Horário de término</label><input type="time" value={form.horario_termino||''} onChange={e=>setForm({...form,horario_termino:e.target.value})}/></div>
               {profile.perfil==='admin'&&<div className="field span2"><label>Técnico responsável</label>
                 <select value={form.tecnico_id||''} onChange={e=>setForm({...form,tecnico_id:e.target.value})}>
