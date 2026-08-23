@@ -1,29 +1,15 @@
-# FORTAL TECH V1.5.1
+# FORTAL TECH V1.5.2
 
-Correções da criação/edição da Ordem de Serviço.
+Correções:
+- restaura e reforça a geração/download do PDF da OS;
+- adiciona fallback de download caso `doc.save()` falhe no navegador/PWA;
+- mensagem de sucesso ao gerar o PDF;
+- erro técnico de PDF aparece no app se ainda houver falha.
 
-Salvamento:
-- valida os campos obrigatórios antes de tentar gravar;
-- informa exatamente quais itens estão faltando;
-- evidencia os campos pendentes em amarelo;
-- rola automaticamente para o primeiro campo faltante;
-- cada item da mensagem pode ser tocado para ir direto ao campo;
-- botão muda para `Salvando...` durante a gravação;
-- se o Supabase retornar erro, a mensagem técnica aparece dentro da OS.
+Regra de atendimento corretivo:
+- `Manutenção corretiva / diagnóstico` só aparece quando o tipo de atendimento for `Manutenção Corretiva`;
+- nos demais tipos esse bloco não aparece e não precisa ser preenchido;
+- a numeração das seções se ajusta automaticamente;
+- o PDF também só inclui a seção corretiva quando a OS for realmente corretiva.
 
-Ao concluir uma OS também são exigidos:
-- condição final;
-- nome do responsável do cliente;
-- assinatura do cliente;
-- assinatura do técnico.
-
-Assinaturas:
-- componente refeito com Pointer Events para celular;
-- assinatura fica preservada ao alterar outros campos;
-- redesenho automático após mudanças de layout;
-- mantém a assinatura armazenada no estado até salvar.
-
-Antes de testar:
-1. Execute `supabase/v1.5.1_hotfix.sql`.
-2. Atualize o GitHub.
-3. Aguarde a Vercel ficar Ready.
+Não há SQL novo nesta versão.

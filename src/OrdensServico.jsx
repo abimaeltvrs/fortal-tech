@@ -705,16 +705,20 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         y=doc.lastAutoTable.finalY+6
       }
 
-      section('4. MANUTENÇÃO CORRETIVA / DIAGNÓSTICO')
-      paragraph('Problema relatado',os.problema_relatado)
-      paragraph('Diagnóstico técnico',os.diagnostico)
-      paragraph('Causa identificada',os.causa_identificada)
-      paragraph('Serviço executado',os.servico_executado)
-      paragraph('Equipamento/peça substituída',os.equipamento_substituido)
-      paragraph('Teste realizado após o reparo',os.teste_realizado)
-      line('Resultado',os.resultado)
+      let pdfSection=4
+      if(os.tipo_atendimento==='Manutenção Corretiva'){
+        section(`${pdfSection}. MANUTENÇÃO CORRETIVA / DIAGNÓSTICO`)
+        paragraph('Problema relatado',os.problema_relatado)
+        paragraph('Diagnóstico técnico',os.diagnostico)
+        paragraph('Causa identificada',os.causa_identificada)
+        paragraph('Serviço executado',os.servico_executado)
+        paragraph('Equipamento/peça substituída',os.equipamento_substituido)
+        paragraph('Teste realizado após o reparo',os.teste_realizado)
+        line('Resultado',os.resultado)
+        pdfSection++
+      }
 
-      section('5. MATERIAIS / PEÇAS UTILIZADOS')
+      section(`${pdfSection}. MATERIAIS / PEÇAS UTILIZADOS`)
       const mats=children.materiais||[]
       if(mats.length){
         autoTable(doc,{
@@ -736,14 +740,14 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         paragraph('', 'Nenhum material informado.')
       }
 
-      section('6. PENDÊNCIAS / RECOMENDAÇÕES')
+      pdfSection++; section(`${pdfSection}. PENDÊNCIAS / RECOMENDAÇÕES`)
       paragraph('Pendências identificadas',os.pendencias)
       paragraph('Recomendações técnicas',os.recomendacoes)
       line('Necessita orçamento adicional',os.necessita_orcamento?'SIM':'NÃO')
       paragraph('Descrição do orçamento recomendado',os.descricao_orcamento)
       line('Prazo recomendado para correção',os.prazo_correcao)
 
-      section('7. CONDIÇÃO FINAL DO SISTEMA')
+      pdfSection++; section(`${pdfSection}. CONDIÇÃO FINAL DO SISTEMA`)
       line('Condição final',os.condicao_final)
       paragraph('Observações finais',os.observacoes_finais)
 
@@ -763,7 +767,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       const fotosPDF=children.fotos||[]
       if(fotosPDF.length){
         if(y>225){doc.addPage();y=16}
-        section('8. REGISTRO FOTOGRÁFICO')
+        pdfSection++; section(`${pdfSection}. REGISTRO FOTOGRÁFICO`)
         for(const foto of fotosPDF.slice(0,6)){
           try{
             let src=foto.preview_data||foto.preview_url||''
@@ -795,7 +799,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       const ac=ass.find(x=>x.tipo==='cliente')
       const at=ass.find(x=>x.tipo==='tecnico')
       if(y>235){doc.addPage();y=16}
-      section('9. ACEITE DO SERVIÇO')
+      pdfSection++; section(`${pdfSection}. ACEITE DO SERVIÇO`)
       doc.setFontSize(8);doc.setTextColor(40)
       doc.text('Declaro que acompanhei a execução dos serviços descritos nesta Ordem de Serviço e fui informado sobre as condições, serviços, pendências e recomendações registradas.',14,y,{maxWidth:180})
       y+=14
@@ -820,9 +824,24 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         doc.text(`FORTAL TECH • ${os.numero} • Página ${p}/${pages}`,105,292,{align:'center'})
       }
 
-      doc.save(`${os.numero}.pdf`)
+      const filename=`${os.numero}.pdf`
+      try{
+        doc.save(filename)
+      }catch(saveError){
+        const blob=doc.output('blob')
+        const url=URL.createObjectURL(blob)
+        const a=document.createElement('a')
+        a.href=url
+        a.download=filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        setTimeout(()=>URL.revokeObjectURL(url),1500)
+      }
+      setSucesso(`PDF da ${os.numero} gerado.`)
     }catch(e){
-      setErro(e.message||'Não foi possível gerar o PDF.')
+      console.error('Erro ao gerar PDF:',e)
+      setErro(`Não foi possível gerar o PDF: ${e.message||'erro não identificado.'}`)
     }
   }
 
@@ -975,7 +994,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             </div>
           })}
 
-          <div className="osSection">
+          {form.tipo_atendimento==='Manutenção Corretiva'&&<div className="osSection">
             <h3>3. Manutenção corretiva / diagnóstico</h3>
             <div className="formGrid">
               <div className="field span2"><label>Problema relatado</label><textarea rows="3" value={form.problema_relatado||''} onChange={e=>setForm({...form,problema_relatado:e.target.value})}/></div>
@@ -990,10 +1009,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
               </div>
               <div className="field span2"><label>Teste realizado após o reparo</label><textarea rows="2" value={form.teste_realizado||''} onChange={e=>setForm({...form,teste_realizado:e.target.value})}/></div>
             </div>
-          </div>
+          </div>}
 
           <div className="osSection">
-            <div className="sectionHead"><h3>4. Materiais / peças utilizados</h3><button type="button" className="ghost" onClick={addMaterial}><PackagePlus size={16}/> Adicionar material</button></div>
+            <div className="sectionHead"><h3>{form.tipo_atendimento==='Manutenção Corretiva'?'4':'3'}. Materiais / peças utilizados</h3><button type="button" className="ghost" onClick={addMaterial}><PackagePlus size={16}/> Adicionar material</button></div>
             {materiais.length===0?<div className="emptyInline">Nenhum material informado.</div>:
               <>
                 <div className="materialHeader">
@@ -1017,7 +1036,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
 
           <div className="osSection">
-            <h3>5. Registro fotográfico</h3>
+            <h3>{form.tipo_atendimento==='Manutenção Corretiva'?'5':'4'}. Registro fotográfico</h3>
             <p className="sectionHelp">Adicione fotos antes, durante e depois do serviço. No celular você pode usar a câmera ou a galeria.</p>
             <div className="photoTypeGrid">
               {[
@@ -1040,7 +1059,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>
 
           <div className="osSection">
-            <h3>6. Aceite e assinaturas</h3>
+            <h3>{form.tipo_atendimento==='Manutenção Corretiva'?'6':'5'}. Aceite e assinaturas</h3>
             <div className="formGrid">
               <div data-field="nome_aceite" className={`field ${pendenciasFormulario.some(x=>x.id==='nome_aceite')?'invalidField':''}`}><label>Responsável pelo cliente</label><input value={nomeAceiteCliente} onChange={e=>setNomeAceiteCliente(e.target.value)}/></div>
               <div className="field"><label>Cargo / Função</label><input value={cargoAceiteCliente} onChange={e=>setCargoAceiteCliente(e.target.value)}/></div>
@@ -1052,7 +1071,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>
 
           <div className="osSection">
-            <h3>7. Pendências / recomendações</h3>
+            <h3>{form.tipo_atendimento==='Manutenção Corretiva'?'7':'6'}. Pendências / recomendações</h3>
             <div className="formGrid">
               <div className="field span2"><label>Pendências identificadas</label><textarea rows="3" value={form.pendencias||''} onChange={e=>setForm({...form,pendencias:e.target.value})}/></div>
               <div className="field span2"><label>Recomendações técnicas</label><textarea rows="3" value={form.recomendacoes||''} onChange={e=>setForm({...form,recomendacoes:e.target.value})}/></div>
@@ -1065,7 +1084,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           </div>
 
           <div className="osSection">
-            <h3>8. Condição final do sistema</h3>
+            <h3>{form.tipo_atendimento==='Manutenção Corretiva'?'8':'7'}. Condição final do sistema</h3>
             <div className="formGrid">
               <div data-field="condicao_final" className={`field span2 ${pendenciasFormulario.some(x=>x.id==='condicao_final')?'invalidField':''}`}><label>Condição final</label>
                 <select value={form.condicao_final||''} onChange={e=>setForm({...form,condicao_final:e.target.value})}>

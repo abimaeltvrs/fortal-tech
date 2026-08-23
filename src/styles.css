@@ -782,3 +782,6 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
   cursor:pointer;
 }
 .modalActions button:disabled{opacity:.55;cursor:default}
+
+/* ===== V1.5.2 - Correções PDF e corretiva condicional ===== */
+.osSection[hidden]{display:none!important}
