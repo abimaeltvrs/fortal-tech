@@ -4,7 +4,7 @@ import {
   BarChart3,UserCog,Settings,Plus,Wrench,AlertTriangle,CheckCircle2,
   Menu,LogOut,Cloud,CloudOff,RefreshCcw,Clock,ChevronDown,
   UserPlus,CalendarPlus,Receipt,WalletMinimal
-} from 'lucide-react'
+,BookOpen} from 'lucide-react'
 import {supabase} from './supabase'
 import Login from './Login'
 import Clientes from './Clientes'
@@ -16,6 +16,7 @@ import Orcamentos from './Orcamentos'
 import Financeiro from './Financeiro'
 import Relatorios from './Relatorios'
 import Usuarios from './Usuarios'
+import Manuais from './Manuais'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -23,7 +24,8 @@ const pages=[
   ['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda',CalendarDays],
   ['clientes','Clientes',Users],['os','Ordens de Serviço',ClipboardList],
   ['orcamentos','Orçamentos',FileText],['financeiro','Financeiro',WalletCards],
-  ['relatorios','Relatórios',BarChart3],['usuarios','Usuários',UserCog],
+  ['relatorios','Relatórios',BarChart3],['manuais','Manuais / Assistente',BookOpen],
+    ['usuarios','Usuários',UserCog],
   ['configuracoes','Configurações',Settings]
 ]
 
@@ -170,7 +172,7 @@ export default function App(){
 
   const visiblePages=useMemo(()=>{
     if(profile?.perfil==='admin')return pages
-    return pages.filter(p=>['dashboard','agenda','clientes','os'].includes(p[0]))
+    return pages.filter(p=>['dashboard','agenda','clientes','os','manuais'].includes(p[0]))
   },[profile?.perfil])
 
   useEffect(()=>{
@@ -241,6 +243,7 @@ export default function App(){
          page==='financeiro'?<Financeiro supabase={supabase} orcamentoFiltro={financeOrcamentoId} clearFiltro={()=>setFinanceOrcamentoId(null)}/>:
          page==='relatorios'?<Relatorios supabase={supabase}/>:
          page==='usuarios'?<Usuarios supabase={supabase} session={session} profile={profile}/>:
+         page==='manuais'?<Manuais supabase={supabase} profile={profile}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>
