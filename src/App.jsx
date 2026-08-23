@@ -18,6 +18,7 @@ import Relatorios from './Relatorios'
 import Usuarios from './Usuarios'
 import Manuais from './Manuais'
 import InstallApp from './InstallApp'
+import fortalLogo from './assets/fortal-tech-logo.png'
 import {syncPendingChanges} from './sync'
 
 const pages=[
@@ -193,7 +194,10 @@ export default function App(){
   return <div className="app">
     {open && <button className="sidebarOverlay" aria-label="Fechar menu" onClick={()=>setOpen(false)}></button>}
     <aside className={open?'sidebar open':'sidebar'}>
-      <div className="brand"><div className="logo">FT</div><div><b>FORTAL TECH</b><span>Gestão Técnica</span></div></div>
+      <div className="brand brandOfficial">
+        <img src={fortalLogo} alt="FORTAL TECH"/>
+        <div><b>FORTAL TECH</b><span>Segurança Eletrônica & Elétrica</span></div>
+      </div>
       <nav>{visible.map(([id,l,I])=><button key={id} className={page===id?'active':''} onClick={()=>{setPage(id);setOpen(false)}}><I size={19}/>{l}</button>)}</nav>
       <div className="sidebarInstall"><InstallApp/></div>
       <div className="profile">
@@ -218,7 +222,7 @@ export default function App(){
     <main>
       <header>
         <button className="menuBtn" onClick={()=>setOpen(!open)}><Menu/></button>
-        <div><span className="eyebrow">FORTAL TECH</span><h1>{current?.[1]}</h1></div>
+        <div className="pageIdentity"><span className="eyebrow">FORTAL TECH</span><h1>{current?.[1]}</h1></div>
         <div className="headerRight">
           <NotificationCenter
             supabase={supabase}
@@ -247,5 +251,13 @@ export default function App(){
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>
+
+    <nav className="mobileBottomNav" aria-label="Navegação principal">
+      <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={20}/><span>Início</span></button>
+      <button className={page==='clientes'?'active':''} onClick={()=>setPage('clientes')}><Users size={20}/><span>Clientes</span></button>
+      <button className={page==='os'?'active':''} onClick={()=>setPage('os')}><ClipboardList size={20}/><span>OS</span></button>
+      <button className={page==='agenda'?'active':''} onClick={()=>setPage('agenda')}><CalendarDays size={20}/><span>Agenda</span></button>
+      <button onClick={()=>setOpen(true)}><Menu size={20}/><span>Mais</span></button>
+    </nav>
   </div>
 }

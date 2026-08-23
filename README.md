@@ -1,16 +1,33 @@
-# FORTAL TECH V1.11.1
+# FORTAL TECH V1.12 — Nova Identidade Visual
 
-Correção visual do Financeiro no celular.
+Aplicação completa da identidade baseada na nova logo FORTAL TECH.
 
-Corrigido:
-- campos sobrepostos no modal de Entrada;
-- campos sobrepostos no modal de Saída;
-- cada campo passa a ocupar uma linha no celular;
-- largura de inputs e selects limitada ao modal;
-- melhor espaçamento vertical;
-- textarea de observações ajustada;
-- botões Salvar e Cancelar responsivos;
-- Entrada / Saída continuam lado a lado no topo;
-- modal pode rolar verticalmente em telas menores.
+Paleta:
+- preto / grafite como base;
+- amarelo / dourado para identidade, seleção e ações principais;
+- branco para textos importantes;
+- verde somente para estados positivos/recebimentos/concluídos;
+- vermelho somente para saídas, cancelamentos e alertas negativos.
 
-Não há SQL novo.
+Atualizações:
+- logo oficial aplicada no menu lateral;
+- logo oficial aplicada na tela de login;
+- background global escuro com detalhes discretos dourados;
+- sidebar redesenhada;
+- item ativo do menu em dourado;
+- header redesenhado;
+- cards e painéis em grafite;
+- botões principais dourados;
+- inputs, selects e modais atualizados;
+- Orçamentos, Financeiro, Relatórios e Assistente Técnico adaptados para a nova identidade;
+- barra inferior no celular:
+  - Início
+  - Clientes
+  - OS
+  - Agenda
+  - Mais
+- navegação lateral continua disponível pelo botão Mais/menu.
+
+Funcionalidades existentes não foram removidas.
+
+Não há SQL novo nesta versão.
