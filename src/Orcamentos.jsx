@@ -46,6 +46,8 @@ export default function Orcamentos({supabase,profile,session}){
   const [envio,setEnvio]=useState(null)
   const [enviando,setEnviando]=useState(false)
   const [financeiroPorOrcamento,setFinanceiroPorOrcamento]=useState({})
+  const [importandoOS,setImportandoOS]=useState(false)
+  const [osImportada,setOsImportada]=useState('')
 
   async function carregar(){
     setErro('')
@@ -90,17 +92,70 @@ export default function Orcamentos({supabase,profile,session}){
         observacoes:os.descricao_orcamento||os.recomendacoes||''
       })
       setItens([{id:crypto.randomUUID(),tipo:'servico',descricao:'Serviço técnico conforme OS '+os.numero,quantidade:1,valor_unitario:0}])
+      setOsImportada('')
       setModal(true)
+      setTimeout(()=>importarItensDaOS(os.id,{confirmar:false}),120)
     }
     window.addEventListener('fortal:orcamento-from-os',handler)
     return()=>window.removeEventListener('fortal:orcamento-from-os',handler)
   },[])
+
+
+  async function importarItensDaOS(osId,{confirmar=true}={}){
+    if(!osId)return
+    const os=ordens.find(x=>x.id===osId)
+    if(!os)return
+
+    if(confirmar && itens.length>0){
+      const ok=confirm('Importar os itens desta OS? Os itens já adicionados ao orçamento serão mantidos.')
+      if(!ok)return
+    }
+
+    setImportandoOS(true)
+    setErro('')
+    try{
+      const {data:mat,error}=await supabase
+        .from('os_materiais')
+        .select('*')
+        .eq('os_id',osId)
+        .order('id')
+
+      if(error)throw error
+
+      const importados=(mat||[]).map(x=>({
+        id:crypto.randomUUID(),
+        tipo:'material',
+        descricao:x.nome_item||x.item||x.descricao||x.nome||'Material da OS',
+        quantidade:Number(x.quantidade||1),
+        valor_unitario:Number(x.preco||x.valor_unitario||x.valor||0),
+        origem_os_item_id:x.id
+      }))
+
+      if(!importados.length){
+        setSucesso(`A ${os.numero} não possui materiais/peças registrados para importar.`)
+        setOsImportada(osId)
+        return
+      }
+
+      setItens(atual=>{
+        const existentes=new Set(atual.map(i=>i.origem_os_item_id).filter(Boolean))
+        return [...atual,...importados.filter(i=>!existentes.has(i.origem_os_item_id))]
+      })
+      setOsImportada(osId)
+      setSucesso(`${importados.length} item(ns) da ${os.numero} importado(s) para o orçamento.`)
+    }catch(e){
+      setErro(`Não foi possível importar os itens da OS: ${e.message||'erro não identificado.'}`)
+    }finally{
+      setImportandoOS(false)
+    }
+  }
 
   function novo(){
     const hoje=new Date()
     const validade=new Date(hoje.getTime()+15*86400000)
     setEdit(null)
     setErro('')
+    setOsImportada('')
     setForm({...empty,
       data_orcamento:hoje.toISOString().slice(0,10),
       validade:validade.toISOString().slice(0,10)
@@ -544,10 +599,21 @@ export default function Orcamentos({supabase,profile,session}){
               </select>
             </div>
             <div className="field span2"><label>OS relacionada</label>
-              <select value={form.os_id||''} onChange={e=>setForm({...form,os_id:e.target.value})}>
+              <select value={form.os_id||''} onChange={async e=>{
+                const osId=e.target.value
+                setForm({...form,os_id:osId})
+                setOsImportada('')
+                if(osId) await importarItensDaOS(osId)
+              }}>
                 <option value="">Sem OS relacionada</option>
                 {ordens.filter(x=>!form.cliente_id||x.cliente_id===form.cliente_id).map(x=><option key={x.id} value={x.id}>{x.numero}</option>)}
               </select>
+              {form.os_id&&<div className="osImportTools">
+                <button type="button" disabled={importandoOS} onClick={()=>importarItensDaOS(form.os_id,{confirmar:false})}>
+                  {importandoOS?'Importando...':'Importar materiais/peças da OS'}
+                </button>
+                {osImportada===form.os_id&&<span>Itens da OS verificados</span>}
+              </div>}
             </div>
             <div className="field"><label>Data do orçamento</label><input type="date" value={form.data_orcamento||''} onChange={e=>setForm({...form,data_orcamento:e.target.value})}/></div>
             <div className="field"><label>Validade</label><input type="date" value={form.validade||''} onChange={e=>setForm({...form,validade:e.target.value})}/></div>

@@ -1047,3 +1047,27 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
 @media(max-width:420px){
   .budgetActions .financeOpenBtn{grid-column:span 3}
 }
+
+/* ===== V1.6.5 - Importação OS → Orçamento ===== */
+.osImportTools{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:7px;
+  flex-wrap:wrap;
+}
+.osImportTools button{
+  border:1px solid #28624d;
+  background:#15372d;
+  color:#7de3b8;
+  border-radius:8px;
+  padding:7px 9px;
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+.osImportTools button:disabled{opacity:.55;cursor:default}
+.osImportTools span{
+  font-size:8px;
+  color:#7de3b8;
+}
