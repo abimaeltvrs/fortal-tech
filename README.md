@@ -1,23 +1,21 @@
-# FORTAL TECH V1.2
+# FORTAL TECH V1.2.1
 
-## Novidades
-- Agenda real integrada ao Supabase
-- Novo agendamento, edição e exclusão
-- Status do atendimento e conclusão rápida
-- Filtros Hoje / Semana / Mês
-- Cliente e técnico vinculados
-- Rota do atendimento pelo Google Maps
-- Agenda disponível offline via IndexedDB
-- Fila de sincronização automática da Agenda
-- Dashboard mostra os atendimentos reais do dia
-- Botão inteligente "Instalar aplicativo"
-- Orientação específica para instalação no iPhone/iPad
-- Ícones PWA 192x192 e 512x512
-- Service Worker atualizado
+Correções da V1.2:
 
-## Antes de testar
-Execute `supabase/v1.2_patch.sql` no SQL Editor do Supabase.
+- Corrige erro da Agenda: `Could not find the 'sistema' column`.
+- Garante todas as colunas utilizadas pelo formulário de agendamento.
+- Remove bloqueio de `empresa_id` herdado do banco antigo, caso exista.
+- Recarrega o schema do Supabase/PostgREST.
+- Mantém as regras ADMIN/TÉCNICO da Agenda.
+- Corrige menu lateral no celular/PWA instalado.
+- Nome e perfil do usuário não ultrapassam mais o menu.
+- Botão de sair permanece alinhado.
+- Ajusta modal de agendamento em telas pequenas.
 
-## GitHub
-Substitua os arquivos da V1.1 pelos da V1.2 e faça commit na branch main.
-A Vercel fará o deploy automaticamente.
+## Ordem de atualização
+
+1. Execute `supabase/v1.2.1_hotfix.sql` no SQL Editor do Supabase.
+2. Atualize os arquivos do GitHub pelos desta versão.
+3. Commit na branch `main`.
+4. Aguarde a Vercel ficar `Ready`.
+5. Feche e abra novamente o PWA instalado para receber a atualização.
