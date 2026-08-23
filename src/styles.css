@@ -675,3 +675,30 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
  .notifPanel{top:70px;right:12px}
  .headerRight{gap:5px}.notifButton{width:36px;height:36px}
 }
+
+/* ===== V1.4.2 - Notificações clicáveis e lidas ===== */
+.notifItem{
+  cursor:pointer;
+  align-items:center;
+}
+.notifItem:hover{background:#132238;border-radius:9px}
+.notifItem.read{opacity:.58}
+.notifText{flex:1;min-width:0}
+.markReadBtn{
+  border:0;
+  background:transparent;
+  color:#72d9b0;
+  font-size:9px;
+  cursor:pointer;
+  padding:6px;
+  white-space:nowrap;
+}
+.markReadBtn:disabled{
+  color:#64768a;
+  cursor:default;
+}
+@media(max-width:760px){
+  .notifItem{align-items:flex-start;flex-wrap:wrap}
+  .notifText{min-width:calc(100% - 48px)}
+  .markReadBtn{margin-left:44px}
+}

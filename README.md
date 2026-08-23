@@ -1,27 +1,13 @@
-# FORTAL TECH V1.4.1
+# FORTAL TECH V1.4.2
 
-Novidades:
-- clicar no cliente abre o perfil completo;
-- perfil mostra dados cadastrais, responsável, endereço e observações;
-- botão para abrir rota no perfil;
-- acesso ao histórico completo do cliente;
-- sino de notificações dentro do aplicativo;
-- notificações internas para:
-  - agendamentos próximos;
-  - OS abertas;
-  - OS agendadas;
-  - OS em atendimento;
-  - OS aguardando material;
-  - OS aguardando orçamento;
-- opção `Ativar lembrete` no agendamento;
-- antecedência configurável: 15 min, 30 min, 1h, 2h ou 1 dia;
-- central atualiza automaticamente enquanto o aplicativo estiver aberto.
+Melhorias da central de notificações:
 
-Importante:
-Esses lembretes são internos ao aplicativo.
-Push notification com o app totalmente fechado pode ser adicionado posteriormente.
+- cada notificação pode ser marcada como lida;
+- contador do sino mostra somente notificações não lidas;
+- notificações lidas ficam visualmente discretas;
+- ao clicar numa notificação de Agenda, o aplicativo abre aquele agendamento;
+- ao clicar numa notificação de OS, o aplicativo abre aquela OS;
+- a notificação é marcada automaticamente como lida ao ser aberta;
+- estado de leitura fica salvo localmente no aplicativo.
 
-Antes de testar:
-1. Execute `supabase/v1.4.1_lembretes.sql`.
-2. Atualize o GitHub.
-3. Aguarde a Vercel ficar Ready.
+Não há SQL novo nesta versão.

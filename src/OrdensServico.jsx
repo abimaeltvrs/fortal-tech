@@ -85,7 +85,7 @@ function statusChecklist(v){
   return ({ok:'OK',irregular:'IRREGULAR',nao_aplicavel:'N/A',nao_verificado:'NÃO VERIFICADO'})[v]||v||'-'
 }
 
-export default function OrdensServico({supabase,profile,session,setSyncStatus}){
+export default function OrdensServico({supabase,profile,session,setSyncStatus,openItemId,clearOpenItem}){
   const [lista,setLista]=useState([])
   const [clientes,setClientes]=useState([])
   const [tecnicos,setTecnicos]=useState([])
@@ -136,6 +136,15 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
   }
 
   useEffect(()=>{carregar()},[profile.perfil])
+
+  useEffect(()=>{
+    if(!openItemId || !lista.length)return
+    const item=lista.find(x=>x.id===openItemId)
+    if(item){
+      editar(item)
+      clearOpenItem?.()
+    }
+  },[openItemId,lista])
 
   useEffect(()=>{
     const abrir=()=>novo()

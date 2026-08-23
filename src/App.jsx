@@ -82,6 +82,8 @@ export default function App(){
   const [online,setOnline]=useState(navigator.onLine)
   const [syncStatus,setSyncStatus]=useState('synced')
   const [quickCreate,setQuickCreate]=useState(false)
+  const [openAgendaId,setOpenAgendaId]=useState(null)
+  const [openOSId,setOpenOSId]=useState(null)
 
   function abrirCriacao(tipo){
     setQuickCreate(false)
@@ -174,7 +176,13 @@ export default function App(){
         <button className="menuBtn" onClick={()=>setOpen(!open)}><Menu/></button>
         <div><span className="eyebrow">FORTAL TECH</span><h1>{current?.[1]}</h1></div>
         <div className="headerRight">
-          <NotificationCenter supabase={supabase} profile={profile} session={session}/>
+          <NotificationCenter
+            supabase={supabase}
+            profile={profile}
+            session={session}
+            onOpenAgenda={(id)=>{setOpenAgendaId(id);setPage('agenda')}}
+            onOpenOS={(id)=>{setOpenOSId(id);setPage('os')}}
+          />
         <div className={`connection ${online?'online':'offline'} ${syncStatus==='syncing'?'syncing':''}`} title="Status de conexão e sincronização">
           {online?<Cloud size={16}/>:<CloudOff size={16}/>}
           <span>{!online?'Modo offline':syncStatus==='syncing'?'Sincronizando...':syncStatus==='pending'?'Aguardando sincronização':'Online'}</span>
@@ -184,9 +192,9 @@ export default function App(){
       </header>
       <div className="content">
         {page==='dashboard'?<DashboardReal supabase={supabase} session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)}/>:
-         page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
+         page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openAgendaId} clearOpenItem={()=>setOpenAgendaId(null)}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
-         page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
+         page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>

@@ -32,7 +32,7 @@ const empty={
   endereco_atendimento:'',status:'agendado',observacoes:'',lembrete_ativo:true,lembrete_minutos:60
 }
 
-export default function Agenda({supabase,profile,session,setSyncStatus}){
+export default function Agenda({supabase,profile,session,setSyncStatus,openItemId,clearOpenItem}){
   const [lista,setLista]=useState([])
   const [clientes,setClientes]=useState([])
   const [tecnicos,setTecnicos]=useState([])
@@ -75,6 +75,15 @@ export default function Agenda({supabase,profile,session,setSyncStatus}){
   }
 
   useEffect(()=>{carregar()},[profile?.perfil])
+
+  useEffect(()=>{
+    if(!openItemId || !lista.length)return
+    const item=lista.find(x=>x.id===openItemId)
+    if(item){
+      editar(item)
+      clearOpenItem?.()
+    }
+  },[openItemId,lista])
 
   useEffect(()=>{
     const abrir=()=>novo()

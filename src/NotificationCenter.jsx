@@ -6,10 +6,11 @@ function fmt(v){
   return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
 }
 
-export default function NotificationCenter({supabase,profile,session}){
+export default function NotificationCenter({supabase,profile,session,onOpenAgenda,onOpenOS}){
   const [open,setOpen]=useState(false)
   const [agenda,setAgenda]=useState([])
   const [os,setOs]=useState([])
+  const [lidos,setLidos]=useState(()=>new Set(JSON.parse(localStorage.getItem('fortal_notificacoes_lidas')||'[]')))
 
   async function carregar(){
     if(!navigator.onLine)return
@@ -49,14 +50,17 @@ export default function NotificationCenter({supabase,profile,session}){
       .filter(x=>x.lembrete_ativo!==false)
       .map(x=>({
         id:'a-'+x.id,
+        sourceId:x.id,
         tipo:'agenda',
         titulo:x.clientes?.nome||'Atendimento agendado',
         texto:`${x.tipo_atendimento||'Atendimento'} • ${fmt(x.inicio)}`,
-        prioridade:1
+        prioridade:1,
+        lida:lidos.has('a-'+x.id)
       }))
 
     const o=os.map(x=>({
       id:'o-'+x.id,
+      sourceId:x.id,
       tipo:'os',
       titulo:x.clientes?.nome||x.numero,
       texto:
@@ -65,16 +69,39 @@ export default function NotificationCenter({supabase,profile,session}){
         x.status==='em_atendimento'?'OS em atendimento':
         x.status==='agendada'?'OS agendada':
         'OS aberta',
-      prioridade:2
+      prioridade:2,
+      lida:lidos.has('o-'+x.id)
     }))
 
     return [...a,...o]
-  },[agenda,os])
+  },[agenda,os,lidos])
+
+  function persistirLidos(next){
+    const arr=[...next]
+    localStorage.setItem('fortal_notificacoes_lidas',JSON.stringify(arr))
+    setLidos(next)
+  }
+
+  function marcarLida(id,e){
+    e?.stopPropagation()
+    const next=new Set(lidos)
+    next.add(id)
+    persistirLidos(next)
+  }
+
+  function abrirItem(item){
+    marcarLida(item.id)
+    setOpen(false)
+    if(item.tipo==='agenda') onOpenAgenda?.(item.sourceId)
+    if(item.tipo==='os') onOpenOS?.(item.sourceId)
+  }
+
+  const naoLidas=itens.filter(x=>!x.lida).length
 
   return <>
     <button className="notifButton" onClick={()=>setOpen(!open)} title="Notificações">
       <Bell size={18}/>
-      {itens.length>0&&<span>{itens.length>99?'99+':itens.length}</span>}
+      {naoLidas>0&&<span>{naoLidas>99?'99+':naoLidas}</span>}
     </button>
 
     {open&&<>
@@ -88,11 +115,14 @@ export default function NotificationCenter({supabase,profile,session}){
         {itens.length===0?
           <div className="notifEmpty"><CheckCircle2/><b>Tudo em dia</b><span>Nenhum agendamento próximo ou OS pendente.</span></div>:
           <div className="notifList">
-            {itens.map(x=><div className="notifItem" key={x.id}>
+            {itens.map(x=><div className={`notifItem ${x.lida?'read':''}`} key={x.id} onClick={()=>abrirItem(x)}>
               <div className={`notifIcon ${x.tipo}`}>
                 {x.tipo==='agenda'?<CalendarDays size={17}/>:<AlertTriangle size={17}/>}
               </div>
-              <div><b>{x.titulo}</b><span>{x.texto}</span></div>
+              <div className="notifText"><b>{x.titulo}</b><span>{x.texto}</span></div>
+              <button className="markReadBtn" onClick={(e)=>marcarLida(x.id,e)} disabled={x.lida}>
+                {x.lida?'Lida':'Marcar como lida'}
+              </button>
             </div>)}
           </div>
         }
