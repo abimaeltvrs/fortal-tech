@@ -1,0 +1,45 @@
+:root{
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#e5e7eb;background:#08111f;font-synthesis:none
+}
+*{box-sizing:border-box}body{margin:0;background:#08111f}
+button{font:inherit}
+.app{min-height:100vh;display:grid;grid-template-columns:270px 1fr}
+.sidebar{background:#0b1526;border-right:1px solid #1e293b;padding:22px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 24px}
+.logo{width:44px;height:44px;border-radius:12px;background:#13b981;display:grid;place-items:center;color:#03110c;font-weight:900}
+.brand b{display:block;font-size:17px}.brand span,.profile span{display:block;color:#7f8ea3;font-size:12px;margin-top:2px}
+nav{display:flex;flex-direction:column;gap:5px}
+nav button{display:flex;align-items:center;gap:11px;background:transparent;border:0;color:#9aa9bc;padding:11px 12px;border-radius:10px;text-align:left;cursor:pointer}
+nav button:hover,nav button.active{background:#122238;color:white}
+nav button.active{box-shadow:inset 3px 0 #13b981}
+.profile{margin-top:auto;border-top:1px solid #1e293b;padding:18px 8px 0;display:flex;gap:10px;align-items:center}
+.avatar{width:36px;height:36px;border-radius:50%;background:#1f3148;display:grid;place-items:center;font-size:12px;font-weight:800}
+main{min-width:0}
+header{height:82px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:#0a1423;position:sticky;top:0;z-index:3}
+header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px;color:#13b981;font-weight:800}
+.status{font-size:13px;color:#8fa0b5}.status::first-letter{color:#13b981}
+.menuBtn{display:none;background:transparent;border:0;color:white}
+.content{padding:28px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.toolbar h2{margin:0 0 4px}.toolbar p,.panel p{margin:0;color:#8493a8;font-size:14px}
+.primary,.ghost,.agendaHeader button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer}
+.primary{background:#13b981;color:#03110c;font-weight:800;display:flex;align-items:center;gap:7px}
+.ghost,.agendaHeader button{background:#16253a;color:#cbd5e1;display:flex;align-items:center;gap:6px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
+.card,.panel{background:#0f1c2e;border:1px solid #213148;border-radius:14px}
+.card{padding:18px;display:flex;gap:13px;align-items:center}.cardIcon{width:42px;height:42px;border-radius:11px;background:#122c2a;color:#13b981;display:grid;place-items:center}
+.card span{display:block;color:#8da0b8;font-size:13px}.card strong{display:block;font-size:22px;margin-top:4px}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}.panel{padding:19px}
+.panelTitle{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}.panelTitle h3{margin:0 0 4px}
+.agendaItem{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid #1b2a3f}.agendaItem:first-child{border-top:0}.agendaItem.large{padding:16px 0}
+.time{display:flex;gap:6px;align-items:center;color:#13b981;font-weight:800;font-size:13px;min-width:74px}.grow{flex:1}.grow b,.grow span{display:block}.grow span{color:#8190a5;font-size:12px;margin-top:4px}
+.badge{background:#183126;color:#78e0b7;border:1px solid #23523f;padding:5px 8px;border-radius:999px;font-size:11px}
+.pending{padding:12px 0;border-top:1px solid #1b2a3f}.pending:first-of-type{border-top:0}.pending b,.pending span{display:block}.pending span{font-size:13px;color:#8ea0b5;margin-top:4px}.pending.ok{display:flex;gap:8px;align-items:center;color:#13b981}.pending.ok span{margin:0}
+.agendaHeader{display:flex;gap:8px;margin-bottom:8px}.empty{min-height:330px;display:grid;place-items:center;align-content:center;text-align:center;gap:8px}.empty svg{color:#13b981}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .app{display:block}.sidebar{position:fixed;left:-290px;z-index:10;width:270px;transition:.2s}.sidebar.open{left:0}
+  .menuBtn{display:block}.content{padding:18px}header{padding:0 18px}.status{display:none}.cards{grid-template-columns:1fr 1fr}
+  .toolbar{align-items:flex-start;gap:12px}.toolbar p{max-width:220px}.agendaItem{flex-wrap:wrap}.ghost{order:4}
+}
+@media(max-width:480px){.cards{grid-template-columns:1fr}.toolbar{flex-direction:column}}

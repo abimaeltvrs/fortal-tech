@@ -1,0 +1,9 @@
+{
+  "name": "FORTAL TECH",
+  "short_name": "FORTAL TECH",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Gestão técnica, OS, clientes, agenda, orçamentos e financeiro."
+}
