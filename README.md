@@ -1,35 +1,38 @@
-# FORTAL TECH V1.9
+# FORTAL TECH V1.9.1
 
-Novo módulo: Manuais / Assistente Técnico.
+Assistente Técnico conectado à OpenAI.
 
-Nesta etapa:
-- nova aba disponível para Administrador e Técnico;
-- Administrador envia PDFs;
-- cadastro por Fabricante, Modelo/Equipamento e Categoria;
-- biblioteca pesquisável;
-- abrir PDF dentro do dispositivo;
-- Administrador pode excluir manuais;
-- Técnico pode consultar, mas não alterar a biblioteca;
-- bucket privado no Supabase;
-- tabela de chunks e pgvector preparada para busca semântica;
-- interface de chat criada.
+Fluxo:
+1. Administrador envia o PDF.
+2. Toca em `Indexar IA`.
+3. Backend da Vercel baixa o PDF privado do Supabase.
+4. O PDF é enviado à OpenAI Files API.
+5. É criado um Vector Store específico para o manual.
+6. O arquivo é indexado.
+7. Status muda para `Pronto para IA`.
+8. Administrador ou Técnico seleciona o manual.
+9. Faz uma pergunta no chat.
+10. A Responses API usa File Search somente naquele manual.
 
-IMPORTANTE:
-A biblioteca de PDFs já funciona nesta versão.
-O chat ainda não inventa respostas sobre o PDF. Ele fica preparado e informa que falta configurar a API/indexador.
-Isso é proposital: a chave da IA nunca deve ficar no frontend.
+Segurança:
+- OPENAI_API_KEY permanece somente na Vercel;
+- nenhuma chave fica no frontend, GitHub ou APK;
+- PDFs continuam privados no Supabase;
+- o chat é instruído a não inventar respostas quando o manual não trouxer a informação.
 
-Próxima etapa:
-- criar backend seguro;
-- configurar chave da API;
-- extrair/indexar os PDFs;
-- gerar embeddings;
-- busca semântica;
-- respostas com citação de manual e página.
+Modelo:
+- `gpt-5.6-luna`, escolhido para reduzir custo do assistente.
+
+Observação:
+- File Search fornece citações ao arquivo utilizado.
+- número exato da página não é garantido pelo File Search em toda resposta;
+- uma etapa posterior pode adicionar extração paginada se for necessário citar página exata.
 
 Antes de testar:
-1. Execute `supabase/v1.9_manuais_assistente.sql`.
+1. Execute `supabase/v1.9.1_openai_file_search.sql`.
 2. Atualize o GitHub.
-3. Aguarde o deploy.
-4. Entre como Administrador.
-5. Abra Manuais / Assistente e envie um PDF.
+3. Aguarde a Vercel redeployar para carregar OPENAI_API_KEY.
+4. Abra Manuais.
+5. Em um PDF já enviado, toque em `Indexar IA`.
+6. Aguarde aparecer `Pronto para IA`.
+7. Selecione o manual e faça uma pergunta.
