@@ -1,34 +1,39 @@
-# FORTAL TECH V1.9.5
+# FORTAL TECH V1.10
 
-Correção do Assistente Técnico.
+Relatórios avançados.
 
-Problema corrigido:
-- a V1.9.4 possuía um erro no frontend que impedia a nova tela estruturada de compilar;
-- por isso a Vercel podia continuar servindo a versão anterior, com resposta em bloco corrido.
+Novos filtros:
+- Hoje
+- Este mês
+- Este ano
+- Período personalizado
+- Todo o período
+- Cliente
+- Técnico responsável
+- Tipo de atendimento
+- Status
 
-Nesta versão:
-- resposta realmente separada em:
-  - Resposta
-  - Causa
-  - Procedimento
-  - Atenção
-  - Observação
-  - Fonte
-- o Gemini procura referência visual quando a pergunta pede:
-  - mostrar;
-  - bornes;
-  - ligação;
-  - diagrama;
-  - esquema;
-  - componente;
-  - localização.
-- quando encontra uma página relevante, o app usa `pdfjs-dist` para renderizar a página REAL do PDF como imagem dentro do chat;
-- botão `Abrir página` continua disponível;
-- não gera desenho técnico inventado;
-- botão Limpar conversa permanece.
+Novos indicadores:
+- total de OS;
+- taxa de conclusão;
+- pendências;
+- emergenciais;
+- valor de materiais/peças utilizados;
+- valor de orçamentos aprovados;
+- a receber;
+- recebido.
 
-IMPORTANTE:
-Ao atualizar pelo GitHub, o `package.json` adiciona a dependência `pdfjs-dist`.
-A Vercel instalará essa dependência automaticamente no novo deploy.
+Novas análises:
+- produtividade por técnico;
+- OS concluídas por técnico;
+- clientes com mais atendimentos;
+- tipos de atendimento;
+- ranking de materiais/peças por quantidade e valor.
 
-Não há SQL novo.
+Exportação:
+- PDF gerencial completo;
+- CSV das OS filtradas.
+
+Tudo respeita os filtros escolhidos.
+
+Não há SQL novo nesta versão.
