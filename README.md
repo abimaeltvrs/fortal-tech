@@ -1,38 +1,30 @@
-# FORTAL TECH V1.9.1
+# FORTAL TECH V1.9.2
 
-Assistente Técnico conectado à OpenAI.
+Assistente Técnico migrado da OpenAI para Gemini.
 
-Fluxo:
-1. Administrador envia o PDF.
-2. Toca em `Indexar IA`.
-3. Backend da Vercel baixa o PDF privado do Supabase.
-4. O PDF é enviado à OpenAI Files API.
-5. É criado um Vector Store específico para o manual.
-6. O arquivo é indexado.
-7. Status muda para `Pronto para IA`.
-8. Administrador ou Técnico seleciona o manual.
-9. Faz uma pergunta no chat.
-10. A Responses API usa File Search somente naquele manual.
+O que mudou:
+- não depende mais de créditos da OpenAI;
+- usa `GEMINI_API_KEY` armazenada somente na Vercel;
+- modelo utilizado: `gemini-2.5-flash-lite`;
+- o modelo possui nível gratuito sujeito aos limites/quota do Google;
+- não existe mais botão `Indexar IA`;
+- qualquer PDF cadastrado fica pronto para consulta;
+- a cada pergunta, o backend obtém temporariamente o PDF privado do Supabase e envia seu conteúdo ao Gemini;
+- o Gemini é instruído a responder somente com base no PDF;
+- se não localizar a informação, deve dizer que não encontrou;
+- quando conseguir identificar seção ou página com segurança, pode citá-la;
+- não inventa página quando ela não puder ser determinada.
 
-Segurança:
-- OPENAI_API_KEY permanece somente na Vercel;
-- nenhuma chave fica no frontend, GitHub ou APK;
-- PDFs continuam privados no Supabase;
-- o chat é instruído a não inventar respostas quando o manual não trouxer a informação.
-
-Modelo:
-- `gpt-5.6-luna`, escolhido para reduzir custo do assistente.
-
-Observação:
-- File Search fornece citações ao arquivo utilizado.
-- número exato da página não é garantido pelo File Search em toda resposta;
-- uma etapa posterior pode adicionar extração paginada se for necessário citar página exata.
+Limites:
+- PDFs de até 50 MB para este fluxo;
+- o nível gratuito possui cotas de uso definidas pelo Google;
+- no Free Tier, o Google informa que dados podem ser usados para melhorar seus produtos.
 
 Antes de testar:
-1. Execute `supabase/v1.9.1_openai_file_search.sql`.
-2. Atualize o GitHub.
-3. Aguarde a Vercel redeployar para carregar OPENAI_API_KEY.
-4. Abra Manuais.
-5. Em um PDF já enviado, toque em `Indexar IA`.
-6. Aguarde aparecer `Pronto para IA`.
-7. Selecione o manual e faça uma pergunta.
+1. Confirme `GEMINI_API_KEY` em Vercel → Environment Variables.
+2. Execute `supabase/v1.9.2_gemini.sql`.
+3. Atualize o GitHub.
+4. Aguarde a Vercel ficar Ready.
+5. Abra o manual e faça uma pergunta no chat.
+
+A `OPENAI_API_KEY` pode permanecer cadastrada por enquanto, mas não é mais usada pelo Assistente Técnico desta versão.

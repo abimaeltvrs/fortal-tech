@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react'
-import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,BrainCircuit,CheckCircle2,RefreshCcw} from 'lucide-react'
+import {BookOpen,Upload,Search,Trash2,FileText,MessageSquare,Send,ExternalLink,Loader2,CheckCircle2} from 'lucide-react'
 
 export default function Manuais({supabase,profile}){
   const [lista,setLista]=useState([])
@@ -16,7 +16,7 @@ export default function Manuais({supabase,profile}){
   const [manualSelecionado,setManualSelecionado]=useState('')
   const [pergunta,setPergunta]=useState('')
   const [mensagens,setMensagens]=useState([
-    {role:'assistant',text:'Selecione um manual com status Pronto e faça sua pergunta. Eu vou pesquisar somente naquele documento.'}
+    {role:'assistant',text:'Selecione um manual e faça sua pergunta. O Gemini vai analisar somente o PDF selecionado.'}
   ])
   const inputRef=useRef(null)
   const chatEnd=useRef(null)
@@ -46,12 +46,12 @@ export default function Manuais({supabase,profile}){
       if(upErr)throw upErr
       const {data,error:dbErr}=await supabase.from('manuais_tecnicos').insert({
         fabricante:fabricante.trim(),modelo:modelo.trim(),categoria:categoria.trim()||null,
-        nome_arquivo:arquivo.name,arquivo_path:path,status_indexacao:'pendente'
+        nome_arquivo:arquivo.name,arquivo_path:path,status_indexacao:'pronto'
       }).select().single()
       if(dbErr)throw dbErr
       setFabricante('');setModelo('');setCategoria('');setArquivo(null)
       if(inputRef.current)inputRef.current.value=''
-      setSucesso('Manual enviado. Agora toque em “Indexar IA”.')
+      setSucesso('Manual enviado e pronto para consultas com Gemini.')
       await carregar()
       setManualSelecionado(data.id)
     }catch(e){setErro(e.message||'Falha ao enviar manual.')}
@@ -69,69 +69,6 @@ export default function Manuais({supabase,profile}){
     catch(e){setErro(e.message)}
   }
 
-  async function indexar(m){
-    setIndexando(m.id);setErro('');setSucesso('')
-    try{
-      await supabase.from('manuais_tecnicos').update({status_indexacao:'processando'}).eq('id',m.id)
-      setLista(x=>x.map(i=>i.id===m.id?{...i,status_indexacao:'processando'}:i))
-      const signedUrl=await signed(m)
-      const r=await fetch('/api/index-manual',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({signedUrl,filename:m.nome_arquivo,fabricante:m.fabricante,modelo:m.modelo})
-      })
-      const data=await r.json()
-      if(!r.ok)throw new Error(data.error||'Falha na indexação.')
-
-      let status=data.status
-      if(data.pending){
-        for(let i=0;i<15&&status!=='completed';i++){
-          await new Promise(resolve=>setTimeout(resolve,1500))
-          const sr=await fetch('/api/manual-status',{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({vectorStoreId:data.vector_store_id,fileId:data.openai_file_id})
-          })
-          const sd=await sr.json()
-          if(!sr.ok)throw new Error(sd.error||'Falha ao consultar indexação.')
-          status=sd.status
-          if(status==='failed'||status==='cancelled')throw new Error(`Indexação terminou como ${status}.`)
-        }
-      }
-
-      const pronto=status==='completed'
-      const {error}=await supabase.from('manuais_tecnicos').update({
-        openai_file_id:data.openai_file_id,
-        vector_store_id:data.vector_store_id,
-        status_indexacao:pronto?'pronto':'processando',
-        indexado_em:pronto?new Date().toISOString():null
-      }).eq('id',m.id)
-      if(error)throw error
-      await carregar()
-      setSucesso(pronto?'Manual indexado. O Assistente Técnico já pode consultá-lo.':'Manual enviado para indexação. Tente atualizar o status em alguns instantes.')
-    }catch(e){
-      await supabase.from('manuais_tecnicos').update({status_indexacao:'erro'}).eq('id',m.id)
-      await carregar()
-      setErro(`Não foi possível indexar o manual: ${e.message}`)
-    }finally{setIndexando(null)}
-  }
-
-  async function verificarStatus(m){
-    if(!m.vector_store_id||!m.openai_file_id)return indexar(m)
-    setIndexando(m.id)
-    try{
-      const r=await fetch('/api/manual-status',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({vectorStoreId:m.vector_store_id,fileId:m.openai_file_id})
-      })
-      const data=await r.json()
-      if(!r.ok)throw new Error(data.error)
-      const status=data.status==='completed'?'pronto':data.status
-      await supabase.from('manuais_tecnicos').update({
-        status_indexacao:status,indexado_em:status==='pronto'?new Date().toISOString():m.indexado_em
-      }).eq('id',m.id)
-      await carregar()
-    }catch(e){setErro(e.message)}
-    finally{setIndexando(null)}
-  }
 
   async function excluir(m){
     if(!confirm(`Excluir o manual ${m.fabricante} ${m.modelo}?`))return
@@ -148,18 +85,19 @@ export default function Manuais({supabase,profile}){
     const m=lista.find(x=>x.id===manualSelecionado)
     if(!q)return
     if(!m){setErro('Selecione um manual.');return}
-    if(m.status_indexacao!=='pronto'||!m.vector_store_id){
-      setErro('Este manual ainda não está pronto para consultas. Use “Indexar IA”.');return
+    if(!m.arquivo_path){
+      setErro('Este manual não possui um PDF disponível para consulta.');return
     }
     setErro('')
     setPergunta('')
     setMensagens(x=>[...x,{role:'user',text:q}])
     setPerguntando(true)
     try{
-      const r=await fetch('/api/manual-chat',{
+      const signedUrl=await signed(m)
+      const r=await fetch('/api/gemini-manual-chat',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          question:q,vectorStoreId:m.vector_store_id,
+          question:q,signedUrl,
           fabricante:m.fabricante,modelo:m.modelo,nomeArquivo:m.nome_arquivo
         })
       })
@@ -184,7 +122,7 @@ export default function Manuais({supabase,profile}){
 
   return <>
     <div className="toolbar">
-      <div><h2>Manuais / Assistente Técnico</h2><p>Consulte os manuais dos fabricantes usando inteligência artificial.</p></div>
+      <div><h2>Manuais / Assistente Técnico</h2><p>Consulte os manuais dos fabricantes com Gemini, usando o próprio PDF como fonte.</p></div>
     </div>
     {erro&&<div className="warningBox">{erro}</div>}
     {sucesso&&<div className="successBox">{sucesso}</div>}
@@ -212,15 +150,10 @@ export default function Manuais({supabase,profile}){
               <b>{m.fabricante} • {m.modelo}</b>
               <span>{m.categoria||'Manual técnico'}</span>
               <small>{m.nome_arquivo}</small>
-              <em className={`indexStatus st-${m.status_indexacao}`}>
-                {m.status_indexacao==='pronto'?<><CheckCircle2 size={11}/> Pronto para IA</>:
-                 m.status_indexacao==='processando'?<><Loader2 className="spin" size={11}/> Indexando</>:
-                 m.status_indexacao==='erro'?'Erro na indexação':'Aguardando indexação'}
-              </em>
+              <em className="indexStatus st-pronto"><CheckCircle2 size={11}/> Pronto para Gemini</em>
             </div>
             <div className="manualCardActions" onClick={e=>e.stopPropagation()}>
               <button title="Abrir PDF" onClick={()=>abrir(m)}><ExternalLink size={15}/></button>
-              {admin&&m.status_indexacao!=='pronto'&&<button title="Indexar IA" disabled={indexando===m.id} onClick={()=>m.status_indexacao==='processando'&&m.vector_store_id?verificarStatus(m):indexar(m)}><BrainCircuit size={15}/></button>}
               {admin&&<button title="Excluir" onClick={()=>excluir(m)}><Trash2 size={15}/></button>}
             </div>
           </div>)}
@@ -228,7 +161,7 @@ export default function Manuais({supabase,profile}){
       </section>
 
       <section className="panel manualChat">
-        <div className="manualChatHead"><MessageSquare size={18}/><div><h3>Assistente Técnico</h3><span>{selected?`${selected.fabricante} ${selected.modelo} • ${selected.status_indexacao}`:'Selecione um manual'}</span></div></div>
+        <div className="manualChatHead"><MessageSquare size={18}/><div><h3>Assistente Técnico</h3><span>{selected?`${selected.fabricante} ${selected.modelo} • Gemini`:'Selecione um manual'}</span></div></div>
         <div className="chatMessages">
           {mensagens.map((m,i)=><div key={i} className={`chatBubble ${m.role}`}>
             <div>{m.text}</div>{m.source&&<small>{m.source}</small>}
@@ -240,7 +173,7 @@ export default function Manuais({supabase,profile}){
           <input disabled={perguntando} value={pergunta} onChange={e=>setPergunta(e.target.value)} placeholder="Ex.: O que significa o erro E9?"/>
           <button className="primary" disabled={perguntando||!selected}><Send size={16}/></button>
         </form>
-        <div className="aiSetupNotice">O assistente pesquisa somente o manual selecionado. Confirme procedimentos críticos diretamente no PDF quando necessário.</div>
+        <div className="aiSetupNotice">O Gemini analisa somente o PDF selecionado. Para procedimentos críticos, confirme a orientação diretamente no manual.</div>
       </section>
     </div>
   </>
