@@ -1,22 +1,10 @@
-# FORTAL TECH V1.3.1
+# FORTAL TECH V1.3.2
 
-Correções:
-- corrige erro `duplicate key value violates unique constraint "os_sistemas_pkey"`;
-- IDs dos sistemas/checklists/materiais passam a ser gerados pelo próprio Supabase;
-- sincronização offline usa o mesmo fluxo seguro;
-- adiciona botão inteligente `Criar` no Dashboard.
+Hotfix de salvamento da Ordem de Serviço.
 
-Atalhos de criação:
-- Nova OS;
-- Novo agendamento;
-- Novo cliente;
-- Novo orçamento;
-- Movimentação financeira.
+Correção:
+- campos `horario_chegada` e `horario_termino` vazios agora são enviados como `null`;
+- `data_visita` vazia também passa a ser enviada como `null`;
+- evita o erro `invalid input syntax for type time`.
 
-Os três primeiros já abrem diretamente os formulários existentes.
-Orçamento e Financeiro ficam preparados para as próximas etapas.
-
-Antes de testar:
-1. Execute `supabase/v1.3.1_hotfix.sql`.
-2. Atualize o GitHub com esta versão.
-3. Aguarde a Vercel ficar Ready.
+Não é necessário executar SQL nesta versão.

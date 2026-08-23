@@ -208,6 +208,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
       id:osId,
       numero:edit?.numero||numeroOS(),
       tecnico_id:profile.perfil==='admin'?form.tecnico_id:session.user.id,
+      data_visita:form.data_visita||null,
+      horario_chegada:form.horario_chegada||null,
+      horario_termino:form.horario_termino||null,
+      encerrada_em:form.encerrada_em||null,
       updated_at:new Date().toISOString()
     }
     const sistPayload=sistemas.map(x=>({
