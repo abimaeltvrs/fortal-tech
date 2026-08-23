@@ -15,6 +15,7 @@ import NotificationCenter from './NotificationCenter'
 import Orcamentos from './Orcamentos'
 import Financeiro from './Financeiro'
 import Relatorios from './Relatorios'
+import Usuarios from './Usuarios'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -167,6 +168,17 @@ export default function App(){
     return()=>window.removeEventListener('fortal:open-os',openLinkedOS)
   },[])
 
+  const visiblePages=useMemo(()=>{
+    if(profile?.perfil==='admin')return pages
+    return pages.filter(p=>['dashboard','agenda','clientes','os'].includes(p[0]))
+  },[profile?.perfil])
+
+  useEffect(()=>{
+    if(profile?.perfil!=='admin' && ['orcamentos','financeiro','relatorios','usuarios','configuracoes'].includes(page)){
+      setPage('dashboard')
+    }
+  },[page,profile?.perfil])
+
   const current=useMemo(()=>pages.find(p=>p[0]===page),[page])
   if(loading)return <div className="boot">Carregando FORTAL TECH...</div>
   if(!supabase)return <div className="boot errorBox">Supabase não configurado. Verifique as variáveis de ambiente.</div>
@@ -228,6 +240,7 @@ export default function App(){
          page==='orcamentos'?<Orcamentos supabase={supabase} profile={profile} session={session}/>:
          page==='financeiro'?<Financeiro supabase={supabase} orcamentoFiltro={financeOrcamentoId} clearFiltro={()=>setFinanceOrcamentoId(null)}/>:
          page==='relatorios'?<Relatorios supabase={supabase}/>:
+         page==='usuarios'?<Usuarios supabase={supabase} session={session} profile={profile}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>

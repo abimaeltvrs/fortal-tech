@@ -1126,3 +1126,15 @@ header h1{font-size:21px;margin:2px 0}.eyebrow{font-size:10px;letter-spacing:2px
  .reportTable{min-width:640px}
  .panel:has(.reportTable){overflow-x:auto}
 }
+
+/* ===== V1.8 - Usuários e permissões ===== */
+.userInfoBox{display:flex;gap:10px;align-items:flex-start;border:1px solid #285947;background:#15372d;border-radius:10px;padding:12px;margin-bottom:14px}.userInfoBox>svg{color:#7de3b8;flex:none}.userInfoBox b,.userInfoBox span{display:block}.userInfoBox b{font-size:11px;color:#b8ead7}.userInfoBox span{font-size:9px;color:#83a696;margin-top:3px;line-height:1.45}
+.usersList{display:flex;flex-direction:column}.userRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 2px;border-top:1px solid #1b2a3f}.userRow:first-child{border-top:0}
+.userIdentity{display:flex;align-items:center;gap:10px;min-width:0}.userAvatar{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none}.userAvatar.role-admin{background:#173b2e;color:#7de3b8}.userAvatar.role-tecnico{background:#173047;color:#82c9ff}
+.userIdentity b,.userIdentity span,.userIdentity em{display:block}.userIdentity b{font-size:12px}.userIdentity b small{font-size:7px;color:#13b981;margin-left:5px}.userIdentity span{font-size:10px;color:#8294a8;margin-top:3px}.userIdentity em{font-size:9px;color:#677b91;font-style:normal;margin-top:3px}
+.userControls{display:flex;align-items:flex-end;gap:8px}.userControls label span{display:block;font-size:8px;color:#71849a;margin-bottom:4px}.userControls select{border:1px solid #26374e;background:#0b1727;color:#d6e0ea;border-radius:8px;padding:8px;font-size:10px}
+.activateUser,.deactivateUser{border-radius:8px;padding:8px 9px;display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;cursor:pointer}.activateUser{border:1px solid #28624d;background:#15372d;color:#7de3b8}.deactivateUser{border:1px solid #57313a;background:#321a20;color:#fda4af}
+.permissionCompare{display:grid;grid-template-columns:1fr 1fr;gap:10px}.permissionCompare>div{border:1px solid #213148;background:#0b1727;border-radius:10px;padding:13px}.permissionCompare svg{color:#13b981;margin-bottom:7px}.permissionCompare b,.permissionCompare span{display:block}.permissionCompare b{font-size:12px;margin-bottom:8px}.permissionCompare span{font-size:9px;color:#9aaabd;padding:4px 0;border-top:1px solid #17263a}.permissionCompare span.blocked{color:#9a6670}
+@media(max-width:760px){
+ .userRow{align-items:flex-start;flex-direction:column}.userControls{width:100%;display:grid;grid-template-columns:1fr auto}.userControls select{width:100%}.permissionCompare{grid-template-columns:1fr}
+}

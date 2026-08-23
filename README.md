@@ -1,35 +1,34 @@
-# FORTAL TECH V1.7
+# FORTAL TECH V1.8
 
-Novo módulo: Relatórios.
+Módulo de Usuários e Permissões.
 
-Filtros:
-- Hoje
-- Este mês
-- Este ano
-- Todo o período
-- Cliente
-- Tipo de atendimento
-- Status da OS
-- Busca textual
+Administrador:
+- visualiza todos os usuários;
+- altera perfil entre Administrador e Técnico;
+- ativa/desativa acesso;
+- acesso total ao sistema.
 
-Indicadores:
-- total de OS;
-- concluídas;
-- pendentes;
-- emergenciais;
-- valor de orçamentos aprovados;
-- valores a receber;
-- valores recebidos.
+Técnico:
+- Dashboard operacional;
+- Agenda;
+- Clientes;
+- Ordens de Serviço;
+- não visualiza Orçamentos;
+- não visualiza Financeiro;
+- não visualiza Relatórios administrativos;
+- não visualiza Usuários;
+- não visualiza Configurações administrativas.
 
-Análises:
-- atendimentos por tipo;
-- clientes com mais atendimentos;
-- tabela detalhada de OS.
+Segurança:
+- técnico não consegue acessar páginas administrativas apenas digitando/navegando internamente;
+- administrador não pode desativar o próprio usuário pela tela;
+- administrador não pode remover o próprio perfil administrativo pela tela.
 
-PDF:
-- gera relatório gerencial respeitando os filtros selecionados;
-- inclui resumo operacional;
-- inclui resumo financeiro;
-- inclui relação das OS do período.
+Cadastro:
+- o novo usuário cria sua conta pela tela de acesso;
+- depois o administrador define o perfil na aba Usuários.
 
-Não há SQL novo nesta versão.
+Antes de testar:
+1. Execute `supabase/v1.8_usuarios.sql`.
+2. Atualize o GitHub.
+3. Aguarde a Vercel ficar Ready.
