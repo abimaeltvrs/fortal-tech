@@ -1767,3 +1767,169 @@ input:focus,select:focus,textarea:focus,
 ::-webkit-scrollbar-track{background:#080a0c}
 ::-webkit-scrollbar-thumb{background:#33383e;border-radius:999px}
 ::-webkit-scrollbar-thumb:hover{background:#5a4a0c}
+
+/* ==========================================================
+   FORTAL TECH V1.12.2 — Refinamento dourado
+   Verde reservado para estados positivos/online.
+   ========================================================== */
+
+/* Notícias & Mercado */
+.newsCard,
+.newsPanel,
+.marketNews,
+.newsSection{
+  border-color:#2e3237!important;
+}
+.newsCard .newsIcon,
+.newsPanel .newsIcon,
+.marketNews .newsIcon,
+.newsSection .newsIcon,
+.newsHeader svg{
+  color:var(--ft-gold)!important;
+  background:rgba(247,200,0,.09)!important;
+  border-color:rgba(247,200,0,.15)!important;
+}
+.newsCard .source,
+.newsCard .sourceName,
+.newsCard .newsSource,
+.newsPanel .source,
+.newsPanel .sourceName,
+.marketNews .source,
+.newsSection .source,
+.newsSource{
+  color:var(--ft-gold)!important;
+}
+.newsCard a,
+.newsPanel a,
+.marketNews a,
+.newsSection a,
+.readNews,
+.newsReadMore{
+  color:#f3cf38!important;
+}
+.newsCard a:hover,
+.newsPanel a:hover,
+.readNews:hover,
+.newsReadMore:hover{
+  color:#ffe56b!important;
+}
+
+/* Chips de assuntos / filtros de notícia */
+.newsTopics button,
+.newsFilters button,
+.newsCategories button,
+.topicChip,
+.newsChip{
+  background:#12161a!important;
+  border-color:#343940!important;
+  color:#8d939c!important;
+}
+.newsTopics button.active,
+.newsFilters button.active,
+.newsCategories button.active,
+.topicChip.active,
+.newsChip.active,
+.newsTopics button[aria-pressed="true"],
+.newsFilters button[aria-pressed="true"]{
+  color:#1a1500!important;
+  background:linear-gradient(135deg,var(--ft-gold-2),var(--ft-gold))!important;
+  border-color:#e9bd00!important;
+}
+
+/* Indicadores do carrossel */
+.newsDots button,
+.carouselDots button,
+.dot{
+  background:#353a40!important;
+}
+.newsDots button.active,
+.carouselDots button.active,
+.dot.active{
+  background:var(--ft-gold)!important;
+}
+.newsArrow,
+.carouselArrow{
+  color:#808791!important;
+}
+.newsArrow:hover,
+.carouselArrow:hover{
+  color:var(--ft-gold)!important;
+}
+
+/* Filtros e controles gerais: selecionado = dourado */
+.filterChip,
+.segmented button,
+.tabs button{
+  border-color:#343940!important;
+  color:#8d939c!important;
+}
+.filterChip.active,
+.segmented button.active,
+.tabs button.active{
+  background:rgba(247,200,0,.10)!important;
+  color:var(--ft-gold)!important;
+  border-color:#665000!important;
+}
+
+/* Destaques que ainda usavam verde como identidade */
+.accentText,
+.sectionAccent,
+.highlightLabel,
+.linkAccent{
+  color:var(--ft-gold)!important;
+}
+.accentIcon,
+.sectionAccentIcon{
+  color:var(--ft-gold)!important;
+}
+
+/* Dashboard */
+.dashboardHero,
+.heroPanel{
+  background:
+    radial-gradient(circle at 87% 18%,rgba(247,200,0,.12),transparent 34%),
+    linear-gradient(145deg,#0d1013,#0a0c0f)!important;
+  border-color:#34312a!important;
+}
+.dashboardHero .eyebrow,
+.heroPanel .eyebrow{
+  color:var(--ft-gold)!important;
+}
+
+/* Botões de ação que não representam sucesso */
+.refreshBtn,
+.filterBtn,
+.settingsBtn{
+  color:#aeb3ba!important;
+  border-color:#343940!important;
+  background:#11151a!important;
+}
+.refreshBtn:hover,
+.filterBtn:hover,
+.settingsBtn:hover{
+  color:var(--ft-gold)!important;
+  border-color:#665000!important;
+}
+
+/* Mantém verde APENAS para estados funcionais positivos */
+.connection.online,
+.successBox,
+.status-concluido,
+.status-confirmado,
+.budget-aprovado,
+.fin-recebido,
+.financeStatus.recebido,
+.financeStatus.pago,
+.cashTypeIcon.entrada,
+.incomeBtn{
+  /* regras semânticas das versões anteriores permanecem */
+}
+
+/* Pequeno reforço visual do menu inferior */
+.mobileBottomNav button.active{
+  color:var(--ft-gold)!important;
+  background:rgba(247,200,0,.07)!important;
+}
+.mobileBottomNav button.active svg{
+  color:var(--ft-gold)!important;
+}
