@@ -10,6 +10,7 @@ import Login from './Login'
 import Clientes from './Clientes'
 import Agenda from './Agenda'
 import OrdensServico from './OrdensServico'
+import DashboardReal from './DashboardReal'
 import InstallApp from './InstallApp'
 import {syncPendingChanges} from './sync'
 
@@ -178,7 +179,7 @@ export default function App(){
         </div>
       </header>
       <div className="content">
-        {page==='dashboard'?<Dashboard session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)}/>:
+        {page==='dashboard'?<DashboardReal supabase={supabase} session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)}/>:
          page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
