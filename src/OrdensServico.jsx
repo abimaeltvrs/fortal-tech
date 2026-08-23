@@ -119,6 +119,12 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
 
   useEffect(()=>{carregar()},[profile.perfil])
 
+  useEffect(()=>{
+    const abrir=()=>novo()
+    window.addEventListener('fortal:new-os',abrir)
+    return()=>window.removeEventListener('fortal:new-os',abrir)
+  },[tecnicos,profile.perfil])
+
   const filtradas=useMemo(()=>{
     const q=busca.toLowerCase().trim()
     if(!q)return lista
@@ -204,9 +210,25 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
       tecnico_id:profile.perfil==='admin'?form.tecnico_id:session.user.id,
       updated_at:new Date().toISOString()
     }
-    const sistPayload=sistemas.map(x=>({...x,os_id:osId}))
-    const checkPayload=checklist.map(x=>({...x,os_id:osId}))
-    const matPayload=materiais.filter(x=>x.descricao.trim()).map(x=>({...x,os_id:osId,quantidade:Number(x.quantidade||1)}))
+    const sistPayload=sistemas.map(x=>({
+      os_id:osId,
+      sistema:x.sistema,
+      outro_descricao:x.outro_descricao||null
+    }))
+    const checkPayload=checklist.map(x=>({
+      os_id:osId,
+      sistema:x.sistema,
+      grupo:x.grupo||null,
+      item:x.item,
+      status:x.status||'nao_verificado',
+      observacao:x.observacao||''
+    }))
+    const matPayload=materiais.filter(x=>x.descricao.trim()).map(x=>({
+      os_id:osId,
+      descricao:x.descricao.trim(),
+      quantidade:Number(x.quantidade||1),
+      unidade:x.unidade||'un'
+    }))
     const bundle={os:osPayload,sistemas:sistPayload,checklist:checkPayload,materiais:matPayload}
 
     try{
@@ -219,21 +241,32 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus}){
         await supabase.from('os_checklist').delete().eq('os_id',osId)
         await supabase.from('os_materiais').delete().eq('os_id',osId)
 
+        let savedSistemas=[]
+        let savedChecklist=[]
+        let savedMateriais=[]
+
         if(sistPayload.length){
-          const {error}=await supabase.from('os_sistemas').insert(sistPayload)
+          const {data:rows,error}=await supabase.from('os_sistemas').insert(sistPayload).select()
           if(error) throw error
+          savedSistemas=rows||[]
         }
         if(checkPayload.length){
-          const {error}=await supabase.from('os_checklist').insert(checkPayload)
+          const {data:rows,error}=await supabase.from('os_checklist').insert(checkPayload).select()
           if(error) throw error
+          savedChecklist=rows||[]
         }
         if(matPayload.length){
-          const {error}=await supabase.from('os_materiais').insert(matPayload)
+          const {data:rows,error}=await supabase.from('os_materiais').insert(matPayload).select()
           if(error) throw error
+          savedMateriais=rows||[]
         }
 
         await saveLocalOS(data,'synced')
-        await replaceLocalOSChildren(osId,{sistemas:sistPayload,checklist:checkPayload,materiais:matPayload})
+        await replaceLocalOSChildren(osId,{
+          sistemas:savedSistemas,
+          checklist:savedChecklist,
+          materiais:savedMateriais
+        })
       }else{
         await saveLocalOS(osPayload,'pending')
         await replaceLocalOSChildren(osId,{sistemas:sistPayload,checklist:checkPayload,materiais:matPayload})

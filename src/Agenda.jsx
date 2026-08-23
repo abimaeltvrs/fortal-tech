@@ -75,6 +75,12 @@ export default function Agenda({supabase,profile,session,setSyncStatus}){
   }
 
   useEffect(()=>{carregar()},[profile?.perfil])
+
+  useEffect(()=>{
+    const abrir=()=>novo()
+    window.addEventListener('fortal:new-agendamento',abrir)
+    return()=>window.removeEventListener('fortal:new-agendamento',abrir)
+  },[tecnicos,profile?.perfil])
   useEffect(()=>{
     const fn=async()=>{await syncPendingChanges(supabase,setSyncStatus);await carregar()}
     window.addEventListener('online',fn)

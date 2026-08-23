@@ -2,7 +2,8 @@ import React,{useEffect,useMemo,useState} from 'react'
 import {
   LayoutDashboard,CalendarDays,Users,ClipboardList,FileText,WalletCards,
   BarChart3,UserCog,Settings,Plus,Wrench,AlertTriangle,CheckCircle2,
-  Menu,LogOut,Cloud,CloudOff,RefreshCcw,Clock
+  Menu,LogOut,Cloud,CloudOff,RefreshCcw,Clock,ChevronDown,
+  UserPlus,CalendarPlus,Receipt,WalletMinimal
 } from 'lucide-react'
 import {supabase} from './supabase'
 import Login from './Login'
@@ -20,7 +21,7 @@ const pages=[
   ['configuracoes','Configurações',Settings]
 ]
 
-function Dashboard({session,profile}){
+function Dashboard({session,profile,onQuickCreate}){
   const [agenda,setAgenda]=useState([])
   const [loading,setLoading]=useState(true)
 
@@ -39,7 +40,7 @@ function Dashboard({session,profile}){
   return <>
     <div className="toolbar">
       <div><h2>Visão geral</h2><p>Acompanhe o movimento da FORTAL TECH.</p></div>
-      <button className="primary"><Plus size={18}/> Nova OS</button>
+      <button className="primary" onClick={onQuickCreate}><Plus size={18}/> Criar <ChevronDown size={16}/></button>
     </div>
 
     <div className="cards">
@@ -78,6 +79,31 @@ export default function App(){
   const [open,setOpen]=useState(false)
   const [online,setOnline]=useState(navigator.onLine)
   const [syncStatus,setSyncStatus]=useState('synced')
+  const [quickCreate,setQuickCreate]=useState(false)
+
+  function abrirCriacao(tipo){
+    setQuickCreate(false)
+    if(tipo==='os'){
+      setPage('os')
+      setTimeout(()=>window.dispatchEvent(new Event('fortal:new-os')),50)
+    }
+    if(tipo==='agenda'){
+      setPage('agenda')
+      setTimeout(()=>window.dispatchEvent(new Event('fortal:new-agendamento')),50)
+    }
+    if(tipo==='cliente'){
+      setPage('clientes')
+      setTimeout(()=>window.dispatchEvent(new Event('fortal:new-cliente')),50)
+    }
+    if(tipo==='orcamento'){
+      setPage('orcamentos')
+      setTimeout(()=>alert('O módulo de Orçamentos será ativado na próxima etapa.'),80)
+    }
+    if(tipo==='financeiro'){
+      setPage('financeiro')
+      setTimeout(()=>alert('O módulo Financeiro será ativado em uma próxima etapa.'),80)
+    }
+  }
 
   useEffect(()=>{
     if(!supabase){setLoading(false);return}
@@ -132,6 +158,15 @@ export default function App(){
       </div>
     </aside>
 
+    {quickCreate && <button className="quickCreateOverlay" aria-label="Fechar atalhos" onClick={()=>setQuickCreate(false)}></button>}
+    {quickCreate && <div className="quickCreateMenu">
+      <button onClick={()=>abrirCriacao('os')}><ClipboardList size={18}/><span><b>Nova OS</b><small>Criar ordem de serviço</small></span></button>
+      <button onClick={()=>abrirCriacao('agenda')}><CalendarPlus size={18}/><span><b>Novo agendamento</b><small>Adicionar atendimento à agenda</small></span></button>
+      <button onClick={()=>abrirCriacao('cliente')}><UserPlus size={18}/><span><b>Novo cliente</b><small>Cadastrar cliente ou condomínio</small></span></button>
+      {profile.perfil==='admin' && <button onClick={()=>abrirCriacao('orcamento')}><Receipt size={18}/><span><b>Novo orçamento</b><small>Criar proposta comercial</small></span></button>}
+      {profile.perfil==='admin' && <button onClick={()=>abrirCriacao('financeiro')}><WalletMinimal size={18}/><span><b>Movimentação</b><small>Registrar entrada ou saída</small></span></button>}
+    </div>}
+
     <main>
       <header>
         <button className="menuBtn" onClick={()=>setOpen(!open)}><Menu/></button>
@@ -143,7 +178,7 @@ export default function App(){
         </div>
       </header>
       <div className="content">
-        {page==='dashboard'?<Dashboard session={session} profile={profile}/>:
+        {page==='dashboard'?<Dashboard session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)}/>:
          page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus}/>:

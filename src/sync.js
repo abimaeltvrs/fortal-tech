@@ -59,24 +59,50 @@ export async function syncPendingChanges(supabase,onStatus=()=>{}){
           await supabase.from('os_checklist').delete().eq('os_id',osData.id)
           await supabase.from('os_materiais').delete().eq('os_id',osData.id)
 
+          let savedSistemas=[]
+          let savedChecklist=[]
+          let savedMateriais=[]
+
           if(bundle.sistemas?.length){
-            const {error}=await supabase.from('os_sistemas').insert(bundle.sistemas.map(x=>({...x,os_id:osData.id})))
+            const payload=bundle.sistemas.map(x=>({
+              os_id:osData.id,
+              sistema:x.sistema,
+              outro_descricao:x.outro_descricao||null
+            }))
+            const {data,error}=await supabase.from('os_sistemas').insert(payload).select()
             if(error) throw error
+            savedSistemas=data||[]
           }
           if(bundle.checklist?.length){
-            const {error}=await supabase.from('os_checklist').insert(bundle.checklist.map(x=>({...x,os_id:osData.id})))
+            const payload=bundle.checklist.map(x=>({
+              os_id:osData.id,
+              sistema:x.sistema,
+              grupo:x.grupo||null,
+              item:x.item,
+              status:x.status||'nao_verificado',
+              observacao:x.observacao||''
+            }))
+            const {data,error}=await supabase.from('os_checklist').insert(payload).select()
             if(error) throw error
+            savedChecklist=data||[]
           }
           if(bundle.materiais?.length){
-            const {error}=await supabase.from('os_materiais').insert(bundle.materiais.map(x=>({...x,os_id:osData.id})))
+            const payload=bundle.materiais.map(x=>({
+              os_id:osData.id,
+              descricao:x.descricao,
+              quantidade:Number(x.quantidade||1),
+              unidade:x.unidade||'un'
+            }))
+            const {data,error}=await supabase.from('os_materiais').insert(payload).select()
             if(error) throw error
+            savedMateriais=data||[]
           }
 
           await offlineDB.ordensServico.put({...osData,_syncStatus:'synced'})
           await replaceLocalOSChildren(osData.id,{
-            sistemas:bundle.sistemas||[],
-            checklist:bundle.checklist||[],
-            materiais:bundle.materiais||[]
+            sistemas:savedSistemas,
+            checklist:savedChecklist,
+            materiais:savedMateriais
           })
         }
         if(item.action==='delete'){
