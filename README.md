@@ -1,39 +1,34 @@
-# FORTAL TECH V1.10
+# FORTAL TECH V1.11 — Gestão Financeira / Caixa
 
-Relatórios avançados.
+O Financeiro agora funciona como caixa da empresa.
 
-Novos filtros:
-- Hoje
-- Este mês
-- Este ano
-- Período personalizado
-- Todo o período
-- Cliente
-- Técnico responsável
-- Tipo de atendimento
-- Status
+Principais recursos:
+- lançamento manual de Entrada;
+- lançamento manual de Saída;
+- contas a receber;
+- contas a pagar;
+- saldo de caixa;
+- entradas recebidas;
+- saídas pagas;
+- valores vencidos;
+- categorias financeiras;
+- forma de pagamento;
+- vínculo opcional de entrada com cliente;
+- fornecedor/favorecido nas saídas;
+- observações;
+- filtros por período, tipo, status e categoria;
+- busca de movimentações.
 
-Novos indicadores:
-- total de OS;
-- taxa de conclusão;
-- pendências;
-- emergenciais;
-- valor de materiais/peças utilizados;
-- valor de orçamentos aprovados;
-- a receber;
-- recebido.
+Regra do Caixa:
+- Entrada pendente = conta a receber e NÃO aumenta o saldo;
+- Entrada recebida = aumenta o caixa;
+- Saída pendente = conta a pagar e NÃO reduz o saldo;
+- Saída paga = reduz o caixa.
 
-Novas análises:
-- produtividade por técnico;
-- OS concluídas por técnico;
-- clientes com mais atendimentos;
-- tipos de atendimento;
-- ranking de materiais/peças por quantidade e valor.
+Integração:
+- lançamentos antigos provenientes de orçamento são preservados;
+- lançamentos de orçamento continuam identificados;
+- lançamento automático de orçamento não pode ser excluído pelo Caixa.
 
-Exportação:
-- PDF gerencial completo;
-- CSV das OS filtradas.
-
-Tudo respeita os filtros escolhidos.
-
-Não há SQL novo nesta versão.
+IMPORTANTE:
+Execute `supabase/v1.11_financeiro_caixa.sql` antes de testar.
