@@ -1,19 +1,14 @@
-# FORTAL TECH V1.12.8 — Hotfix definitivo de salvamento/sincronização da OS
+# FORTAL TECH V1.12.9
 
-Correções:
-- sanitização centralizada do payload da tabela `ordens_servico`;
-- `clientes` e outros campos de relacionamento nunca são enviados ao Supabase;
-- a fila de sincronização offline também é higienizada antes de enviar OS antigas;
-- bundles antigos salvos offline são filtrados no momento da sincronização;
-- service worker atualizado para `fortal-tech-v1.12.8-pwa`;
-- HTML/navegação passam a priorizar a versão da rede quando houver internet;
-- caches antigos do PWA são removidos ao ativar a nova versão;
-- sistema de rascunho permanece ativo.
+Atualização visual e interativa do Dashboard e Ordens de Serviço.
 
-Não há SQL novo nesta versão.
+- Cards do Dashboard agora abrem a lista de OS já filtrada.
+- Resumo por status é clicável.
+- OS recentes do Dashboard são clicáveis.
+- Filtros rápidos de status na tela de OS.
+- Cores por status com faixa lateral e selo.
+- Legenda de cores na tela de OS.
+- Clique no card da OS continua abrindo somente a visualização; edição permanece no botão específico.
+- Mantidas correções V1.12.8 e rascunho automático.
 
-Após o deploy:
-1. Abra o site pelo navegador uma vez.
-2. Feche completamente o PWA/app instalado.
-3. Abra novamente.
-4. Reabra a OS pelo rascunho e tente salvar.
+Não requer SQL novo.

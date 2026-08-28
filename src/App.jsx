@@ -239,7 +239,7 @@ export default function App(){
         </div>
       </header>
       <div className="content">
-        {page==='dashboard'?<DashboardReal supabase={supabase} session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)}/>:
+        {page==='dashboard'?<DashboardReal supabase={supabase} session={session} profile={profile} onQuickCreate={()=>setQuickCreate(true)} onOpenOSFilter={(filter)=>{setPage('os');setTimeout(()=>window.dispatchEvent(new CustomEvent('fortal:filter-os',{detail:filter})),80)}} onOpenOS={(id)=>{setOpenOSId(id);setPage('os')}}/>:
          page==='agenda'?<Agenda supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openAgendaId} clearOpenItem={()=>setOpenAgendaId(null)}/>:
          page==='clientes'?<Clientes supabase={supabase} setSyncStatus={setSyncStatus}/>:
          page==='os'?<OrdensServico supabase={supabase} profile={profile} session={session} setSyncStatus={setSyncStatus} openItemId={openOSId} clearOpenItem={()=>setOpenOSId(null)}/>:

@@ -13,7 +13,7 @@ function localDate(v){
   const [y,m,d]=String(v).slice(0,10).split('-')
   return `${d}/${m}/${y}`
 }
-export default function DashboardReal({supabase,profile,session,onQuickCreate}){
+export default function DashboardReal({supabase,profile,session,onQuickCreate,onOpenOSFilter,onOpenOS}){
   const [os,setOs]=useState([])
   const [clientes,setClientes]=useState([])
   const [periodo,setPeriodo]=useState('mes')
@@ -75,24 +75,24 @@ export default function DashboardReal({supabase,profile,session,onQuickCreate}){
       <button className="iconBtn" onClick={carregar} title="Atualizar"><RefreshCcw size={16} className={loading?'spin':''}/></button>
     </div>
     <div className="cards dashboardCards">
-      <div className="card"><ClipboardList/><div><span>OS ativas</span><strong>{abertas}</strong></div></div>
-      <div className="card"><CheckCircle2/><div><span>Concluídas</span><strong>{concluidas}</strong></div></div>
-      <div className="card"><Clock3/><div><span>Pendentes</span><strong>{pendentes}</strong></div></div>
-      <div className="card"><AlertTriangle/><div><span>Emergenciais</span><strong>{emergenciais}</strong></div></div>
+      <button className="card dashboardCardButton" onClick={()=>onOpenOSFilter?.('ativas')}><ClipboardList/><div><span>OS ativas</span><strong>{abertas}</strong><small>Toque para visualizar</small></div></button>
+      <button className="card dashboardCardButton" onClick={()=>onOpenOSFilter?.('concluida')}><CheckCircle2/><div><span>Concluídas</span><strong>{concluidas}</strong><small>Toque para visualizar</small></div></button>
+      <button className="card dashboardCardButton" onClick={()=>onOpenOSFilter?.('pendentes')}><Clock3/><div><span>Pendentes</span><strong>{pendentes}</strong><small>Material ou orçamento</small></div></button>
+      <button className="card dashboardCardButton" onClick={()=>onOpenOSFilter?.('emergenciais')}><AlertTriangle/><div><span>Emergenciais</span><strong>{emergenciais}</strong><small>Prioridade emergencial</small></div></button>
     </div>
     <div className="grid2">
       <section className="panel">
         <h3>Ordens de Serviço no período</h3>
         {filtradas.length===0?<div className="emptySmall"><CalendarDays/><b>Nenhuma OS neste filtro</b></div>:
-        <div className="dashOsList">{filtradas.slice(0,10).map(x=><div className="dashOs" key={x.id}>
+        <div className="dashOsList">{filtradas.slice(0,10).map(x=><button type="button" className={`dashOs dashStatus-${x.status}`} key={x.id} onClick={()=>onOpenOS?.(x.id)}>
           <div><b>{x.numero}</b><span>{x.clientes?.nome||clientes.find(c=>c.id===x.cliente_id)?.nome||'Cliente'} • {localDate(x.data_visita)}</span></div>
           <em className={`status-${x.status}`}>{labels[x.status]||x.status}</em>
-        </div>)}</div>}
+        </button>)}</div>}
       </section>
       <section className="panel">
         <h3>Resumo por status</h3>
         <div className="statusSummary">
-          {Object.entries(labels).map(([key,label])=><div key={key}><span>{label}</span><strong>{count([key])}</strong></div>)}
+          {Object.entries(labels).map(([key,label])=><button type="button" key={key} onClick={()=>onOpenOSFilter?.(key)}><span><i className={`statusDot status-${key}`}></i>{label}</span><strong>{count([key])}</strong></button>)}
         </div>
       </section>
     </div>

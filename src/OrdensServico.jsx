@@ -94,6 +94,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [clientes,setClientes]=useState([])
   const [tecnicos,setTecnicos]=useState([])
   const [busca,setBusca]=useState('')
+  const [statusFiltro,setStatusFiltro]=useState('todos')
   const [modal,setModal]=useState(false)
   const [edit,setEdit]=useState(null)
   const [form,setForm]=useState(empty)
@@ -176,6 +177,15 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   },[openItemId,lista])
 
   useEffect(()=>{
+    const filtrar=(e)=>{
+      setStatusFiltro(e.detail||'todos')
+      setBusca('')
+    }
+    window.addEventListener('fortal:filter-os',filtrar)
+    return()=>window.removeEventListener('fortal:filter-os',filtrar)
+  },[])
+
+  useEffect(()=>{
     const abrir=()=>novo()
     window.addEventListener('fortal:new-os',abrir)
     return()=>window.removeEventListener('fortal:new-os',abrir)
@@ -193,12 +203,18 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
   const filtradas=useMemo(()=>{
     const q=busca.toLowerCase().trim()
-    if(!q)return lista
-    return lista.filter(os=>[
-      os.numero,os.clientes?.nome,clientes.find(c=>c.id===os.cliente_id)?.nome,
-      os.tipo_atendimento,os.status
-    ].filter(Boolean).join(' ').toLowerCase().includes(q))
-  },[lista,busca,clientes])
+    return lista.filter(os=>{
+      const matchStatus=statusFiltro==='todos' ||
+        (statusFiltro==='ativas'&&['aberta','agendada','em_atendimento','aguardando_material','aguardando_orcamento'].includes(os.status)) ||
+        (statusFiltro==='pendentes'&&['aguardando_material','aguardando_orcamento'].includes(os.status)) ||
+        (statusFiltro==='emergenciais'&&os.prioridade==='emergencial') ||
+        os.status===statusFiltro
+      if(!matchStatus)return false
+      if(!q)return true
+      return [os.numero,os.clientes?.nome,clientes.find(c=>c.id===os.cliente_id)?.nome,os.tipo_atendimento,os.status]
+        .filter(Boolean).join(' ').toLowerCase().includes(q)
+    })
+  },[lista,busca,clientes,statusFiltro])
 
   const totalMateriais=useMemo(()=>materiais.reduce((s,m)=>
     s+(Number(m.quantidade||0)*Number(m.preco_unitario||0)),0
@@ -1129,13 +1145,17 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         <Search size={18}/>
         <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar por OS, cliente, tipo ou status..." />
       </div>
+      <div className="osFilterChips">
+        {[['todos','Todas'],['aberta','Aberta'],['agendada','Agendada'],['em_atendimento','Em atendimento'],['aguardando_material','Aguard. material'],['aguardando_orcamento','Aguard. orçamento'],['concluida','Concluída'],['cancelada','Cancelada']].map(([v,l])=><button type="button" key={v} className={statusFiltro===v?'active':''} onClick={()=>setStatusFiltro(v)}>{l}</button>)}
+      </div>
 
       {filtradas.length===0?
         <div className="emptySmall"><ClipboardList size={36}/><b>Nenhuma OS encontrada</b><span>Crie a primeira Ordem de Serviço.</span></div>:
         <div className="osList">
-          {filtradas.map(os=><div className="osRow clickableOS" key={os.id} onClick={()=>visualizar(os)}>
+          {filtradas.map(os=><div className={`osRow clickableOS osStatusRow statusRow-${os.status}`} key={os.id} onClick={()=>visualizar(os)}>
             <div className="osMain">
               <div className="osNumber">{os.numero}</div>
+              <span className={`osStatusBadge status-${os.status}`}>{({aberta:'Aberta',agendada:'Agendada',em_atendimento:'Em atendimento',aguardando_material:'Aguardando material',aguardando_orcamento:'Aguardando orçamento',concluida:'Concluída',cancelada:'Cancelada'})[os.status]||os.status}</span>
               <div><b>{os.clientes?.nome||nomeCliente(os.cliente_id)}</b>
                 <span>{os.tipo_atendimento||'Atendimento'} • {os.data_visita||'Sem data'}</span>
                 {os._syncStatus==='pending'&&<em>Aguardando sincronização</em>}
@@ -1174,6 +1194,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             </div>
           </div>)}
         </div>}
+      <div className="osStatusLegend" aria-label="Legenda de status das ordens de serviço">
+        <b>Legenda das cores</b>
+        <div>{[['aberta','Aberta'],['agendada','Agendada'],['em_atendimento','Em atendimento'],['aguardando_material','Aguardando material'],['aguardando_orcamento','Aguardando orçamento'],['concluida','Concluída'],['cancelada','Cancelada']].map(([v,l])=><span key={v}><i className={`statusDot status-${v}`}></i>{l}</span>)}</div>
+      </div>
     </section>
 
 

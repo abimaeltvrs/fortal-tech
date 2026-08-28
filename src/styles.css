@@ -2268,3 +2268,23 @@ input:focus,select:focus,textarea:focus,
     width:100%;
   }
 }
+
+
+/* ===== V1.12.9 - Dashboard interativo + cores de status OS ===== */
+.dashboardCardButton{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.dashboardCardButton small{display:block;color:#747b84;font-size:9px;margin-top:4px}
+.dashboardCardButton:hover,.dashboardCardButton:focus-visible{border-color:#6d590c;outline:none}
+.dashOs{width:100%;background:transparent;color:inherit;text-align:left;cursor:pointer;border-left:4px solid transparent;padding-left:10px}
+.dashOs:hover,.dashOs:focus-visible{background:rgba(255,255,255,.025);outline:none}
+.statusSummary>button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 0;border:0;border-top:1px solid #1b2a3f;background:transparent;color:inherit;cursor:pointer;text-align:left}
+.statusSummary>button:first-child{border-top:0}.statusSummary>button span{display:flex;align-items:center;gap:7px}
+.statusDot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+.osFilterChips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 14px;scrollbar-width:none}.osFilterChips::-webkit-scrollbar{display:none}
+.osFilterChips button{white-space:nowrap;border:1px solid #30353b;background:#11151a;color:#9da3aa;border-radius:999px;padding:7px 10px;font-size:10px;cursor:pointer}
+.osFilterChips button.active{border-color:#806700;background:rgba(247,200,0,.1);color:#f7d94e}
+.osStatusRow{border-left:4px solid transparent;padding-left:10px!important}.osStatusBadge{display:inline-flex;align-items:center;border:1px solid;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:800;white-space:nowrap}
+.statusRow-aberta,.dashStatus-aberta{border-left-color:#2f80ed}.statusRow-agendada,.dashStatus-agendada{border-left-color:#8a3ffc}.statusRow-em_atendimento,.dashStatus-em_atendimento{border-left-color:#f7c800}.statusRow-aguardando_material,.dashStatus-aguardando_material{border-left-color:#ff7a00}.statusRow-aguardando_orcamento,.dashStatus-aguardando_orcamento{border-left-color:#a66b00}.statusRow-concluida,.dashStatus-concluida{border-left-color:#22b84b}.statusRow-cancelada,.dashStatus-cancelada{border-left-color:#e02626}
+.status-aberta{background:rgba(47,128,237,.12)!important;color:#70adff!important;border-color:#2f80ed!important}.status-agendada{background:rgba(138,63,252,.12)!important;color:#b98aff!important;border-color:#8a3ffc!important}.status-em_atendimento{background:rgba(247,200,0,.12)!important;color:#f7d94e!important;border-color:#8b7100!important}.status-aguardando_material{background:rgba(255,122,0,.12)!important;color:#ff9d43!important;border-color:#a84f00!important}.status-aguardando_orcamento{background:rgba(166,107,0,.14)!important;color:#dca83e!important;border-color:#795000!important}.status-concluida{background:rgba(34,184,75,.12)!important;color:#62dd82!important;border-color:#247c3c!important}.status-cancelada{background:rgba(224,38,38,.12)!important;color:#ff7777!important;border-color:#8f2929!important}
+.statusDot.status-aberta{background:#2f80ed!important}.statusDot.status-agendada{background:#8a3ffc!important}.statusDot.status-em_atendimento{background:#f7c800!important}.statusDot.status-aguardando_material{background:#ff7a00!important}.statusDot.status-aguardando_orcamento{background:#a66b00!important}.statusDot.status-concluida{background:#22b84b!important}.statusDot.status-cancelada{background:#e02626!important}
+.osStatusLegend{border-top:1px solid #252a2f;margin-top:14px;padding-top:13px}.osStatusLegend>b{display:block;color:#f7d94e;font-size:11px;margin-bottom:9px}.osStatusLegend>div{display:flex;gap:8px 14px;flex-wrap:wrap}.osStatusLegend span{display:flex;align-items:center;gap:5px;color:#9ba2aa;font-size:9px}
+@media(max-width:760px){.osStatusBadge{order:3}.osMain{flex-wrap:wrap}.osMain>div:last-child{min-width:160px;flex:1}.dashboardCardButton{min-height:88px}}
