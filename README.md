@@ -1,14 +1,38 @@
-# FORTAL TECH V1.12.9
+# FORTAL TECH V1.13 — Agenda avançada
 
-Atualização visual e interativa do Dashboard e Ordens de Serviço.
+Melhorias:
+- calendário mensal visual e clicável;
+- contador de compromissos por dia;
+- navegação entre meses;
+- atalhos Dia / Semana / Mês;
+- cards interativos:
+  - Hoje;
+  - Próximas 24h;
+  - Atrasados;
+  - Lembretes agora;
+- filtros por:
+  - status;
+  - cliente;
+  - sistema;
+- destaque visual de compromisso atrasado;
+- cores diferentes por status;
+- endereço exibido diretamente no compromisso;
+- vínculo opcional com uma OS;
+- botão para abrir a OS relacionada;
+- rota para atendimento;
+- conclusão rápida;
+- edição e exclusão;
+- lembrete dentro do aplicativo;
+- rascunho automático da Agenda;
+- funcionamento offline/sincronização preservados.
 
-- Cards do Dashboard agora abrem a lista de OS já filtrada.
-- Resumo por status é clicável.
-- OS recentes do Dashboard são clicáveis.
-- Filtros rápidos de status na tela de OS.
-- Cores por status com faixa lateral e selo.
-- Legenda de cores na tela de OS.
-- Clique no card da OS continua abrindo somente a visualização; edição permanece no botão específico.
-- Mantidas correções V1.12.8 e rascunho automático.
+Não há SQL novo: o campo `os_id` e os campos de lembrete já fazem parte da estrutura atual da Agenda.
 
-Não requer SQL novo.
+Teste recomendado:
+1. Crie um novo agendamento.
+2. Vincule cliente + OS.
+3. Ative lembrete de 15 minutos.
+4. Atualize a página antes de salvar para testar o rascunho.
+5. Salve e confirme o evento no calendário.
+6. Toque no dia do calendário.
+7. Use o botão da OS vinculada.

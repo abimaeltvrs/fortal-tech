@@ -2288,3 +2288,66 @@ input:focus,select:focus,textarea:focus,
 .statusDot.status-aberta{background:#2f80ed!important}.statusDot.status-agendada{background:#8a3ffc!important}.statusDot.status-em_atendimento{background:#f7c800!important}.statusDot.status-aguardando_material{background:#ff7a00!important}.statusDot.status-aguardando_orcamento{background:#a66b00!important}.statusDot.status-concluida{background:#22b84b!important}.statusDot.status-cancelada{background:#e02626!important}
 .osStatusLegend{border-top:1px solid #252a2f;margin-top:14px;padding-top:13px}.osStatusLegend>b{display:block;color:#f7d94e;font-size:11px;margin-bottom:9px}.osStatusLegend>div{display:flex;gap:8px 14px;flex-wrap:wrap}.osStatusLegend span{display:flex;align-items:center;gap:5px;color:#9ba2aa;font-size:9px}
 @media(max-width:760px){.osStatusBadge{order:3}.osMain{flex-wrap:wrap}.osMain>div:last-child{min-width:160px;flex:1}.dashboardCardButton{min-height:88px}}
+
+/* ==========================================================
+   FORTAL TECH V1.13 — Agenda avançada
+   ========================================================== */
+.agendaSummaryCards{grid-template-columns:repeat(4,1fr);margin-bottom:14px}
+.agendaSummary{appearance:none;text-align:left;cursor:pointer;color:inherit}
+.agendaSummary>svg{color:#f7c800}
+.agendaSummary.warning>svg{color:#f0a12b}
+.agendaSummary.danger>svg{color:#ff6d6d}
+.agendaSummary.reminder>svg{color:#b98aff}
+.agendaSummary.clickable:hover{border-color:#665000!important;transform:translateY(-1px)}
+
+.agendaLayout{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:12px;align-items:start}
+.agendaCalendarPanel{position:sticky;top:82px}
+.calendarToolbar{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;gap:6px;margin-bottom:11px}
+.calendarToolbar>div{text-align:center}.calendarToolbar>div>b{display:block;text-transform:capitalize;font-size:12px}
+.calendarToolbar>div>button{border:0;background:transparent;color:#f7c800;font-size:8px;margin-top:2px;cursor:pointer}
+.calendarToolbar .iconBtn{width:36px;height:36px}
+.calendarWeek,.calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendarWeek span{text-align:center;font-size:8px;color:#666e78;font-weight:800;padding:4px}
+.calendarGrid button{position:relative;aspect-ratio:1;border:1px solid #252a30;background:#0b0e11;color:#aab0b8;border-radius:8px;display:grid;place-items:center;cursor:pointer;font-size:10px}
+.calendarGrid button.outside{opacity:.35}.calendarGrid button.today{border-color:#6d590c;color:#f7d94e}.calendarGrid button.active{background:rgba(247,200,0,.12);border-color:#f7c800;color:#fff}
+.calendarGrid button em{position:absolute;right:3px;bottom:3px;min-width:13px;height:13px;border-radius:999px;background:#f7c800;color:#171200;font-style:normal;font-size:7px;display:grid;place-items:center;font-weight:900}
+.calendarLegend{display:flex;gap:12px;margin-top:10px;color:#6f7781;font-size:8px}.calendarLegend span{display:flex;align-items:center;gap:5px}.calendarLegend i{width:8px;height:8px;border-radius:999px}.todayDot{border:1px solid #f7c800}.eventDot{background:#f7c800}
+
+.agendaMainPanel{min-width:0}
+.agendaTopActions{display:flex;gap:7px}.filterActive{color:#f7c800!important;border-color:#665000!important}
+.agendaFilters{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;padding:10px;background:#090c0f;border:1px solid #292e34;border-radius:10px;margin-bottom:11px}
+.agendaFilters select{min-width:0;background:#0b0e11;color:#e6e8ea;border:1px solid #343940;border-radius:8px;padding:8px;font-size:9px}
+.agendaPeriodTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px 4px}.agendaPeriodTitle>div{display:flex;align-items:center;gap:6px;color:#dce0e4}.agendaPeriodTitle b{text-transform:capitalize;font-size:10px}.agendaPeriodTitle span{font-size:8px;color:#747c86}
+
+.agendaCard{position:relative;border-left:3px solid #59616b;padding-left:10px!important}
+.agendaStatus-agendado{border-left-color:#8a3ffc}.agendaStatus-confirmado{border-left-color:#2f80ed}.agendaStatus-em_deslocamento{border-left-color:#f0a12b}.agendaStatus-em_atendimento{border-left-color:#f7c800}.agendaStatus-concluido{border-left-color:#22b84b}.agendaStatus-cancelado{border-left-color:#e02626}.agendaStatus-reagendado{border-left-color:#a66b00}
+.agendaLate{background:rgba(224,38,38,.035)}
+.agendaTime{color:#f7c800!important}
+.agendaInfo .linkedOS{display:flex!important;align-items:center;gap:4px;color:#b98aff!important}
+.agendaInfo .lateTag{color:#ff7777!important;font-weight:800}
+.osLinkBtn{color:#b98aff!important;border-color:#574077!important}
+.osLinkBtn:hover{border-color:#8a3ffc!important}
+.status-agendado{background:rgba(138,63,252,.12)!important;color:#c09aff!important;border-color:#6e35c8!important}
+.status-confirmado{background:rgba(47,128,237,.12)!important;color:#77b4ff!important;border-color:#2f80ed!important}
+.status-em_deslocamento{background:rgba(240,161,43,.12)!important;color:#ffc062!important;border-color:#8c5a16!important}
+.status-em_atendimento{background:rgba(247,200,0,.12)!important;color:#f7d94e!important;border-color:#8b7100!important}
+.status-concluido{background:rgba(34,184,75,.12)!important;color:#62dd82!important;border-color:#247c3c!important}
+.status-cancelado{background:rgba(224,38,38,.12)!important;color:#ff7777!important;border-color:#8f2929!important}
+.status-reagendado{background:rgba(166,107,0,.14)!important;color:#dca83e!important;border-color:#795000!important}
+
+.reminderBox{background:#0a0d10;border:1px solid #30353a;border-radius:10px;padding:10px}.reminderBox>label{display:flex!important;align-items:center;gap:8px!important}.reminderBox input[type=checkbox]{width:17px!important;height:17px!important;accent-color:#f7c800}.reminderBox select{margin-top:8px}
+
+@media(max-width:1000px){
+  .agendaSummaryCards{grid-template-columns:1fr 1fr}
+  .agendaLayout{grid-template-columns:1fr}.agendaCalendarPanel{position:static}
+}
+@media(max-width:760px){
+  .agendaSummaryCards{grid-template-columns:1fr 1fr}
+  .agendaSummary strong{font-size:18px!important}
+  .agendaTop{gap:8px}.agendaTopActions{display:grid;grid-template-columns:1fr 1fr}
+  .agendaTopActions button{justify-content:center!important}
+  .agendaFilters{grid-template-columns:1fr 1fr}.agendaFilters button{grid-column:span 2}
+  .agendaPeriodTitle{align-items:flex-start;flex-direction:column}
+  .agendaCard{padding:12px 8px!important}.agendaActions{display:grid!important;grid-template-columns:auto repeat(4,36px);width:100%}.agendaActions .statusBadge{justify-self:start;align-self:center}
+  .calendarGrid button{min-height:38px;aspect-ratio:auto}
+}
