@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import {saveDraft,loadDraft,clearDraft,draftAgeLabel} from './drafts'
 
 const empty={
   cliente_id:'',os_id:'',data_orcamento:'',validade:'',
@@ -50,6 +51,16 @@ export default function Orcamentos({supabase,profile,session}){
   const [osImportada,setOsImportada]=useState('')
   const [visualizacao,setVisualizacao]=useState(null)
   const [itensVisualizacao,setItensVisualizacao]=useState([])
+  const [draftRecovered,setDraftRecovered]=useState(null)
+  const [draftDirty,setDraftDirty]=useState(false)
+
+
+  useEffect(()=>{
+    if(!modal)return
+    setDraftDirty(true)
+    const t=setTimeout(()=>saveDraft(budgetDraftKey(),buildBudgetDraft()),450)
+    return()=>clearTimeout(t)
+  },[modal,edit?.id,form,itens,osImportada])
 
   async function carregar(){
     setErro('')
@@ -152,6 +163,28 @@ export default function Orcamentos({supabase,profile,session}){
     }
   }
 
+
+  function budgetDraftKey(){
+    return edit?.id ? `orcamento:${edit.id}` : 'orcamento:new'
+  }
+
+  function buildBudgetDraft(){
+    return {form,itens,osImportada}
+  }
+
+  function restoreBudgetDraft(data){
+    if(!data)return
+    if(data.form)setForm(data.form)
+    if(Array.isArray(data.itens))setItens(data.itens)
+    if(typeof data.osImportada==='string')setOsImportada(data.osImportada)
+  }
+
+  function descartarBudgetDraft(){
+    clearDraft(budgetDraftKey())
+    setDraftRecovered(null)
+    setDraftDirty(false)
+  }
+
   function novo(){
     const hoje=new Date()
     const validade=new Date(hoje.getTime()+15*86400000)
@@ -163,6 +196,13 @@ export default function Orcamentos({supabase,profile,session}){
       validade:validade.toISOString().slice(0,10)
     })
     setItens([])
+    const saved=loadDraft('orcamento:new')
+    if(saved?.data){
+      restoreBudgetDraft(saved.data)
+      setDraftRecovered(saved.saved_at)
+    }else{
+      setDraftRecovered(null)
+    }
     setModal(true)
   }
 
@@ -191,6 +231,13 @@ export default function Orcamentos({supabase,profile,session}){
     const {data,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id).order('id')
     if(error){setErro(error.message);return}
     setItens(data||[])
+    const savedDraft=loadDraft(`orcamento:${o.id}`)
+    if(savedDraft?.data){
+      restoreBudgetDraft(savedDraft.data)
+      setDraftRecovered(savedDraft.saved_at)
+    }else{
+      setDraftRecovered(null)
+    }
     setModal(true)
   }
 
@@ -351,6 +398,10 @@ export default function Orcamentos({supabase,profile,session}){
       const {error:itErr}=await supabase.from('orcamento_itens').insert(rows)
       if(itErr)throw itErr
 
+      clearDraft(edit?.id ? `orcamento:${edit.id}` : 'orcamento:new')
+      if(data?.id)clearDraft(`orcamento:${data.id}`)
+      setDraftRecovered(null)
+      setDraftDirty(false)
       setModal(false)
       await carregar()
       setSucesso(edit?'Orçamento atualizado com sucesso.':'Orçamento criado com sucesso.')
@@ -608,6 +659,12 @@ export default function Orcamentos({supabase,profile,session}){
           <div><span className="eyebrow">FORTAL TECH</span><h2>{edit?edit.numero:'Novo orçamento'}</h2></div>
           <button className="iconBtn" onClick={()=>setModal(false)}><X/></button>
         </div>
+        {draftRecovered&&<div className="draftRecoveredBanner budgetDraftBanner">
+          <div><b>Rascunho recuperado</b><span>Orçamento restaurado {draftAgeLabel(draftRecovered)}.</span></div>
+          <button type="button" onClick={descartarBudgetDraft}>Descartar rascunho</button>
+        </div>}
+        {!draftRecovered&&draftDirty&&<div className="draftSavingHint">Rascunho salvo automaticamente neste aparelho.</div>}
+
 
         {erro&&<div className="warningBox modalError">{erro}</div>}
 

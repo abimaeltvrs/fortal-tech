@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useState} from 'react'
 import {
+import {saveDraft,loadDraft,clearDraft,draftAgeLabel} from './drafts'
   Wallet,ArrowDownCircle,ArrowUpCircle,Plus,Search,CheckCircle2,
   Clock3,AlertTriangle,Trash2,X,RefreshCcw,Landmark,ReceiptText
 } from 'lucide-react'
@@ -23,6 +24,8 @@ export default function Financeiro({supabase}){
   const [erro,setErro]=useState('')
   const [ok,setOk]=useState('')
   const [loading,setLoading]=useState(false)
+  const [draftRecovered,setDraftRecovered]=useState(null)
+  const [draftDirty,setDraftDirty]=useState(false)
   const [form,setForm]=useState({
     tipo:'entrada',descricao:'',categoria:'Serviços',valor:'',data_movimento:isoToday(),
     vencimento:'',status:'recebido',forma_pagamento:'Pix',cliente_id:'',fornecedor:'',
@@ -40,6 +43,14 @@ export default function Financeiro({supabase}){
     setLoading(false)
   }
   useEffect(()=>{carregar()},[])
+
+  useEffect(()=>{
+    if(!modal)return
+    setDraftDirty(true)
+    const t=setTimeout(()=>saveDraft('financeiro:movimentacao',form),400)
+    return()=>clearTimeout(t)
+  },[modal,form])
+
 
   function periodoOk(x){
     const raw=x.data_movimento||x.vencimento||x.created_at
@@ -75,7 +86,14 @@ export default function Financeiro({supabase}){
       tipo:t,descricao:'',categoria:t==='entrada'?'Serviços':'Materiais / peças',valor:'',
       data_movimento:isoToday(),vencimento:'',status:t==='entrada'?'recebido':'pago',
       forma_pagamento:'Pix',cliente_id:'',fornecedor:'',observacoes:''
-    });setModal(true);setErro('');setOk('')
+    });const saved=loadDraft('financeiro:movimentacao')
+    if(saved?.data && saved.data.tipo===t){
+      setForm(saved.data)
+      setDraftRecovered(saved.saved_at)
+    }else{
+      setDraftRecovered(null)
+    }
+    setModal(true);setErro('');setOk('')
   }
 
   async function salvar(e){
@@ -91,7 +109,7 @@ export default function Financeiro({supabase}){
     }
     const {error}=await supabase.from('financeiro_lancamentos').insert(payload)
     if(error){setErro(error.message);return}
-    setModal(false);setOk(`${form.tipo==='entrada'?'Entrada':'Saída'} registrada com sucesso.`);carregar()
+    clearDraft('financeiro:movimentacao');setDraftRecovered(null);setDraftDirty(false);setModal(false);setOk(`${form.tipo==='entrada'?'Entrada':'Saída'} registrada com sucesso.`);carregar()
   }
 
   async function marcar(x){

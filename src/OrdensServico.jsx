@@ -13,6 +13,7 @@ import {
   saveLocalOSMedia,getLocalOSMedia,removeLocalOSMedia,replaceLocalOSSignatures,getLocalOSSignatures
 } from './offline'
 import {syncPendingChanges} from './sync'
+import {saveDraft,loadDraft,clearDraft,draftAgeLabel} from './drafts'
 
 const sistemasCatalogo=[
   ['cftv','CFTV'],
@@ -111,8 +112,23 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [pendenciasFormulario,setPendenciasFormulario]=useState([])
   const [salvandoOS,setSalvandoOS]=useState(false)
   const [visualizacao,setVisualizacao]=useState(null)
+  const [draftRecovered,setDraftRecovered]=useState(null)
+  const [draftDirty,setDraftDirty]=useState(false)
   const [viewChildren,setViewChildren]=useState({sistemas:[],checklist:[],materiais:[],fotos:[],assinaturas:[]})
   const modalRef=useRef(null)
+
+
+  useEffect(()=>{
+    if(!modal)return
+    setDraftDirty(true)
+    const t=setTimeout(()=>{
+      saveDraft(draftKey(),buildDraftPayload())
+    },450)
+    return()=>clearTimeout(t)
+  },[
+    modal,edit?.id,form,sistemas,checklist,materiais,fotos,
+    assinaturaCliente,assinaturaTecnico,nomeAceiteCliente,cargoAceiteCliente,expanded
+  ])
 
   async function carregar(){
     setErro('')
@@ -202,6 +218,46 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       setSistemas(s=>s.filter(x=>x.sistema!==cod))
       setChecklist(c=>c.filter(x=>x.sistema!==cod))
     }
+  }
+
+
+  function draftKey(){
+    return edit?.id ? `os:${edit.id}` : 'os:new'
+  }
+
+  function buildDraftPayload(){
+    return {
+      form,
+      sistemas,
+      checklist,
+      materiais,
+      fotos,
+      assinaturaCliente,
+      assinaturaTecnico,
+      nomeAceiteCliente,
+      cargoAceiteCliente,
+      expanded
+    }
+  }
+
+  function restoreDraft(payload){
+    if(!payload)return
+    if(payload.form)setForm(payload.form)
+    if(Array.isArray(payload.sistemas))setSistemas(payload.sistemas)
+    if(Array.isArray(payload.checklist))setChecklist(payload.checklist)
+    if(Array.isArray(payload.materiais))setMateriais(payload.materiais)
+    if(Array.isArray(payload.fotos))setFotos(payload.fotos)
+    if(typeof payload.assinaturaCliente==='string')setAssinaturaCliente(payload.assinaturaCliente)
+    if(typeof payload.assinaturaTecnico==='string')setAssinaturaTecnico(payload.assinaturaTecnico)
+    if(typeof payload.nomeAceiteCliente==='string')setNomeAceiteCliente(payload.nomeAceiteCliente)
+    if(typeof payload.cargoAceiteCliente==='string')setCargoAceiteCliente(payload.cargoAceiteCliente)
+    if(payload.expanded)setExpanded(payload.expanded)
+  }
+
+  function descartarRascunho(){
+    clearDraft(draftKey())
+    setDraftRecovered(null)
+    setDraftDirty(false)
   }
 
   function novo(){
@@ -319,6 +375,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setNomeAceiteCliente(ac?.nome||'')
     setCargoAceiteCliente(ac?.cargo||'')
     setAssinaturaTecnico(at?.assinatura_data||at?.preview_data||'')
+    const savedDraft=loadDraft(`os:${os.id}`)
+    if(savedDraft?.data){
+      restoreDraft(savedDraft.data)
+      setDraftRecovered(savedDraft.saved_at)
+    }else{
+      setDraftRecovered(null)
+    }
     setModal(true)
   }
 
@@ -594,6 +657,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       }
 
       // Só fecha depois de TODAS as etapas terem sido concluídas.
+      clearDraft(edit?.id ? `os:${edit.id}` : 'os:new')
+      clearDraft(`os:${osId}`)
+      setDraftRecovered(null)
+      setDraftDirty(false)
       setModal(false)
       setEdit(null)
       setForm(empty)
@@ -1160,6 +1227,15 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           <div><span className="eyebrow">FORTAL TECH</span><h2>{edit?edit.numero:'Nova Ordem de Serviço'}</h2></div>
           <button className="iconBtn" onClick={()=>setModal(false)}><X/></button>
         </div>
+        {draftRecovered&&<div className="draftRecoveredBanner">
+          <div>
+            <b>Rascunho recuperado</b>
+            <span>Seu preenchimento foi restaurado {draftAgeLabel(draftRecovered)}.</span>
+          </div>
+          <button type="button" onClick={descartarRascunho}>Descartar rascunho</button>
+        </div>}
+        {!draftRecovered&&draftDirty&&<div className="draftSavingHint">Rascunho salvo automaticamente neste aparelho.</div>}
+
 
         {erro&&<div className="warningBox modalError">
           <b>{erro}</b>

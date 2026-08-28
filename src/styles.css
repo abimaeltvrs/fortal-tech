@@ -2213,3 +2213,58 @@ input:focus,select:focus,textarea:focus,
   opacity:.6;
   cursor:wait;
 }
+
+/* ==========================================================
+   FORTAL TECH V1.12.5 — Rascunho automático
+   ========================================================== */
+.draftRecoveredBanner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:1px solid #6d590c;
+  background:rgba(247,200,0,.08);
+  border-radius:10px;
+  padding:9px 10px;
+  margin:8px 0 12px;
+}
+.draftRecoveredBanner b,
+.draftRecoveredBanner span{display:block}
+.draftRecoveredBanner b{
+  color:#f7d94e;
+  font-size:10px;
+}
+.draftRecoveredBanner span{
+  color:#a99f72;
+  font-size:8px;
+  margin-top:2px;
+}
+.draftRecoveredBanner button{
+  flex:none;
+  border:1px solid #5e4d0b;
+  background:#11100a;
+  color:#f0cc32;
+  border-radius:8px;
+  padding:7px 8px;
+  font-size:8px;
+  font-weight:800;
+}
+.draftSavingHint{
+  margin:6px 0 10px;
+  color:#7c828a;
+  font-size:8px;
+}
+.draftSavingHint::before{
+  content:"●";
+  color:#f7c800;
+  margin-right:5px;
+}
+@media(max-width:600px){
+  .draftRecoveredBanner{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .draftRecoveredBanner button{
+    width:100%;
+  }
+}

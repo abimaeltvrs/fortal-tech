@@ -1,51 +1,54 @@
-# FORTAL TECH V1.12.4 — Correção de Salvar / Finalizar OS
+# FORTAL TECH V1.12.5 — Rascunho automático
 
-Correções funcionais:
+Objetivo:
+Nenhum preenchimento deve ser perdido se a página atualizar, o PWA fechar ou o navegador recarregar.
 
-## Salvar OS
-- removida a validação nativa do navegador que podia bloquear o validador do aplicativo;
-- o app agora sempre executa sua própria validação antes de salvar;
-- a OS só fecha depois que:
-  - OS principal;
-  - sistemas;
-  - checklist;
-  - materiais;
-  - fotos;
-  - assinaturas
-  forem salvos com sucesso;
-- em caso de erro online, o modal permanece aberto e os dados digitados não são apagados.
+Implementado inicialmente nos formulários mais críticos:
+- Ordem de Serviço;
+- Orçamento;
+- Entrada/Saída do Financeiro.
 
-## Campos obrigatórios
-Quando faltar algo:
-- mostra exatamente os campos pendentes;
-- destaca o campo/seção em amarelo;
-- rola automaticamente o MODAL até o primeiro campo obrigatório;
-- aplica um destaque visual pulsante;
-- tenta colocar o foco no campo;
-- os nomes dos campos pendentes são clicáveis para navegar diretamente até eles.
+Funcionamento:
+- enquanto o usuário digita, o formulário é salvo automaticamente no armazenamento local do aparelho;
+- o salvamento acontece poucos milissegundos após cada alteração;
+- se a página atualizar ou o app fechar, ao abrir o mesmo formulário o rascunho é restaurado;
+- aparece o aviso `Rascunho recuperado`;
+- existe opção `Descartar rascunho`;
+- o rascunho só é apagado automaticamente depois que o documento é salvo com sucesso.
 
-Campos mínimos para salvar:
-- Cliente;
-- Data da visita;
-- Horário de chegada;
-- pelo menos um Sistema envolvido.
+OS:
+O rascunho preserva:
+- dados do atendimento;
+- sistemas;
+- checklist;
+- materiais;
+- fotos adicionadas ao estado do formulário;
+- assinaturas;
+- responsável pelo cliente;
+- seções abertas.
 
-Campos adicionais para concluir:
-- Condição final;
-- Nome do responsável pelo cliente;
-- Assinatura do cliente;
-- Assinatura do técnico.
+Orçamento:
+Preserva:
+- cliente;
+- OS relacionada;
+- itens;
+- valores;
+- pagamento;
+- observações.
 
-## Finalizar OS
-- o botão `Finalizar OS` agora executa tudo em uma única ação;
-- valida os campos obrigatórios;
-- registra status `concluida`;
-- registra horário de término automaticamente;
-- registra `encerrada_em`;
-- salva a OS;
-- salva fotos e assinaturas;
-- fecha a edição somente após confirmação do salvamento.
+Financeiro:
+Preserva:
+- Entrada/Saída;
+- descrição;
+- categoria;
+- valor;
+- datas;
+- status;
+- pagamento;
+- cliente/fornecedor;
+- observações.
 
-Não é mais necessário tocar em `Finalizar OS` e depois em `Salvar OS`.
+Observação:
+O rascunho fica apenas no aparelho onde foi digitado. Ele não é sincronizado com o Supabase até o usuário salvar o documento.
 
 Não há SQL novo nesta versão.
