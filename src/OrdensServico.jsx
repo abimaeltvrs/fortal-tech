@@ -28,38 +28,66 @@ const sistemasCatalogo=[
 
 const checklistCatalogo={
   cftv:{
-    'Câmeras':[
-      'Verificação do funcionamento das câmeras','Verificação da imagem','Verificação de foco e enquadramento',
-      'Verificação de lente','Limpeza das lentes','Verificação de fixação','Verificação de conectores',
-      'Verificação do cabeamento','Verificação da alimentação','Verificação de câmeras offline',
-      'Teste de visualização ao vivo','Teste de infravermelho/visão noturna',
-      'Verificação de câmera com imagem distorcida/intermitente'
-    ],
-    'DVR/NVR':[
-      'Equipamento funcionando','HD reconhecido','Capacidade de armazenamento verificada','Gravação funcionando',
-      'Data e horário corretos','Reprodução de gravações testada','Rede/conectividade verificada',
-      'Acesso remoto testado','Canais verificados','Limpeza/ventilação verificada'
+    'Verificação rápida':[
+      'Câmeras e qualidade da imagem',
+      'Gravação e armazenamento',
+      'Acesso e visualização do sistema',
+      'Alimentação, conexões e comunicação',
+      'Estado físico e limpeza dos equipamentos'
     ]
   },
   controle_acesso:{
-    'Equipamentos':['Controladora','Leitor facial','Leitor RFID/Tag','Biometria','Fechadura eletromagnética','Fechadura elétrica','Eclusa/Intertravamento','Botoeira','Sensor magnético','Catraca','Portão','Interfonia'],
-    'Testes':['Teste de abertura','Teste de fechamento','Teste de leitura facial','Teste de leitura de cartão/tag','Teste de botoeira','Teste de fechadura','Verificação de alimentação','Verificação de bateria/fonte','Verificação de comunicação de rede','Verificação dos usuários cadastrados','Teste de acionamento remoto','Verificação dos registros/eventos']
+    'Verificação rápida':[
+      'Leitores e identificação de usuários',
+      'Abertura, fechamento e acionamentos',
+      'Sensores e dispositivos de segurança',
+      'Comunicação e registros do sistema',
+      'Alimentação e conexões'
+    ]
   },
   cerca_eletrica:{
-    'Verificações':['Central de choque funcionando','Alimentação elétrica verificada','Bateria verificada','Tensão de saída verificada conforme fabricante','Fios de alta tensão verificados','Isoladores verificados','Hastes verificadas','Fixações verificadas','Arames/fios verificados','Aterramento verificado','Sinais de oxidação identificados','Vegetação/objetos próximos removidos','Sirene testada','Disparo/alarme testado','Tamper/violação testado','Central comunicando corretamente','Perímetro inspecionado']
+    'Verificação rápida':[
+      'Central, bateria e alimentação',
+      'Perímetro, fios, hastes e isoladores',
+      'Aterramento e tensão de funcionamento',
+      'Sirene e disparo de alarme',
+      'Condições gerais do sistema'
+    ]
   },
   alarme:{
-    'Central':['Central funcionando','Alimentação verificada','Bateria verificada','Comunicação verificada','Eventos verificados','Memória de eventos consultada'],
-    'Sensores':['Sensores magnéticos testados','Sensores PIR testados','Sensores externos testados','Sensor de movimento testado','Botão de pânico testado','Sirene testada','Teclado testado'],
-    'Comunicação':['Internet/IP','GPRS/4G','Aplicativo','Central de monitoramento','Notificação de disparo']
+    'Verificação rápida':[
+      'Central, bateria e alimentação',
+      'Sensores e dispositivos',
+      'Sirene e teste de disparo',
+      'Comunicação e monitoramento',
+      'Condições gerais do sistema'
+    ]
   },
   infraestrutura_rede:{
-    'Infraestrutura / Rede / Alimentação':['Racks organizados','Switches funcionando','Patch cords/conectores verificados','Cabeamento verificado','Fontes de alimentação verificadas','Nobreak funcionando','Baterias verificadas','Tomadas/alimentação verificadas','Equipamentos sem aquecimento anormal','Equipamentos identificados','Rede de comunicação funcionando']
+    'Verificação rápida':[
+      'Conectividade e funcionamento da rede',
+      'Cabeamento, conectores e patch cords',
+      'Rack, switches e equipamentos',
+      'Alimentação e nobreak',
+      'Organização e identificação'
+    ]
   },
   fonte_nobreak:{
-    'Fonte / Nobreak':['Fonte funcionando','Tensão de saída verificada','Conexões verificadas','Bateria verificada','Nobreak funcionando','Autonomia verificada','Alarmes do nobreak verificados','Ventilação/aquecimento verificados']
+    'Verificação rápida':[
+      'Funcionamento e tensão de saída',
+      'Bateria e autonomia',
+      'Conexões e alimentação',
+      'Alarmes, ventilação e aquecimento'
+    ]
   },
-  outro:{'Verificações Gerais':['Inspeção visual','Funcionamento testado','Alimentação verificada','Conexões verificadas']}
+  outro:{
+    'Verificação rápida':[
+      'Funcionamento geral',
+      'Alimentação e conexões',
+      'Estado físico do equipamento',
+      'Teste final do serviço'
+    ]
+  }
 }
 
 const empty={
@@ -86,7 +114,20 @@ function dataBR(v){
   return y&&m&&d?`${d}/${m}/${y}`:v
 }
 function statusChecklist(v){
-  return ({ok:'OK',irregular:'IRREGULAR',nao_aplicavel:'N/A',nao_verificado:'NÃO VERIFICADO'})[v]||v||'-'
+  return ({ok:'OK',irregular:'ATENÇÃO',nao_aplicavel:'N/A',nao_verificado:'NÃO VERIFICADO'})[v]||v||'-'
+}
+
+function resumoChecklistPorSistema(items=[]){
+  const map={}
+  items.forEach(i=>{
+    const key=i.sistema||'outro'
+    if(!map[key])map[key]={sistema:key,ok:0,irregular:0,nao_aplicavel:0,nao_verificado:0,total:0}
+    const r=map[key]
+    r.total++
+    if(Object.prototype.hasOwnProperty.call(r,i.status))r[i.status]++
+    else r.nao_verificado++
+  })
+  return Object.values(map)
 }
 
 export default function OrdensServico({supabase,profile,session,setSyncStatus,openItemId,clearOpenItem}){
@@ -969,20 +1010,33 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       line('Sistema(s) envolvido(s)',sistemasPDF)
 
       if((children.checklist||[]).length){
-        section('3. CHECKLIST TÉCNICO')
-        const rows=(children.checklist||[]).map(x=>[
-          labelSistema(x.sistema),x.grupo||'',x.item,statusChecklist(x.status),x.observacao||''
+        section('3. RESUMO DA VERIFICAÇÃO TÉCNICA')
+        const resumo=resumoChecklistPorSistema(children.checklist||[])
+        const rows=resumo.map(r=>[
+          labelSistema(r.sistema),
+          `${r.ok} OK`,
+          r.irregular?`${r.irregular} ponto(s) de atenção`:'Sem apontamentos',
+          r.nao_aplicavel?`${r.nao_aplicavel} N/A`:'-'
         ])
         autoTable(doc,{
           startY:y,
-          head:[['Sistema','Grupo','Item','Status','Observação']],
+          head:[['Sistema','Verificado','Resultado','N/A']],
           body:rows,
-          styles:{fontSize:6.8,cellPadding:1.5,overflow:'linebreak'},
+          styles:{fontSize:7.5,cellPadding:2,overflow:'linebreak'},
           headStyles:{fillColor:[15,28,46]},
-          columnStyles:{0:{cellWidth:27},1:{cellWidth:30},2:{cellWidth:67},3:{cellWidth:24},4:{cellWidth:34}},
+          columnStyles:{0:{cellWidth:47},1:{cellWidth:28},2:{cellWidth:77},3:{cellWidth:28}},
           margin:{left:14,right:14}
         })
-        y=doc.lastAutoTable.finalY+6
+        y=doc.lastAutoTable.finalY+5
+
+        const atencoes=(children.checklist||[]).filter(x=>x.status==='irregular')
+        if(atencoes.length){
+          paragraph('Pontos que precisam de atenção',
+            atencoes.map(x=>`${labelSistema(x.sistema)}: ${x.item}${x.observacao?` — ${x.observacao}`:''}`).join('\n')
+          )
+        }else{
+          line('Resultado geral','Sem apontamentos no checklist técnico')
+        }
       }
 
       let pdfSection=4
@@ -1238,13 +1292,21 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         </section>
 
         {(viewChildren.checklist||[]).length>0&&<section className="osSection">
-          <h3>Checklist técnico</h3>
-          <div className="viewChecklist">
-            {(viewChildren.checklist||[]).map(i=><div key={i.id}>
-              <span>{i.item}</span>
-              <b className={`viewCheckStatus ${i.status}`}>{i.status==='ok'?'OK':i.status==='irregular'?'Irregular':i.status==='nao_aplicavel'?'N/A':'Não verificado'}</b>
+          <h3>Resumo da verificação técnica</h3>
+          <p className="sectionHelp">Visão resumida para facilitar a leitura do cliente. Detalhes com atenção aparecem logo abaixo.</p>
+          <div className="checkSummaryGrid">
+            {resumoChecklistPorSistema(viewChildren.checklist||[]).map(r=><div className="checkSummaryCard" key={r.sistema}>
+              <b>{labelSistema(r.sistema)}</b>
+              <div><span className="summaryOk">{r.ok} OK</span>{r.irregular>0&&<span className="summaryAttention">{r.irregular} atenção</span>}{r.nao_aplicavel>0&&<span>{r.nao_aplicavel} N/A</span>}</div>
             </div>)}
           </div>
+          {(viewChildren.checklist||[]).some(i=>i.status==='irregular')&&<div className="clientAttentionList">
+            <b>Pontos que precisam de atenção</b>
+            {(viewChildren.checklist||[]).filter(i=>i.status==='irregular').map(i=><div key={i.id}>
+              <span>{labelSistema(i.sistema)} — {i.item}</span>
+              {i.observacao&&<small>{i.observacao}</small>}
+            </div>)}
+          </div>}
         </section>}
 
         {visualizacao.tipo_atendimento==='Manutenção Corretiva'&&<section className="osSection">
@@ -1393,7 +1455,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             const isOpen=expanded[s.sistema]!==false
             return <div className="osSection" key={s.sistema}>
               <button type="button" className="sectionToggle" onClick={()=>setExpanded(x=>({...x,[s.sistema]:!isOpen}))}>
-                <span>Checklist — {labelSistema(s.sistema)}</span>{isOpen?<ChevronUp/>:<ChevronDown/>}
+                <span>Verificação rápida — {labelSistema(s.sistema)}</span>{isOpen?<ChevronUp/>:<ChevronDown/>}
               </button>
               {isOpen&&<div className="checkGroups">
                 {[...new Set(items.map(x=>x.grupo))].map(grupo=><div className="checkGroup" key={grupo}>
@@ -1402,7 +1464,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                     <div className="checkText">{item.item}</div>
                     <div className="checkStates">
                       {[
-                        ['ok','OK'],['irregular','Irregular'],['nao_aplicavel','N/A'],['nao_verificado','—']
+                        ['ok','OK'],['irregular','Atenção'],['nao_aplicavel','N/A'],['nao_verificado','—']
                       ].map(([v,l])=><button type="button" key={v} className={item.status===v?`state active ${v}`:'state'} onClick={()=>updateChecklist(item.id,v)}>{l}</button>)}
                     </div>
                   </div>)}

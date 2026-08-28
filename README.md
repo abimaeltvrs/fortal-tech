@@ -1,38 +1,30 @@
-# FORTAL TECH V1.13 — Agenda avançada
+# FORTAL TECH V1.13.1 — Checklist de OS resumido
 
-Melhorias:
-- calendário mensal visual e clicável;
-- contador de compromissos por dia;
-- navegação entre meses;
-- atalhos Dia / Semana / Mês;
-- cards interativos:
-  - Hoje;
-  - Próximas 24h;
-  - Atrasados;
-  - Lembretes agora;
-- filtros por:
-  - status;
-  - cliente;
-  - sistema;
-- destaque visual de compromisso atrasado;
-- cores diferentes por status;
-- endereço exibido diretamente no compromisso;
-- vínculo opcional com uma OS;
-- botão para abrir a OS relacionada;
-- rota para atendimento;
-- conclusão rápida;
-- edição e exclusão;
-- lembrete dentro do aplicativo;
-- rascunho automático da Agenda;
-- funcionamento offline/sincronização preservados.
+Atualização focada em deixar a Ordem de Serviço mais rápida para o técnico e mais simples para o cliente.
 
-Não há SQL novo: o campo `os_id` e os campos de lembrete já fazem parte da estrutura atual da Agenda.
+## O que mudou
+- Checklists muito longos foram substituídos por verificações rápidas.
+- Cada sistema agora possui somente 4 ou 5 pontos principais.
+- Itens repetitivos foram agrupados.
+- "Irregular" passou a aparecer como "Atenção", com linguagem mais amigável.
+- Na visualização da OS, o cliente vê um resumo por sistema.
+- Pontos de atenção aparecem destacados separadamente.
+- O PDF deixou de listar dezenas de linhas.
+- O PDF agora mostra um resumo por sistema e detalha somente os pontos que precisam de atenção.
+- OS antigas continuam preservadas; nenhum histórico é apagado.
+- Não exige alteração no banco de dados.
 
-Teste recomendado:
-1. Crie um novo agendamento.
-2. Vincule cliente + OS.
-3. Ative lembrete de 15 minutos.
-4. Atualize a página antes de salvar para testar o rascunho.
-5. Salve e confirme o evento no calendário.
-6. Toque no dia do calendário.
-7. Use o botão da OS vinculada.
+## Exemplos
+CFTV:
+- Câmeras e qualidade da imagem
+- Gravação e armazenamento
+- Acesso e visualização
+- Alimentação, conexões e comunicação
+- Estado físico e limpeza
+
+Controle de Acesso:
+- Leitores e identificação
+- Abertura, fechamento e acionamentos
+- Sensores e segurança
+- Comunicação e registros
+- Alimentação e conexões
