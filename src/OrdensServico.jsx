@@ -14,6 +14,7 @@ import {
 } from './offline'
 import {syncPendingChanges} from './sync'
 import {saveDraft,loadDraft,clearDraft,draftAgeLabel} from './drafts'
+import {sanitizeOSPayload} from './sanitize'
 
 const sistemasCatalogo=[
   ['cftv','CFTV'],
@@ -669,12 +670,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       unidade:x.unidade||'un',
       preco_unitario:Number(x.preco_unitario||0)
     }))
-    const bundle={os:osPayload,sistemas:sistPayload,checklist:checkPayload,materiais:matPayload}
+    const safeOSPayload=sanitizeOSPayload(osPayload)
+    const bundle={os:safeOSPayload,sistemas:sistPayload,checklist:checkPayload,materiais:matPayload}
 
     try{
       if(navigator.onLine){
         const {data,error}=await supabase.from('ordens_servico')
-          .upsert(osPayload,{onConflict:'id'}).select().single()
+          .upsert(safeOSPayload,{onConflict:'id'}).select().single()
         if(error) throw error
 
         // Só substitui os filhos depois que a OS principal foi gravada.
@@ -714,7 +716,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           materiais:savedMateriais
         })
       }else{
-        await saveLocalOS(osPayload,'pending')
+        await saveLocalOS(safeOSPayload,'pending')
         await replaceLocalOSChildren(osId,{
           sistemas:sistPayload,
           checklist:checkPayload,

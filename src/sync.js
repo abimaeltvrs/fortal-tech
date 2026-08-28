@@ -2,13 +2,10 @@ import {
   offlineDB, getSyncQueue, removeQueueItem,
   cacheClientes, cacheAgendamentos, cacheOrdensServico, replaceLocalOSChildren
 } from './offline'
+import {sanitizeOSPayload,stripRelationFields} from './sanitize'
 
 function cleanPayload(payload){
-  const p={...payload}
-  delete p._syncStatus
-  delete p.cliente
-  delete p.tecnico
-  return p
+  return stripRelationFields(payload)
 }
 
 export async function syncPendingChanges(supabase,onStatus=()=>{}){
@@ -50,7 +47,7 @@ export async function syncPendingChanges(supabase,onStatus=()=>{}){
       if(item.entity==='ordens_servico'){
         if(item.action==='upsert_bundle'){
           const bundle=item.payload
-          const osPayload=cleanPayload(bundle.os)
+          const osPayload=sanitizeOSPayload(stripRelationFields(bundle.os))
           const {data:osData,error:osError}=await supabase.from('ordens_servico')
             .upsert(osPayload,{onConflict:'id'}).select().single()
           if(osError) throw osError
