@@ -426,6 +426,30 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   }
 
 
+
+  function irParaCampoObrigatorio(id){
+    setTimeout(()=>{
+      const root=modalRef.current
+      const el=root?.querySelector?.(`[data-field="${id}"]`)
+      if(!el)return
+
+      // Rola o próprio modal, não a página atrás dele.
+      const top=Math.max(0,el.offsetTop-95)
+      root.scrollTo?.({top,behavior:'smooth'})
+
+      el.classList.remove('fieldPulse')
+      void el.offsetWidth
+      el.classList.add('fieldPulse')
+
+      setTimeout(()=>{
+        const control=el.querySelector?.('input,select,textarea,button')
+        control?.focus?.({preventScroll:true})
+      },320)
+
+      setTimeout(()=>el.classList.remove('fieldPulse'),1800)
+    },60)
+  }
+
   function validarFormulario(){
     const faltas=[]
     if(!form.cliente_id) faltas.push({id:'cliente',label:'Cliente'})
@@ -444,35 +468,55 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
     if(faltas.length){
       setErro(`Faltam ${faltas.length} item(ns) para salvar: ${faltas.map(x=>x.label).join(', ')}.`)
-      setTimeout(()=>{
-        const el=document.querySelector(`[data-field="${faltas[0].id}"]`)
-        el?.scrollIntoView({behavior:'smooth',block:'center'})
-        el?.querySelector?.('input,select,textarea')?.focus?.()
-      },80)
+      irParaCampoObrigatorio(faltas[0].id)
       return false
     }
     return true
   }
 
-  async function salvar(e){
-    e.preventDefault()
+  async function persistirOS(formEfetivo,{finalizando=false}={}){
     setErro('')
     setSucesso('')
-    if(!validarFormulario()) return
+
+    // valida usando exatamente o estado que será salvo
+    const faltas=[]
+    if(!formEfetivo.cliente_id) faltas.push({id:'cliente',label:'Cliente'})
+    if(!formEfetivo.data_visita) faltas.push({id:'data_visita',label:'Data da visita'})
+    if(!formEfetivo.horario_chegada) faltas.push({id:'horario_chegada',label:'Horário de chegada'})
+    if(!sistemas.length) faltas.push({id:'sistemas',label:'Sistema(s) envolvido(s)'})
+
+    if(formEfetivo.status==='concluida'){
+      if(!formEfetivo.condicao_final) faltas.push({id:'condicao_final',label:'Condição final do sistema'})
+      if(!nomeAceiteCliente.trim()) faltas.push({id:'nome_aceite',label:'Nome do responsável pelo cliente'})
+      if(!assinaturaCliente) faltas.push({id:'assinatura_cliente',label:'Assinatura do cliente'})
+      if(!assinaturaTecnico) faltas.push({id:'assinatura_tecnico',label:'Assinatura do técnico'})
+    }
+
+    setPendenciasFormulario(faltas)
+    if(faltas.length){
+      setErro(
+        `${finalizando?'Não foi possível finalizar':'Não foi possível salvar'} a OS. `+
+        `Preencha: ${faltas.map(x=>x.label).join(', ')}.`
+      )
+      irParaCampoObrigatorio(faltas[0].id)
+      return false
+    }
 
     setSalvandoOS(true)
+    const eraEdicao=Boolean(edit)
     const osId=edit?.id||crypto.randomUUID()
     const osPayload={
-      ...form,
+      ...formEfetivo,
       id:osId,
       numero:edit?.numero||numeroOS(),
-      tecnico_id:profile.perfil==='admin'?form.tecnico_id:session.user.id,
-      data_visita:form.data_visita||null,
-      horario_chegada:form.horario_chegada||null,
-      horario_termino:form.horario_termino||null,
-      encerrada_em:form.encerrada_em||null,
+      tecnico_id:profile.perfil==='admin'?formEfetivo.tecnico_id:session.user.id,
+      data_visita:formEfetivo.data_visita||null,
+      horario_chegada:formEfetivo.horario_chegada||null,
+      horario_termino:formEfetivo.horario_termino||null,
+      encerrada_em:formEfetivo.encerrada_em||null,
       updated_at:new Date().toISOString()
     }
+
     const sistPayload=sistemas.map(x=>({
       os_id:osId,
       sistema:x.sistema,
@@ -501,9 +545,14 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           .upsert(osPayload,{onConflict:'id'}).select().single()
         if(error) throw error
 
-        await supabase.from('os_sistemas').delete().eq('os_id',osId)
-        await supabase.from('os_checklist').delete().eq('os_id',osId)
-        await supabase.from('os_materiais').delete().eq('os_id',osId)
+        // Só substitui os filhos depois que a OS principal foi gravada.
+        const deletes=await Promise.all([
+          supabase.from('os_sistemas').delete().eq('os_id',osId),
+          supabase.from('os_checklist').delete().eq('os_id',osId),
+          supabase.from('os_materiais').delete().eq('os_id',osId)
+        ])
+        const deleteError=deletes.find(x=>x.error)?.error
+        if(deleteError) throw deleteError
 
         let savedSistemas=[]
         let savedChecklist=[]
@@ -525,6 +574,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           savedMateriais=rows||[]
         }
 
+        await salvarMidiasEAssinaturas(osId)
         await saveLocalOS(data,'synced')
         await replaceLocalOSChildren(osId,{
           sistemas:savedSistemas,
@@ -533,12 +583,17 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         })
       }else{
         await saveLocalOS(osPayload,'pending')
-        await replaceLocalOSChildren(osId,{sistemas:sistPayload,checklist:checkPayload,materiais:matPayload})
+        await replaceLocalOSChildren(osId,{
+          sistemas:sistPayload,
+          checklist:checkPayload,
+          materiais:matPayload
+        })
+        await salvarMidiasEAssinaturas(osId)
         await queueChange('ordens_servico','upsert_bundle',bundle)
         setSyncStatus('pending')
       }
-      await salvarMidiasEAssinaturas(osId)
 
+      // Só fecha depois de TODAS as etapas terem sido concluídas.
       setModal(false)
       setEdit(null)
       setForm(empty)
@@ -551,26 +606,36 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       setNomeAceiteCliente('')
       setCargoAceiteCliente('')
       setExpanded({})
+      setPendenciasFormulario([])
       await carregar()
-      setSucesso(edit ? 'OS atualizada com sucesso.' : 'OS criada com sucesso.')
+
+      setSucesso(
+        finalizando
+          ? 'OS finalizada e salva com sucesso.'
+          : eraEdicao
+            ? 'OS atualizada com sucesso.'
+            : 'OS criada com sucesso.'
+      )
       window.scrollTo({top:0,behavior:'smooth'})
+      return true
     }catch(e){
-      if(!navigator.onLine){
-        await saveLocalOS(osPayload,'pending')
-        await replaceLocalOSChildren(osId,{sistemas:sistPayload,checklist:checkPayload,materiais:matPayload})
-        await queueChange('ordens_servico','upsert_bundle',bundle)
-        setSyncStatus('pending')
-        setModal(false)
-        await carregar()
-      }else {
-        setErro(`Não foi possível salvar a OS: ${e.message||'erro não identificado.'}`)
-        setTimeout(()=>{
-          modalRef.current?.scrollTo?.({top:0,behavior:'smooth'})
-        },50)
-      }
+      // No modo online, mantém o modal aberto para o usuário não perder nada.
+      setErro(
+        `${finalizando?'Não foi possível finalizar':'Não foi possível salvar'} a OS: `+
+        `${e.message||'erro não identificado.'}`
+      )
+      setTimeout(()=>{
+        modalRef.current?.scrollTo?.({top:0,behavior:'smooth'})
+      },50)
+      return false
     }finally{
       setSalvandoOS(false)
     }
+  }
+
+  async function salvar(e){
+    e?.preventDefault?.()
+    await persistirOS({...form},{finalizando:false})
   }
 
   async function excluir(os){
@@ -588,19 +653,24 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
 
   async function finalizarOSAtual(){
-    if(!edit)return
-    if(!assinaturaCliente)return setErro('Para finalizar, registre a assinatura do responsável pelo cliente.')
-    if(!assinaturaTecnico)return setErro('Para finalizar, registre a assinatura do técnico.')
+    if(!edit || salvandoOS)return
+
     const agora=new Date()
     const hh=String(agora.getHours()).padStart(2,'0')
     const mm=String(agora.getMinutes()).padStart(2,'0')
-    setForm(f=>({
-      ...f,
+    const ss=String(agora.getSeconds()).padStart(2,'0')
+
+    const formFinal={
+      ...form,
       status:'concluida',
-      horario_termino:`${hh}:${mm}`,
+      horario_termino:`${hh}:${mm}:${ss}`,
       encerrada_em:agora.toISOString()
-    }))
-    setSucesso('OS preparada para conclusão. Toque em “Salvar OS” para registrar definitivamente.')
+    }
+
+    // Atualiza visualmente e salva usando o mesmo objeto, sem depender
+    // da atualização assíncrona do estado do React.
+    setForm(formFinal)
+    await persistirOS(formFinal,{finalizando:true})
   }
 
   async function salvarStatusRapido(os){
@@ -1094,11 +1164,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         {erro&&<div className="warningBox modalError">
           <b>{erro}</b>
           {pendenciasFormulario.length>0&&<div className="missingList">
-            {pendenciasFormulario.map(x=><button type="button" key={x.id} onClick={()=>{
-              const el=document.querySelector(`[data-field="${x.id}"]`)
-              el?.scrollIntoView({behavior:'smooth',block:'center'})
-              el?.querySelector?.('input,select,textarea')?.focus?.()
-            }}>{x.label}</button>)}
+            {pendenciasFormulario.map(x=><button type="button" key={x.id} onClick={()=>irParaCampoObrigatorio(x.id)}>{x.label}</button>)}
           </div>}
         </div>}
 
@@ -1107,7 +1173,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             <h3>1. Dados do atendimento</h3>
             <div className="formGrid">
               <div data-field="cliente" className={`field span2 ${pendenciasFormulario.some(x=>x.id==='cliente')?'invalidField':''}`}><label>Cliente *</label>
-                <select required value={form.cliente_id} onChange={e=>setForm({...form,cliente_id:e.target.value})}>
+                <select value={form.cliente_id} onChange={e=>setForm({...form,cliente_id:e.target.value})}>
                   <option value="">Selecione...</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
@@ -1121,13 +1187,13 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                   <option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option><option value="emergencial">Emergencial</option>
                 </select>
               </div>
-              <div data-field="data_visita" className={`field ${pendenciasFormulario.some(x=>x.id==='data_visita')?'invalidField':''}`}><label>Data da visita *</label><input required type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
+              <div data-field="data_visita" className={`field ${pendenciasFormulario.some(x=>x.id==='data_visita')?'invalidField':''}`}><label>Data da visita *</label><input type="date" value={form.data_visita||''} onChange={e=>setForm({...form,data_visita:e.target.value})}/></div>
               <div className="field"><label>Status</label>
                 <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
                   <option value="aberta">Aberta</option><option value="agendada">Agendada</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_material">Aguardando material</option><option value="aguardando_orcamento">Aguardando orçamento</option><option value="concluida">Concluída</option><option value="cancelada">Cancelada</option>
                 </select>
               </div>
-              <div data-field="horario_chegada" className={`field ${pendenciasFormulario.some(x=>x.id==='horario_chegada')?'invalidField':''}`}><label>Horário de chegada *</label><input required type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
+              <div data-field="horario_chegada" className={`field ${pendenciasFormulario.some(x=>x.id==='horario_chegada')?'invalidField':''}`}><label>Horário de chegada *</label><input type="time" value={form.horario_chegada||''} onChange={e=>setForm({...form,horario_chegada:e.target.value})}/></div>
               <div className="field"><label>Horário de término</label><input type="time" value={form.horario_termino||''} onChange={e=>setForm({...form,horario_termino:e.target.value})}/></div>
               {profile.perfil==='admin'&&<div className="field span2"><label>Técnico responsável</label>
                 <select value={form.tecnico_id||''} onChange={e=>setForm({...form,tecnico_id:e.target.value})}>
@@ -1278,7 +1344,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           <div className="osSaveBar">
             <div className="saveHint"><CheckCircle2 size={17}/> Fotos e assinaturas ficam vinculadas ao histórico desta OS.</div>
             <div className="modalActions compact">
-              {edit&&form.status!=='concluida'&&<button type="button" className="finalizeBtn" onClick={finalizarOSAtual}><Flag size={16}/> Finalizar OS</button>}
+              {edit&&form.status!=='concluida'&&<button type="button" className="finalizeBtn" disabled={salvandoOS} onClick={finalizarOSAtual}><Flag size={16}/> {salvandoOS?'Finalizando...':'Finalizar OS'}</button>}
               <button type="button" className="ghost" onClick={()=>setModal(false)}>Cancelar</button>
               <button className="primary" disabled={salvandoOS}>{salvandoOS?<><RefreshCcw className="spin" size={17}/> Salvando...</>:<><Save size={17}/> Salvar OS</>}</button>
             </div>

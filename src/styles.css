@@ -2166,3 +2166,50 @@ input:focus,select:focus,textarea:focus,
     display:grid!important;
   }
 }
+
+/* ==========================================================
+   FORTAL TECH V1.12.4 — Validação e conclusão de OS
+   ========================================================== */
+.osModal{
+  scroll-behavior:smooth;
+}
+.invalidField,
+.invalidSection{
+  border-color:#f7c800!important;
+  box-shadow:0 0 0 2px rgba(247,200,0,.12)!important;
+  border-radius:10px;
+}
+.invalidField>label,
+.invalidSection>h3{
+  color:#f7c800!important;
+}
+.fieldPulse{
+  animation:ftRequiredPulse .85s ease-in-out 2;
+}
+@keyframes ftRequiredPulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(247,200,0,.12)}
+  50%{box-shadow:0 0 0 5px rgba(247,200,0,.28)}
+}
+.missingList{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+.missingList button{
+  border:1px solid #6d590c!important;
+  background:#181507!important;
+  color:#f7d94e!important;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:9px;
+  cursor:pointer;
+}
+.missingList button:hover{
+  border-color:#f7c800!important;
+}
+.finalizeBtn:disabled,
+.osSaveBar button:disabled{
+  opacity:.6;
+  cursor:wait;
+}
