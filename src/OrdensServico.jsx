@@ -242,7 +242,19 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
   function restoreDraft(payload){
     if(!payload)return
-    if(payload.form)setForm(payload.form)
+    if(payload.form){
+      const safe={...payload.form}
+      // campos retornados por joins/queries são apenas para visualização
+      delete safe.clientes
+      delete safe.profiles
+      delete safe.tecnicos
+      delete safe.os_sistemas
+      delete safe.os_checklist
+      delete safe.os_materiais
+      delete safe.os_fotos
+      delete safe.os_assinaturas
+      setForm(safe)
+    }
     if(Array.isArray(payload.sistemas))setSistemas(payload.sistemas)
     if(Array.isArray(payload.checklist))setChecklist(payload.checklist)
     if(Array.isArray(payload.materiais))setMateriais(payload.materiais)
@@ -334,7 +346,28 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setSucesso('')
     setPendenciasFormulario([])
     setEdit(os)
-    setForm({...empty,...os})
+    setForm({
+      ...empty,
+      cliente_id:os.cliente_id||'',
+      tipo_atendimento:os.tipo_atendimento||empty.tipo_atendimento,
+      prioridade:os.prioridade||empty.prioridade,
+      data_visita:os.data_visita||'',
+      status:os.status||empty.status,
+      horario_chegada:os.horario_chegada||'',
+      horario_termino:os.horario_termino||'',
+      tecnico_id:os.tecnico_id||'',
+      motivo:os.motivo||'',
+      problema_relatado:os.problema_relatado||'',
+      diagnostico:os.diagnostico||'',
+      causa_identificada:os.causa_identificada||'',
+      servico_executado:os.servico_executado||'',
+      pendencias:os.pendencias||'',
+      recomendacoes:os.recomendacoes||'',
+      necessita_orcamento:Boolean(os.necessita_orcamento),
+      condicao_final:os.condicao_final||'',
+      observacoes:os.observacoes||'',
+      encerrada_em:os.encerrada_em||null
+    })
     let children
     if(navigator.onLine){
       const [sr,cr,mr]=await Promise.all([
@@ -568,17 +601,53 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setSalvandoOS(true)
     const eraEdicao=Boolean(edit)
     const osId=edit?.id||crypto.randomUUID()
+    // IMPORTANTE:
+    // nunca envie o objeto inteiro do formulário ao Supabase.
+    // Registros carregados com joins podem conter propriedades auxiliares
+    // como `clientes`, que não são colunas reais de ordens_servico.
+    const allowedOSFields=[
+      'cliente_id',
+      'tipo_atendimento',
+      'prioridade',
+      'data_visita',
+      'status',
+      'horario_chegada',
+      'horario_termino',
+      'tecnico_id',
+      'motivo',
+      'problema_relatado',
+      'diagnostico',
+      'causa_identificada',
+      'servico_executado',
+      'pendencias',
+      'recomendacoes',
+      'necessita_orcamento',
+      'condicao_final',
+      'observacoes',
+      'encerrada_em'
+    ]
+
     const osPayload={
-      ...formEfetivo,
       id:osId,
-      numero:edit?.numero||numeroOS(),
-      tecnico_id:profile.perfil==='admin'?formEfetivo.tecnico_id:session.user.id,
-      data_visita:formEfetivo.data_visita||null,
-      horario_chegada:formEfetivo.horario_chegada||null,
-      horario_termino:formEfetivo.horario_termino||null,
-      encerrada_em:formEfetivo.encerrada_em||null,
-      updated_at:new Date().toISOString()
+      numero:edit?.numero||numeroOS()
     }
+
+    for(const field of allowedOSFields){
+      if(Object.prototype.hasOwnProperty.call(formEfetivo,field)){
+        osPayload[field]=formEfetivo[field]
+      }
+    }
+
+    // Normalizações
+    osPayload.cliente_id=formEfetivo.cliente_id||null
+    osPayload.tecnico_id=profile.perfil==='admin'
+      ? (formEfetivo.tecnico_id||null)
+      : session.user.id
+    osPayload.data_visita=formEfetivo.data_visita||null
+    osPayload.horario_chegada=formEfetivo.horario_chegada||null
+    osPayload.horario_termino=formEfetivo.horario_termino||null
+    osPayload.encerrada_em=formEfetivo.encerrada_em||null
+    osPayload.updated_at=new Date().toISOString()
 
     const sistPayload=sistemas.map(x=>({
       os_id:osId,

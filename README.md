@@ -1,54 +1,32 @@
-# FORTAL TECH V1.12.5 — Rascunho automático
+# FORTAL TECH V1.12.6 — Hotfix de salvamento da OS
 
-Objetivo:
-Nenhum preenchimento deve ser perdido se a página atualizar, o PWA fechar ou o navegador recarregar.
+Erro corrigido:
+`Could not find the 'clientes' column of 'ordens_servico' in the schema cache`
 
-Implementado inicialmente nos formulários mais críticos:
-- Ordem de Serviço;
-- Orçamento;
-- Entrada/Saída do Financeiro.
+Causa:
+- a consulta da lista de OS usa relacionamento com `clientes`;
+- ao abrir uma OS para edição, o objeto podia carregar também a propriedade auxiliar `clientes`;
+- o salvamento anterior espalhava o objeto completo do formulário no payload;
+- o Supabase recebia `clientes` como se fosse uma coluna da tabela `ordens_servico`.
 
-Funcionamento:
-- enquanto o usuário digita, o formulário é salvo automaticamente no armazenamento local do aparelho;
-- o salvamento acontece poucos milissegundos após cada alteração;
-- se a página atualizar ou o app fechar, ao abrir o mesmo formulário o rascunho é restaurado;
-- aparece o aviso `Rascunho recuperado`;
-- existe opção `Descartar rascunho`;
-- o rascunho só é apagado automaticamente depois que o documento é salvo com sucesso.
+Correção:
+- o salvamento agora usa uma lista explícita de campos permitidos;
+- somente colunas reais de `ordens_servico` são enviadas ao Supabase;
+- campos de relacionamento/join nunca são enviados;
+- rascunhos antigos são higienizados ao serem restaurados;
+- a edição da OS também carrega apenas os campos editáveis.
 
-OS:
-O rascunho preserva:
-- dados do atendimento;
+Benefício:
+Essa proteção evita erros semelhantes com propriedades auxiliares como:
+- clientes;
+- profiles;
+- técnicos;
 - sistemas;
 - checklist;
 - materiais;
-- fotos adicionadas ao estado do formulário;
-- assinaturas;
-- responsável pelo cliente;
-- seções abertas.
+- fotos;
+- assinaturas.
 
-Orçamento:
-Preserva:
-- cliente;
-- OS relacionada;
-- itens;
-- valores;
-- pagamento;
-- observações.
+Não há SQL novo.
 
-Financeiro:
-Preserva:
-- Entrada/Saída;
-- descrição;
-- categoria;
-- valor;
-- datas;
-- status;
-- pagamento;
-- cliente/fornecedor;
-- observações.
-
-Observação:
-O rascunho fica apenas no aparelho onde foi digitado. Ele não é sincronizado com o Supabase até o usuário salvar o documento.
-
-Não há SQL novo nesta versão.
+O rascunho existente continua disponível.
