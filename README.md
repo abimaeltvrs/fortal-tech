@@ -1,3 +1,12 @@
+# FORTAL TECH V1.14.5
+
+## Orçamentos – fluxo contínuo de itens
+- Cada item agora oferece **+ Adicionar outro serviço/material** logo abaixo.
+- Também há atalho para alternar e adicionar o outro tipo de item.
+- O novo item recebe rolagem automática e foco na descrição.
+- Os botões superiores continuam disponíveis.
+- Campos numéricos novos permanecem vazios, conforme V1.14.4.
+
 # FORTAL TECH V1.14.3
 
 ## Correção - Enviar OS

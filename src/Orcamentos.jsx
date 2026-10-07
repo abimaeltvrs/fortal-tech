@@ -771,7 +771,8 @@ export default function Orcamentos({supabase,profile,session}){
                 <div className="budgetItemHeader budgetItemHeaderV14"><span>Tipo</span><span>Descrição</span><span>Qtd.</span><span>Unid.</span><span>Custo</span><span>Acrésc.</span><span>Venda</span><span>Total</span><span></span></div>
                 {itens.map(i=>{
                   const venda=precoVenda(i)
-                  return <div className="budgetItemRow budgetItemRowV14" key={i.id} data-budget-item={i.id}>
+                  return <div className="budgetItemFlow" key={i.id}>
+                  <div className="budgetItemRow budgetItemRowV14" data-budget-item={i.id}>
                     <select value={i.tipo} onChange={e=>{
                       const tipo=e.target.value;upd(i.id,'tipo',tipo);upd(i.id,'unidade',tipo==='servico'?'serv':'un')
                     }}><option value="servico">Serviço</option><option value="material">Material</option></select>
@@ -783,6 +784,11 @@ export default function Orcamentos({supabase,profile,session}){
                     <b className="salePrice">{money(venda)}</b>
                     <strong>{money(Number(i.quantidade||0)*venda)}</strong>
                     <button type="button" className="iconBtn danger" onClick={()=>setItens(x=>x.filter(y=>y.id!==i.id))}><Trash2 size={15}/></button>
+                  </div>
+                  <div className="budgetQuickAdd">
+                    <button type="button" className="ghost" onClick={()=>addItem(i.tipo)}>+ Adicionar outro {i.tipo==='material'?'material':'serviço'}</button>
+                    <button type="button" className="ghost compact" onClick={()=>addItem(i.tipo==='material'?'servico':'material')}>+ {i.tipo==='material'?'Serviço':'Material'}</button>
+                  </div>
                   </div>
                 })}
               </>
