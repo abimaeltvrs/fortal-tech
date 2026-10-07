@@ -2,7 +2,7 @@ export const OS_DB_FIELDS=[
   'id','numero','cliente_id','tipo_atendimento','prioridade','data_visita','status',
   'horario_chegada','horario_termino','tecnico_id','motivo','problema_relatado',
   'diagnostico','causa_identificada','servico_executado','pendencias','recomendacoes',
-  'necessita_orcamento','condicao_final','observacoes','encerrada_em','created_at','updated_at'
+  'necessita_orcamento','condicao_final','observacoes','encerrada_em','os_enviada_em','os_enviada_para','os_envio_metodo','created_at','updated_at'
 ]
 
 export function sanitizeOSPayload(input={}){

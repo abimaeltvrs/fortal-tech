@@ -1,12 +1,11 @@
-# FORTAL TECH V1.14
+# FORTAL TECH V1.14.1
 
-## Orçamentos
-- Materiais agora possuem custo unitário interno.
-- Acréscimo percentual por item com cálculo automático do preço de venda.
-- Resumo interno de custo, venda e lucro bruto estimado.
-- Custo, percentual e lucro não aparecem no PDF do cliente.
-- Quantidade agora possui unidade de medida (unidade, caixa, kit, pacote, rolo, metro, bobina, par, conjunto, serviço e outro).
-- A unidade aparece no orçamento e no PDF.
+- Envio automático de OS por e-mail com PDF anexado.
+- Destinatário, assunto e mensagem preenchidos automaticamente.
+- Opção Compartilhar para WhatsApp/e-mail/apps do celular.
+- Registro do último envio.
 
-## Banco de dados
-Execute `supabase/v1.14_orcamento_margem_unidade.sql` no SQL Editor do Supabase antes de usar a nova versão.
+## Configuração
+1. Execute `supabase/v1.14.1_envio_os.sql`.
+2. Na Vercel configure `RESEND_API_KEY` e `OS_EMAIL_FROM`.
+3. `OS_EMAIL_FROM` deve ser um remetente/domínio autorizado no serviço de e-mail.

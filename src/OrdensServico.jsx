@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
   ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle,
-  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck,RefreshCcw
+  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck,RefreshCcw,Mail,Share2,Send
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -157,6 +157,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [visualizacao,setVisualizacao]=useState(null)
   const [draftRecovered,setDraftRecovered]=useState(null)
   const [draftDirty,setDraftDirty]=useState(false)
+  const [envioOS,setEnvioOS]=useState(null)
+  const [enviandoOS,setEnviandoOS]=useState(false)
   const [viewChildren,setViewChildren]=useState({sistemas:[],checklist:[],materiais:[],fotos:[],assinaturas:[]})
   const modalRef=useRef(null)
 
@@ -928,7 +930,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const nomeCliente=id=>clientes.find(c=>c.id===id)?.nome||'Cliente'
   const labelSistema=cod=>sistemasCatalogo.find(x=>x[0]===cod)?.[1]||cod
 
-  async function gerarPDF(os){
+  async function gerarPDF(os,{returnBlob=false}={}){
     setErro('')
     try{
       const cliente=clientes.find(c=>c.id===os.cliente_id)||{}
@@ -1159,17 +1161,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       }
 
       const filename=`${os.numero}.pdf`
-      try{
-        doc.save(filename)
-      }catch(saveError){
-        const blob=doc.output('blob')
-        const url=URL.createObjectURL(blob)
-        const a=document.createElement('a')
-        a.href=url
-        a.download=filename
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
+      const blob=doc.output('blob')
+      if(returnBlob) return {blob,filename}
+      try{doc.save(filename)}catch(saveError){
+        const url=URL.createObjectURL(blob),a=document.createElement('a')
+        a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove()
         setTimeout(()=>URL.revokeObjectURL(url),1500)
       }
       setSucesso(`PDF da ${os.numero} gerado.`)
@@ -1177,6 +1173,40 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       console.error('Erro ao gerar PDF:',e)
       setErro(`Não foi possível gerar o PDF: ${e.message||'erro não identificado.'}`)
     }
+  }
+
+  function clienteDaOS(os){ return clientes.find(c=>c.id===os?.cliente_id)||{} }
+  async function blobParaBase64(blob){return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.onerror=reject;r.readAsDataURL(blob)})}
+  async function registrarEnvioOS(os,email,metodo='email'){
+    const patch={os_enviada_em:new Date().toISOString(),os_enviada_para:email||null,os_envio_metodo:metodo}
+    const {error}=await supabase.from('ordens_servico').update(patch).eq('id',os.id)
+    if(error)console.warn('Histórico do envio não registrado:',error.message)
+    setLista(x=>x.map(i=>i.id===os.id?{...i,...patch}:i))
+    if(visualizacao?.id===os.id)setVisualizacao(v=>({...v,...patch}))
+  }
+  async function enviarOSEmail(os){
+    const cliente=clienteDaOS(os)
+    if(!cliente.email){setErro('Este cliente não possui e-mail cadastrado.');return}
+    if(!navigator.onLine){setErro('O envio automático por e-mail precisa de internet.');return}
+    setEnviandoOS(true);setErro('')
+    try{
+      const pdf=await gerarPDF(os,{returnBlob:true}),pdfBase64=await blobParaBase64(pdf.blob)
+      const response=await fetch('/api/send-os-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        to:cliente.email,cliente:cliente.responsavel||cliente.nome||'Cliente',numero:os.numero,data:dataBR(os.data_visita),
+        tipo:os.tipo_atendimento||'Atendimento técnico',status:os.status||'concluida',pdfBase64,filename:pdf.filename})})
+      const result=await response.json().catch(()=>({}))
+      if(!response.ok)throw new Error(result.error||'Não foi possível enviar o e-mail.')
+      await registrarEnvioOS(os,cliente.email,'email');setEnvioOS(null);setSucesso(`OS ${os.numero} enviada para ${cliente.email}.`)
+    }catch(e){setErro(e.message||'Não foi possível enviar a OS por e-mail.')}finally{setEnviandoOS(false)}
+  }
+  async function compartilharOS(os){
+    setEnviandoOS(true);setErro('')
+    try{
+      const pdf=await gerarPDF(os,{returnBlob:true}),file=new File([pdf.blob],pdf.filename,{type:'application/pdf'}),cliente=clienteDaOS(os)
+      const data={title:`Ordem de Serviço ${os.numero} - FORTAL TECH`,text:`Olá ${cliente.responsavel||cliente.nome||''}, segue a Ordem de Serviço ${os.numero} da FORTAL TECH.`,files:[file]}
+      if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share(data);await registrarEnvioOS(os,cliente.email||null,'compartilhar');setEnvioOS(null);setSucesso(`OS ${os.numero} compartilhada.`)}
+      else{await gerarPDF(os);setSucesso('PDF gerado. O compartilhamento direto não está disponível neste navegador.')}
+    }catch(e){if(e?.name!=='AbortError')setErro(e.message||'Não foi possível compartilhar a OS.')}finally{setEnviandoOS(false)}
   }
 
   function gerarOrcamentoDaOS(os){
@@ -1364,6 +1394,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
         <div className="osViewActions">
           <button className="ghost" onClick={()=>gerarPDF(visualizacao)}><FileDown size={16}/> Gerar PDF</button>
+          <button className="ghost" onClick={()=>setEnvioOS(visualizacao)}><Send size={16}/> Enviar OS</button>
           {visualizacao.necessita_orcamento&&<button className="ghost" onClick={()=>{
             const item=visualizacao
             setVisualizacao(null)
@@ -1375,6 +1406,20 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             editar(item)
           }}><Pencil size={16}/> Editar OS</button>
         </div>
+      </div>
+    </div>}
+
+    {envioOS&&<div className="modalBackdrop">
+      <div className="sendBudgetModal">
+        <div className="modalHead"><div><span className="eyebrow">ENVIAR ORDEM DE SERVIÇO</span><h2>{envioOS.numero}</h2></div><button className="iconBtn" onClick={()=>setEnvioOS(null)}><X/></button></div>
+        <div className="sendClientSummary"><b>{clienteDaOS(envioOS).nome||'Cliente'}</b><span>{clienteDaOS(envioOS).email||'E-mail não cadastrado'}</span><span>{clienteDaOS(envioOS).responsavel||'Responsável não informado'}</span></div>
+        <p>O PDF da OS será gerado e anexado automaticamente.</p>
+        <div className="sendOptions">
+          <button disabled={enviandoOS||!clienteDaOS(envioOS).email} onClick={()=>enviarOSEmail(envioOS)}><Mail size={23}/><div><b>E-mail automático</b><span>Enviar PDF para o e-mail cadastrado</span></div></button>
+          <button disabled={enviandoOS} onClick={()=>compartilharOS(envioOS)}><Share2 size={23}/><div><b>Compartilhar</b><span>WhatsApp, e-mail ou apps do celular</span></div></button>
+        </div>
+        {envioOS.os_enviada_em&&<div className="sendNote">Último envio: {new Date(envioOS.os_enviada_em).toLocaleString('pt-BR')} {envioOS.os_enviada_para?`• ${envioOS.os_enviada_para}`:''}</div>}
+        <div className="sendNote">O envio automático usa o serviço de e-mail configurado no servidor. A chave nunca fica exposta no aplicativo.</div>
       </div>
     </div>}
 
