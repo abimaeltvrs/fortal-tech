@@ -1,11 +1,12 @@
-# FORTAL TECH V1.14.1
+# FORTAL TECH V1.14.2
 
-- Envio automático de OS por e-mail com PDF anexado.
-- Destinatário, assunto e mensagem preenchidos automaticamente.
-- Opção Compartilhar para WhatsApp/e-mail/apps do celular.
-- Registro do último envio.
+## Correção do envio de OS
+- Remove dependência do Resend/API de e-mail.
+- Usa o mesmo padrão já adotado no envio de Orçamento.
+- Busca o e-mail cadastrado do cliente.
+- Preenche destinatário, assunto e mensagem automaticamente.
+- No celular/PWA, tenta compartilhar o PDF da OS diretamente pelo menu nativo.
+- Quando o navegador não permite anexar pelo compartilhamento, gera o PDF e abre o app de e-mail com os campos preenchidos para o usuário confirmar o envio.
+- Mantém o registro do último envio no Supabase.
 
-## Configuração
-1. Execute `supabase/v1.14.1_envio_os.sql`.
-2. Na Vercel configure `RESEND_API_KEY` e `OS_EMAIL_FROM`.
-3. `OS_EMAIL_FROM` deve ser um remetente/domínio autorizado no serviço de e-mail.
+Não exige nova configuração na Vercel. O SQL executado na V1.14.1 pode permanecer.

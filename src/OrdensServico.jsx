@@ -1176,7 +1176,6 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   }
 
   function clienteDaOS(os){ return clientes.find(c=>c.id===os?.cliente_id)||{} }
-  async function blobParaBase64(blob){return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.onerror=reject;r.readAsDataURL(blob)})}
   async function registrarEnvioOS(os,email,metodo='email'){
     const patch={os_enviada_em:new Date().toISOString(),os_enviada_para:email||null,os_envio_metodo:metodo}
     const {error}=await supabase.from('ordens_servico').update(patch).eq('id',os.id)
@@ -1187,17 +1186,40 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   async function enviarOSEmail(os){
     const cliente=clienteDaOS(os)
     if(!cliente.email){setErro('Este cliente não possui e-mail cadastrado.');return}
-    if(!navigator.onLine){setErro('O envio automático por e-mail precisa de internet.');return}
     setEnviandoOS(true);setErro('')
     try{
-      const pdf=await gerarPDF(os,{returnBlob:true}),pdfBase64=await blobParaBase64(pdf.blob)
-      const response=await fetch('/api/send-os-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        to:cliente.email,cliente:cliente.responsavel||cliente.nome||'Cliente',numero:os.numero,data:dataBR(os.data_visita),
-        tipo:os.tipo_atendimento||'Atendimento técnico',status:os.status||'concluida',pdfBase64,filename:pdf.filename})})
-      const result=await response.json().catch(()=>({}))
-      if(!response.ok)throw new Error(result.error||'Não foi possível enviar o e-mail.')
-      await registrarEnvioOS(os,cliente.email,'email');setEnvioOS(null);setSucesso(`OS ${os.numero} enviada para ${cliente.email}.`)
-    }catch(e){setErro(e.message||'Não foi possível enviar a OS por e-mail.')}finally{setEnviandoOS(false)}
+      const pdf=await gerarPDF(os,{returnBlob:true})
+      const file=new File([pdf.blob],pdf.filename,{type:'application/pdf'})
+      const shareData={
+        title:`Ordem de Serviço ${os.numero} - FORTAL TECH`,
+        text:`Olá ${cliente.responsavel||cliente.nome||''}, segue a Ordem de Serviço ${os.numero} da FORTAL TECH.`,
+        files:[file]
+      }
+      if(navigator.canShare?.({files:[file]}) && navigator.share){
+        await navigator.share(shareData)
+        await registrarEnvioOS(os,cliente.email,'email')
+        setEnvioOS(null)
+        setSucesso('OS compartilhada. Confirme o envio no aplicativo escolhido.')
+        return
+      }
+
+      const assunto=encodeURIComponent(`Ordem de Serviço ${os.numero} - FORTAL TECH`)
+      const corpo=encodeURIComponent(
+        `Olá ${cliente.responsavel||cliente.nome||''},\n\n`+
+        `Segue a Ordem de Serviço ${os.numero} da FORTAL TECH.\n`+
+        `Data do atendimento: ${dataBR(os.data_visita)}\n`+
+        `Tipo: ${os.tipo_atendimento||'Atendimento técnico'}\n`+
+        `Status: ${statusLabel[os.status]||os.status||'Concluída'}\n\n`+
+        `Atenciosamente,\nFORTAL TECH`
+      )
+      await gerarPDF(os)
+      await registrarEnvioOS(os,cliente.email,'email')
+      window.location.href=`mailto:${cliente.email}?subject=${assunto}&body=${corpo}`
+      setEnvioOS(null)
+      setSucesso('E-mail preparado. Anexe o PDF gerado caso o seu aplicativo não o tenha incluído automaticamente.')
+    }catch(e){
+      if(e?.name!=='AbortError')setErro(e.message||'Não foi possível preparar o envio da OS.')
+    }finally{setEnviandoOS(false)}
   }
   async function compartilharOS(os){
     setEnviandoOS(true);setErro('')
@@ -1415,11 +1437,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         <div className="sendClientSummary"><b>{clienteDaOS(envioOS).nome||'Cliente'}</b><span>{clienteDaOS(envioOS).email||'E-mail não cadastrado'}</span><span>{clienteDaOS(envioOS).responsavel||'Responsável não informado'}</span></div>
         <p>O PDF da OS será gerado e anexado automaticamente.</p>
         <div className="sendOptions">
-          <button disabled={enviandoOS||!clienteDaOS(envioOS).email} onClick={()=>enviarOSEmail(envioOS)}><Mail size={23}/><div><b>E-mail automático</b><span>Enviar PDF para o e-mail cadastrado</span></div></button>
+          <button disabled={enviandoOS||!clienteDaOS(envioOS).email} onClick={()=>enviarOSEmail(envioOS)}><Mail size={23}/><div><b>E-mail</b><span>Preencher destinatário, assunto e texto automaticamente</span></div></button>
           <button disabled={enviandoOS} onClick={()=>compartilharOS(envioOS)}><Share2 size={23}/><div><b>Compartilhar</b><span>WhatsApp, e-mail ou apps do celular</span></div></button>
         </div>
         {envioOS.os_enviada_em&&<div className="sendNote">Último envio: {new Date(envioOS.os_enviada_em).toLocaleString('pt-BR')} {envioOS.os_enviada_para?`• ${envioOS.os_enviada_para}`:''}</div>}
-        <div className="sendNote">O envio automático usa o serviço de e-mail configurado no servidor. A chave nunca fica exposta no aplicativo.</div>
+        <div className="sendNote">No celular, o sistema tenta compartilhar o PDF junto. Se o navegador não permitir, o PDF é baixado e o aplicativo de e-mail é aberto com os dados preenchidos.</div>
       </div>
     </div>}
 
