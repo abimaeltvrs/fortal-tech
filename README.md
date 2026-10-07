@@ -6,3 +6,10 @@
 - Envio segue o mesmo padrão do Orçamento: e-mail preenchido automaticamente e compartilhamento do PDF quando suportado pelo celular/navegador.
 - Sem Resend e sem nova configuração na Vercel.
 - Não exige novo SQL além do já executado na V1.14.1.
+
+
+## V1.14.4
+- Ao adicionar Serviço ou Material, a tela rola automaticamente até o novo item.
+- O campo de descrição do novo item recebe foco automaticamente.
+- Quantidade, custo, acréscimo e valor começam visualmente vazios, sem zero para apagar.
+- Campos vazios continuam sendo tratados como zero apenas nos cálculos internos.

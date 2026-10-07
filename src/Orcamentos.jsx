@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react'
+import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,FileText,Search,Pencil,Trash2,X,Save,FileDown,
   BadgeDollarSign,CheckCircle2,Clock3,Send,Mail,MessageCircle,Share2
@@ -269,9 +269,19 @@ export default function Orcamentos({supabase,profile,session}){
   const vendaMateriais=useMemo(()=>itens.filter(x=>x.tipo==='material').reduce((s,x)=>s+Number(x.quantidade||0)*precoVenda(x),0),[itens])
   const lucroMateriais=vendaMateriais-custoMateriais
   const total=Math.max(0,subtotal-Number(form.desconto||0))
+  const novoItemRef=useRef(null)
 
   function addItem(tipo='servico'){
-    setItens(x=>[...x,{id:crypto.randomUUID(),tipo,descricao:'',quantidade:1,unidade:tipo==='servico'?'serv':'un',custo_unitario:0,acrescimo_percentual:0,valor_unitario:0}])
+    const id=crypto.randomUUID()
+    setItens(x=>[...x,{id,tipo,descricao:'',quantidade:'',unidade:tipo==='servico'?'serv':'un',custo_unitario:'',acrescimo_percentual:'',valor_unitario:''}])
+    window.setTimeout(()=>{
+      const row=document.querySelector(`[data-budget-item=\"${id}\"]`)
+      if(!row)return
+      row.scrollIntoView({behavior:'smooth',block:'center'})
+      const first=row.querySelector('input[name=\"descricao-item\"]')
+      if(first){first.focus({preventScroll:true});first.select?.()}
+      novoItemRef.current=row
+    },80)
   }
   function upd(id,key,val){
     setItens(x=>x.map(i=>i.id===id?{...i,[key]:val}:i))
@@ -761,15 +771,15 @@ export default function Orcamentos({supabase,profile,session}){
                 <div className="budgetItemHeader budgetItemHeaderV14"><span>Tipo</span><span>Descrição</span><span>Qtd.</span><span>Unid.</span><span>Custo</span><span>Acrésc.</span><span>Venda</span><span>Total</span><span></span></div>
                 {itens.map(i=>{
                   const venda=precoVenda(i)
-                  return <div className="budgetItemRow budgetItemRowV14" key={i.id}>
+                  return <div className="budgetItemRow budgetItemRowV14" key={i.id} data-budget-item={i.id}>
                     <select value={i.tipo} onChange={e=>{
                       const tipo=e.target.value;upd(i.id,'tipo',tipo);upd(i.id,'unidade',tipo==='servico'?'serv':'un')
                     }}><option value="servico">Serviço</option><option value="material">Material</option></select>
-                    <input value={i.descricao} onChange={e=>upd(i.id,'descricao',e.target.value)} placeholder="Descrição do item"/>
-                    <input type="number" min="0" step="0.01" value={i.quantidade} onChange={e=>upd(i.id,'quantidade',e.target.value)}/>
+                    <input name="descricao-item" value={i.descricao} onChange={e=>upd(i.id,'descricao',e.target.value)} placeholder="Descrição do item"/>
+                    <input type="number" min="0" step="0.01" value={Number(i.quantidade||0)===0?'':i.quantidade} onChange={e=>upd(i.id,'quantidade',e.target.value)}/>
                     <select value={i.unidade||'un'} onChange={e=>upd(i.id,'unidade',e.target.value)}>{unidades.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
-                    {i.tipo==='material'?<input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={i.custo_unitario??0} onChange={e=>upd(i.id,'custo_unitario',e.target.value)} placeholder="Custo"/>:<input type="number" min="0" step="0.01" value={i.valor_unitario??0} onChange={e=>upd(i.id,'valor_unitario',e.target.value)} placeholder="Valor"/>}
-                    {i.tipo==='material'?<div className="percentField"><input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={i.acrescimo_percentual??0} onChange={e=>upd(i.id,'acrescimo_percentual',e.target.value)}/><span>%</span></div>:<span className="notApplicable">—</span>}
+                    {i.tipo==='material'?<input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={Number(i.custo_unitario||0)===0?'':i.custo_unitario} onChange={e=>upd(i.id,'custo_unitario',e.target.value)} placeholder="Custo"/>:<input type="number" min="0" step="0.01" value={Number(i.valor_unitario||0)===0?'':i.valor_unitario} onChange={e=>upd(i.id,'valor_unitario',e.target.value)} placeholder="Valor"/>}
+                    {i.tipo==='material'?<div className="percentField"><input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={Number(i.acrescimo_percentual||0)===0?'':i.acrescimo_percentual} onChange={e=>upd(i.id,'acrescimo_percentual',e.target.value)}/><span>%</span></div>:<span className="notApplicable">—</span>}
                     <b className="salePrice">{money(venda)}</b>
                     <strong>{money(Number(i.quantidade||0)*venda)}</strong>
                     <button type="button" className="iconBtn danger" onClick={()=>setItens(x=>x.filter(y=>y.id!==i.id))}><Trash2 size={15}/></button>
