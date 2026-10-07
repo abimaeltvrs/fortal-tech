@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react'
+import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   LayoutDashboard,CalendarDays,Users,ClipboardList,FileText,WalletCards,
   BarChart3,UserCog,Settings,Plus,Wrench,AlertTriangle,CheckCircle2,
@@ -20,6 +20,21 @@ import Manuais from './Manuais'
 import InstallApp from './InstallApp'
 import fortalLogo from './assets/fortal-tech-logo.png'
 import {syncPendingChanges} from './sync'
+
+
+function FortalSplash({quick=false}){
+  return <div className={`fortalSplash ${quick?'quick':''}`} role="status" aria-live="polite" aria-label={quick?'Atualizando FORTAL TECH':'Carregando FORTAL TECH'}>
+    <div className="splashStage">
+      <div className="splashLogoWrap">
+        <img src={fortalLogo} className="splashLogo" alt="" aria-hidden="true"/>
+        <span className="splashScan" aria-hidden="true"></span>
+      </div>
+      <div className="splashBrand">FORTAL <b>TECH</b></div>
+      <div className="splashCaption">{quick?'Atualizando':'Segurança Eletrônica & Elétrica'}</div>
+      <div className="splashDots" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+  </div>
+}
 
 const pages=[
   ['dashboard','Dashboard',LayoutDashboard],['agenda','Agenda',CalendarDays],
@@ -92,6 +107,38 @@ export default function App(){
   const [openAgendaId,setOpenAgendaId]=useState(null)
   const [openOSId,setOpenOSId]=useState(null)
   const [financeOrcamentoId,setFinanceOrcamentoId]=useState(null)
+  const [bootReady,setBootReady]=useState(false)
+  const [quickSplash,setQuickSplash]=useState(false)
+  const previousPage=useRef(page)
+
+  useEffect(()=>{
+    const timer=setTimeout(()=>setBootReady(true),1400)
+    return()=>clearTimeout(timer)
+  },[])
+
+  useEffect(()=>{
+    if(previousPage.current===page)return
+    previousPage.current=page
+    setQuickSplash(true)
+    const timer=setTimeout(()=>setQuickSplash(false),420)
+    return()=>clearTimeout(timer)
+  },[page])
+
+  useEffect(()=>{
+    if(syncStatus!=='syncing')return
+    setQuickSplash(true)
+    const timer=setTimeout(()=>setQuickSplash(false),360)
+    return()=>clearTimeout(timer)
+  },[syncStatus])
+
+  useEffect(()=>{
+    const show=()=>{
+      setQuickSplash(true)
+      setTimeout(()=>setQuickSplash(false),380)
+    }
+    window.addEventListener('fortal:quick-loading',show)
+    return()=>window.removeEventListener('fortal:quick-loading',show)
+  },[])
 
   function abrirCriacao(tipo){
     setQuickCreate(false)
@@ -183,15 +230,16 @@ export default function App(){
   },[page,profile?.perfil])
 
   const current=useMemo(()=>pages.find(p=>p[0]===page),[page])
-  if(loading)return <div className="boot">Carregando FORTAL TECH...</div>
+  if(loading||!bootReady)return <FortalSplash/>
   if(!supabase)return <div className="boot errorBox">Supabase não configurado. Verifique as variáveis de ambiente.</div>
   if(!session)return <Login supabase={supabase}/>
-  if(!profile)return <div className="boot">Carregando perfil...</div>
+  if(!profile)return <FortalSplash/>
 
   const role=profile.perfil==='admin'?'ADMINISTRADOR':'TÉCNICO'
   const visible=pages.filter(([id])=>profile.perfil==='admin'||!['financeiro','relatorios','usuarios','configuracoes','orcamentos'].includes(id))
 
   return <div className="app">
+    {quickSplash&&<FortalSplash quick/>}
     {open && <button className="sidebarOverlay" aria-label="Fechar menu" onClick={()=>setOpen(false)}></button>}
     <aside className={open?'sidebar open':'sidebar'}>
       <div className="brand brandOfficial">
