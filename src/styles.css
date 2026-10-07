@@ -2367,3 +2367,12 @@ input:focus,select:focus,textarea:focus,
 .clientAttentionList span{display:block;font-size:9px;color:#e5e7ea}
 .clientAttentionList small{display:block;font-size:8px;color:#8f979f;margin-top:3px}
 @media(max-width:700px){.checkSummaryGrid{grid-template-columns:1fr}}
+
+/* FORTAL TECH V1.14 — orçamento com custo, acréscimo e unidade */
+.budgetItemHeaderV14,.budgetItemRowV14{grid-template-columns:90px minmax(160px,1fr) 65px 90px 95px 80px 100px 105px 34px}
+.budgetItemRowV14 .internalField{border-color:#70551b;background:#17140b}
+.percentField{display:flex;align-items:center;position:relative}.percentField input{padding-right:24px!important}.percentField span{position:absolute;right:9px;color:#cba34b;font-size:10px}
+.salePrice{font-size:10px;color:#f2c94c;text-align:right;white-space:nowrap}.notApplicable{text-align:center;color:#65707d}
+.budgetInternalSummary{margin:14px 0 0 auto;width:min(480px,100%);border:1px solid #70551b;background:#121008;border-radius:10px;overflow:hidden}
+.budgetInternalSummary>div{display:grid;grid-template-columns:1fr auto;gap:12px;padding:8px 11px;border-top:1px solid #332b17}.budgetInternalSummary>div:first-child{border-top:0}.budgetInternalSummary span{font-size:10px;color:#a9a18c}.budgetInternalSummary b{font-size:11px}.budgetInternalSummary .internalTitle{background:#1b1608}.budgetInternalSummary .internalTitle b{color:#f2c94c}.budgetInternalSummary .internalTitle span{text-align:right;font-size:8px}.budgetInternalSummary .profit b{color:#76df9a}
+@media(max-width:700px){.budgetItemRowV14{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"type type" "desc desc" "qty unit" "cost percent" "sale total" "del del"}.budgetItemRowV14>select:nth-child(1){grid-area:type}.budgetItemRowV14>input:nth-child(2){grid-area:desc}.budgetItemRowV14>input:nth-child(3){grid-area:qty}.budgetItemRowV14>select:nth-child(4){grid-area:unit}.budgetItemRowV14>input:nth-child(5){grid-area:cost}.budgetItemRowV14>.percentField,.budgetItemRowV14>.notApplicable{grid-area:percent}.budgetItemRowV14>.salePrice{grid-area:sale;text-align:left}.budgetItemRowV14>strong{grid-area:total}.budgetItemRowV14>button{grid-area:del;justify-self:end}.budgetItemHeaderV14{display:none}}

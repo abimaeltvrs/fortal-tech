@@ -32,6 +32,26 @@ const statusLabel={
   expirado:'Expirado'
 }
 
+const unidades=[
+  ['un','Unidade'],['cx','Caixa'],['kit','Kit'],['pct','Pacote'],['rl','Rolo'],
+  ['m','Metro'],['bob','Bobina'],['par','Par'],['cj','Conjunto'],['serv','Serviço'],['outro','Outro']
+]
+function normalizarItem(i={}){
+  const custo=Number(i.custo_unitario??i.valor_unitario??0)
+  const acrescimo=Number(i.acrescimo_percentual??0)
+  const vendaSalva=Number(i.valor_unitario??0)
+  const venda=(i.custo_unitario!=null || i.acrescimo_percentual!=null)
+    ? custo*(1+acrescimo/100)
+    : vendaSalva
+  return {...i,unidade:i.unidade||'un',custo_unitario:custo,acrescimo_percentual:acrescimo,valor_unitario:venda}
+}
+function precoVenda(i){
+  const custo=Number(i.custo_unitario??0)
+  const acrescimo=Number(i.acrescimo_percentual??0)
+  return i.tipo==='material' ? custo*(1+acrescimo/100) : Number(i.valor_unitario||0)
+}
+function unidadeLabel(v){return unidades.find(x=>x[0]===v)?.[1]||v||'Unidade'}
+
 export default function Orcamentos({supabase,profile,session}){
   const [lista,setLista]=useState([])
   const [clientes,setClientes]=useState([])
@@ -104,7 +124,7 @@ export default function Orcamentos({supabase,profile,session}){
         validade:validade.toISOString().slice(0,10),
         observacoes:os.descricao_orcamento||os.recomendacoes||''
       })
-      setItens([{id:crypto.randomUUID(),tipo:'servico',descricao:'Serviço técnico conforme OS '+os.numero,quantidade:1,valor_unitario:0}])
+      setItens([{id:crypto.randomUUID(),tipo:'servico',descricao:'Serviço técnico conforme OS '+os.numero,quantidade:1,unidade:'serv',custo_unitario:0,acrescimo_percentual:0,valor_unitario:0}])
       setOsImportada('')
       setModal(true)
       setTimeout(()=>importarItensDaOS(os.id,{confirmar:false}),120)
@@ -140,6 +160,9 @@ export default function Orcamentos({supabase,profile,session}){
         tipo:'material',
         descricao:x.nome_item||x.item||x.descricao||x.nome||'Material da OS',
         quantidade:Number(x.quantidade||1),
+        unidade:x.unidade||'un',
+        custo_unitario:Number(x.preco_unitario??x.preco??x.valor_unitario??x.valor??0),
+        acrescimo_percentual:0,
         valor_unitario:Number(x.preco_unitario??x.preco??x.valor_unitario??x.valor??0),
         origem_os_item_id:x.id
       }))
@@ -175,7 +198,7 @@ export default function Orcamentos({supabase,profile,session}){
   function restoreBudgetDraft(data){
     if(!data)return
     if(data.form)setForm(data.form)
-    if(Array.isArray(data.itens))setItens(data.itens)
+    if(Array.isArray(data.itens))setItens(data.itens.map(normalizarItem))
     if(typeof data.osImportada==='string')setOsImportada(data.osImportada)
   }
 
@@ -220,7 +243,7 @@ export default function Orcamentos({supabase,profile,session}){
       return
     }
 
-    setItensVisualizacao(data||[])
+    setItensVisualizacao((data||[]).map(normalizarItem))
     setVisualizacao(o)
   }
 
@@ -230,7 +253,7 @@ export default function Orcamentos({supabase,profile,session}){
     setForm({...empty,...o})
     const {data,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id).order('id')
     if(error){setErro(error.message);return}
-    setItens(data||[])
+    setItens((data||[]).map(normalizarItem))
     const savedDraft=loadDraft(`orcamento:${o.id}`)
     if(savedDraft?.data){
       restoreBudgetDraft(savedDraft.data)
@@ -241,11 +264,14 @@ export default function Orcamentos({supabase,profile,session}){
     setModal(true)
   }
 
-  const subtotal=useMemo(()=>itens.reduce((s,x)=>s+Number(x.quantidade||0)*Number(x.valor_unitario||0),0),[itens])
+  const subtotal=useMemo(()=>itens.reduce((s,x)=>s+Number(x.quantidade||0)*precoVenda(x),0),[itens])
+  const custoMateriais=useMemo(()=>itens.filter(x=>x.tipo==='material').reduce((s,x)=>s+Number(x.quantidade||0)*Number(x.custo_unitario||0),0),[itens])
+  const vendaMateriais=useMemo(()=>itens.filter(x=>x.tipo==='material').reduce((s,x)=>s+Number(x.quantidade||0)*precoVenda(x),0),[itens])
+  const lucroMateriais=vendaMateriais-custoMateriais
   const total=Math.max(0,subtotal-Number(form.desconto||0))
 
   function addItem(tipo='servico'){
-    setItens(x=>[...x,{id:crypto.randomUUID(),tipo,descricao:'',quantidade:1,valor_unitario:0}])
+    setItens(x=>[...x,{id:crypto.randomUUID(),tipo,descricao:'',quantidade:1,unidade:tipo==='servico'?'serv':'un',custo_unitario:0,acrescimo_percentual:0,valor_unitario:0}])
   }
   function upd(id,key,val){
     setItens(x=>x.map(i=>i.id===id?{...i,[key]:val}:i))
@@ -393,7 +419,10 @@ export default function Orcamentos({supabase,profile,session}){
         tipo:x.tipo,
         descricao:x.descricao.trim(),
         quantidade:Number(x.quantidade||1),
-        valor_unitario:Number(x.valor_unitario||0)
+        unidade:x.unidade||(x.tipo==='servico'?'serv':'un'),
+        custo_unitario:x.tipo==='material'?Number(x.custo_unitario||0):Number(x.valor_unitario||0),
+        acrescimo_percentual:x.tipo==='material'?Number(x.acrescimo_percentual||0):0,
+        valor_unitario:precoVenda(x)
       }))
       const {error:itErr}=await supabase.from('orcamento_itens').insert(rows)
       if(itErr)throw itErr
@@ -449,18 +478,19 @@ export default function Orcamentos({supabase,profile,session}){
 
       autoTable(doc,{
         startY:y+3,
-        head:[['Tipo','Descrição','Qtd.','Valor unit.','Subtotal']],
+        head:[['Tipo','Descrição','Qtd.','Unid.','Valor unit.','Subtotal']],
         body:(rows||[]).map(x=>[
           x.tipo==='material'?'Material':'Serviço',
           x.descricao,
           Number(x.quantidade||0).toLocaleString('pt-BR'),
+          unidadeLabel(x.unidade),
           money(x.valor_unitario),
           money(Number(x.quantidade||0)*Number(x.valor_unitario||0))
         ]),
         foot:[
-          ['','','','Subtotal',money((rows||[]).reduce((s,x)=>s+Number(x.quantidade||0)*Number(x.valor_unitario||0),0))],
-          ['','','','Desconto',money(o.desconto)],
-          ['','','','TOTAL',money(o.total)]
+          ['','','','','Subtotal',money((rows||[]).reduce((s,x)=>s+Number(x.quantidade||0)*Number(x.valor_unitario||0),0))],
+          ['','','','','Desconto',money(o.desconto)],
+          ['','','','','TOTAL',money(o.total)]
         ],
         styles:{fontSize:8,cellPadding:2},
         headStyles:{fillColor:[15,28,46]},
@@ -728,17 +758,32 @@ export default function Orcamentos({supabase,profile,session}){
 
             {itens.length===0?<div className="emptyInline">Nenhum item adicionado.</div>:
               <>
-                <div className="budgetItemHeader"><span>Tipo</span><span>Descrição</span><span>Qtd.</span><span>Valor unit.</span><span>Subtotal</span><span></span></div>
-                {itens.map(i=><div className="budgetItemRow" key={i.id}>
-                  <select value={i.tipo} onChange={e=>upd(i.id,'tipo',e.target.value)}><option value="servico">Serviço</option><option value="material">Material</option></select>
-                  <input value={i.descricao} onChange={e=>upd(i.id,'descricao',e.target.value)} placeholder="Descrição do item"/>
-                  <input type="number" min="0" step="0.01" value={i.quantidade} onChange={e=>upd(i.id,'quantidade',e.target.value)}/>
-                  <input type="number" min="0" step="0.01" value={i.valor_unitario} onChange={e=>upd(i.id,'valor_unitario',e.target.value)}/>
-                  <strong>{money(Number(i.quantidade||0)*Number(i.valor_unitario||0))}</strong>
-                  <button type="button" className="iconBtn danger" onClick={()=>setItens(x=>x.filter(y=>y.id!==i.id))}><Trash2 size={15}/></button>
-                </div>)}
+                <div className="budgetItemHeader budgetItemHeaderV14"><span>Tipo</span><span>Descrição</span><span>Qtd.</span><span>Unid.</span><span>Custo</span><span>Acrésc.</span><span>Venda</span><span>Total</span><span></span></div>
+                {itens.map(i=>{
+                  const venda=precoVenda(i)
+                  return <div className="budgetItemRow budgetItemRowV14" key={i.id}>
+                    <select value={i.tipo} onChange={e=>{
+                      const tipo=e.target.value;upd(i.id,'tipo',tipo);upd(i.id,'unidade',tipo==='servico'?'serv':'un')
+                    }}><option value="servico">Serviço</option><option value="material">Material</option></select>
+                    <input value={i.descricao} onChange={e=>upd(i.id,'descricao',e.target.value)} placeholder="Descrição do item"/>
+                    <input type="number" min="0" step="0.01" value={i.quantidade} onChange={e=>upd(i.id,'quantidade',e.target.value)}/>
+                    <select value={i.unidade||'un'} onChange={e=>upd(i.id,'unidade',e.target.value)}>{unidades.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
+                    {i.tipo==='material'?<input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={i.custo_unitario??0} onChange={e=>upd(i.id,'custo_unitario',e.target.value)} placeholder="Custo"/>:<input type="number" min="0" step="0.01" value={i.valor_unitario??0} onChange={e=>upd(i.id,'valor_unitario',e.target.value)} placeholder="Valor"/>}
+                    {i.tipo==='material'?<div className="percentField"><input className="internalField" title="Somente interno" type="number" min="0" step="0.01" value={i.acrescimo_percentual??0} onChange={e=>upd(i.id,'acrescimo_percentual',e.target.value)}/><span>%</span></div>:<span className="notApplicable">—</span>}
+                    <b className="salePrice">{money(venda)}</b>
+                    <strong>{money(Number(i.quantidade||0)*venda)}</strong>
+                    <button type="button" className="iconBtn danger" onClick={()=>setItens(x=>x.filter(y=>y.id!==i.id))}><Trash2 size={15}/></button>
+                  </div>
+                })}
               </>
             }
+
+            {itens.some(i=>i.tipo==='material')&&<div className="budgetInternalSummary">
+              <div className="internalTitle"><b>Resumo interno</b><span>Não aparece no PDF do cliente</span></div>
+              <div><span>Custo dos produtos</span><b>{money(custoMateriais)}</b></div>
+              <div><span>Venda dos produtos</span><b>{money(vendaMateriais)}</b></div>
+              <div className="profit"><span>Lucro bruto estimado</span><b>{money(lucroMateriais)}</b></div>
+            </div>}
 
             <div className="budgetTotals">
               <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
@@ -803,7 +848,7 @@ export default function Orcamentos({supabase,profile,session}){
             <div className="budgetViewItems">
               {itensVisualizacao.map((i,n)=><div key={i.id} className="budgetViewItem">
                 <span>{n+1}</span>
-                <div><b>{i.descricao}</b><small>{i.tipo==='material'?'Material':'Serviço'} • Qtd. {Number(i.quantidade||0).toLocaleString('pt-BR')}</small></div>
+                <div><b>{i.descricao}</b><small>{i.tipo==='material'?'Material':'Serviço'} • {Number(i.quantidade||0).toLocaleString('pt-BR')} {unidadeLabel(i.unidade)}</small></div>
                 <strong>{money(Number(i.quantidade||0)*Number(i.valor_unitario||0))}</strong>
               </div>)}
             </div>}

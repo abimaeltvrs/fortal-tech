@@ -1,30 +1,12 @@
-# FORTAL TECH V1.13.1 — Checklist de OS resumido
+# FORTAL TECH V1.14
 
-Atualização focada em deixar a Ordem de Serviço mais rápida para o técnico e mais simples para o cliente.
+## Orçamentos
+- Materiais agora possuem custo unitário interno.
+- Acréscimo percentual por item com cálculo automático do preço de venda.
+- Resumo interno de custo, venda e lucro bruto estimado.
+- Custo, percentual e lucro não aparecem no PDF do cliente.
+- Quantidade agora possui unidade de medida (unidade, caixa, kit, pacote, rolo, metro, bobina, par, conjunto, serviço e outro).
+- A unidade aparece no orçamento e no PDF.
 
-## O que mudou
-- Checklists muito longos foram substituídos por verificações rápidas.
-- Cada sistema agora possui somente 4 ou 5 pontos principais.
-- Itens repetitivos foram agrupados.
-- "Irregular" passou a aparecer como "Atenção", com linguagem mais amigável.
-- Na visualização da OS, o cliente vê um resumo por sistema.
-- Pontos de atenção aparecem destacados separadamente.
-- O PDF deixou de listar dezenas de linhas.
-- O PDF agora mostra um resumo por sistema e detalha somente os pontos que precisam de atenção.
-- OS antigas continuam preservadas; nenhum histórico é apagado.
-- Não exige alteração no banco de dados.
-
-## Exemplos
-CFTV:
-- Câmeras e qualidade da imagem
-- Gravação e armazenamento
-- Acesso e visualização
-- Alimentação, conexões e comunicação
-- Estado físico e limpeza
-
-Controle de Acesso:
-- Leitores e identificação
-- Abertura, fechamento e acionamentos
-- Sensores e segurança
-- Comunicação e registros
-- Alimentação e conexões
+## Banco de dados
+Execute `supabase/v1.14_orcamento_margem_unidade.sql` no SQL Editor do Supabase antes de usar a nova versão.
