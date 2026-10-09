@@ -2402,3 +2402,6 @@ input:focus,select:focus,textarea:focus,
 @keyframes splashDot{0%,100%{transform:translateY(0);opacity:.35}50%{transform:translateY(-5px);opacity:1}}
 @keyframes splashFadeIn{from{opacity:0}to{opacity:1}}@keyframes quickSplashIn{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.splashLogo,.splashScan,.splashDots i{animation:none!important}.fortalSplash{animation:none!important}}
+
+/* V1.15: histórico inteligente das ordens de serviço */
+.osSmartHistory{padding:12px;border:1px solid var(--border,#454545);border-radius:12px}.osSmartHistoryList{display:grid;gap:8px;margin-top:10px}.osSmartHistoryItem{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px;border-radius:9px;background:rgba(130,130,130,.08)}.osSmartHistoryItem>div{min-width:0;overflow-wrap:anywhere}.osSmartHistoryItem small{display:block;margin-top:4px;opacity:.8}.osSmartHistoryItem button{flex-shrink:0}@media(max-width:600px){.osSmartHistoryItem{align-items:flex-start;flex-direction:column}}

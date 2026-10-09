@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
   ChevronDown,ChevronUp,PackagePlus,CheckCircle2,AlertTriangle,
-  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck,RefreshCcw,Mail,Share2,Send
+  FileDown,Camera,ImagePlus,Trash,Flag,UserCheck,RefreshCcw,Mail,Share2,Send,Copy,History
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -158,6 +158,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
   const [draftRecovered,setDraftRecovered]=useState(null)
   const [draftDirty,setDraftDirty]=useState(false)
   const [envioOS,setEnvioOS]=useState(null)
+  const [historicoAberto,setHistoricoAberto]=useState(false)
   const [enviandoOS,setEnviandoOS]=useState(false)
   const [viewChildren,setViewChildren]=useState({sistemas:[],checklist:[],materiais:[],fotos:[],assinaturas:[]})
   const modalRef=useRef(null)
@@ -357,6 +358,26 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
     setModal(true)
   }
 
+
+  const historicoCliente=useMemo(()=>lista.filter(os=>form.cliente_id && os.cliente_id===form.cliente_id && os.id!==edit?.id).sort((a,b)=>String(b.data_visita||b.created_at||'').localeCompare(String(a.data_visita||a.created_at||''))).slice(0,5),[lista,form.cliente_id,edit?.id])
+
+  async function duplicarOS(os){
+    // Uma nova visita nunca herda diagnóstico, resultados, assinaturas ou fotografias.
+    try{
+      let anteriores=[]
+      if(navigator.onLine){
+        const {data,error}=await supabase.from('os_sistemas').select('*').eq('os_id',os.id)
+        if(error)throw error
+        anteriores=data||[]
+      }else anteriores=(await getLocalOSChildren(os.id)).sistemas||[]
+      novo()
+      setForm(atual=>({...atual,cliente_id:os.cliente_id||'',tecnico_id:profile.perfil==='admin'?(os.tecnico_id||atual.tecnico_id):session.user.id,tipo_atendimento:os.tipo_atendimento||atual.tipo_atendimento,prioridade:os.prioridade||'media',motivo:os.motivo||'',status:'aberta'}))
+      const codigos=[...new Set(anteriores.map(x=>x.sistema).filter(Boolean))]
+      setSistemas(codigos.map(cod=>({id:crypto.randomUUID(),os_id:'',sistema:cod,outro_descricao:anteriores.find(x=>x.sistema===cod)?.outro_descricao||null})))
+      setChecklist(codigos.flatMap(cod=>Object.entries(checklistCatalogo[cod]||{}).flatMap(([grupo,itens])=>itens.map(item=>({id:crypto.randomUUID(),os_id:'',sistema:cod,grupo,item,status:'nao_verificado',observacao:''})))))
+      setSucesso(`Nova OS iniciada a partir de ${os.numero}. Confira os dados antes de salvar.`)
+    }catch(e){setErro('Não foi possível duplicar a OS: '+(e.message||'erro desconhecido'))}
+  }
 
   async function visualizar(os){
     setErro('')
@@ -1293,6 +1314,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                 {os.necessita_orcamento&&<button className="budgetFromOSBtn" title="Criar orçamento desta OS" onClick={()=>{
                   window.dispatchEvent(new CustomEvent('fortal:go-orcamento',{detail:os}))
                 }}>Orçamento</button>}
+                <button className="iconBtn" title="Duplicar como nova OS" aria-label="Duplicar OS" onClick={()=>duplicarOS(os)}><Copy size={17}/></button>
                 <button className="iconBtn pdfBtn" title="Gerar PDF" onClick={()=>gerarPDF(os)}><FileDown size={17}/></button>
                 <button className="iconBtn" title="Enviar OS" aria-label="Enviar OS" onClick={()=>setEnvioOS(os)}><Send size={17}/></button>
                 <button className="iconBtn" title="Editar OS completa" onClick={()=>editar(os)}><Pencil size={17}/></button>
@@ -1423,6 +1445,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
             setVisualizacao(null)
             window.dispatchEvent(new CustomEvent('fortal:go-orcamento',{detail:item}))
           }}>Orçamento</button>}
+          <button className="ghost" onClick={()=>{const item=visualizacao;setVisualizacao(null);duplicarOS(item)}}><Copy size={16}/> Duplicar OS</button>
           <button className="primary" onClick={()=>{
             const item=visualizacao
             setVisualizacao(null)
@@ -1478,6 +1501,10 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
                   <option value="">Selecione...</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
+              {!edit&&form.cliente_id&&<div className="field span2"><div className="osSmartHistory">
+                <button type="button" className="ghost" onClick={()=>setHistoricoAberto(v=>!v)}><History size={16}/> Histórico inteligente ({historicoCliente.length} OS recentes) {historicoAberto?'▲':'▼'}</button>
+                {historicoAberto&&<div className="osSmartHistoryList">{historicoCliente.length===0?<p>Nenhum atendimento anterior encontrado para este cliente.</p>:historicoCliente.map(os=><div key={os.id} className="osSmartHistoryItem"><div><b>{os.numero}</b> · {dataBR(os.data_visita)} · {os.tipo_atendimento}<small>Status: {os.status||'Não informado'}</small>{os.pendencias&&<small><b>Pendências anteriores:</b> {os.pendencias}</small>}{os.recomendacoes&&<small><b>Recomendações:</b> {os.recomendacoes}</small>}</div><button type="button" className="ghost" onClick={()=>duplicarOS(os)}>Usar como modelo</button></div>)}</div>}
+              </div></div>}
               <div className="field"><label>Tipo</label>
                 <select value={form.tipo_atendimento} onChange={e=>setForm({...form,tipo_atendimento:e.target.value})}>
                   {['Manutenção Preventiva','Manutenção Corretiva','Visita Técnica','Retorno','Emergencial'].map(x=><option key={x}>{x}</option>)}
