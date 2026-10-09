@@ -16,26 +16,44 @@ function localDate(v){
 export default function DashboardReal({supabase,profile,session,onQuickCreate,onOpenOSFilter,onOpenOS}){
   const [os,setOs]=useState([])
   const [clientes,setClientes]=useState([])
-  const [periodo,setPeriodo]=useState('mes')
+  const [periodo,setPeriodo]=useState('todos')
   const [cliente,setCliente]=useState('')
   const [loading,setLoading]=useState(false)
+  const [erro,setErro]=useState('')
 
   async function carregar(){
     setLoading(true)
+    setErro('')
     try{
       if(navigator.onLine){
-        let q=supabase.from('ordens_servico').select('*,clientes(nome)').order('created_at',{ascending:false})
-        if(profile.perfil!=='admin') q=q.eq('tecnico_id',session.user.id)
-        const [or,cr]=await Promise.all([q,supabase.from('clientes').select('*').order('nome')])
+        // Consultar a tabela principal sem depender do relacionamento com clientes.
+        // A falha do relacionamento não deve zerar os indicadores.
+        let q=supabase.from('ordens_servico').select('*').order('created_at',{ascending:false}).limit(1000)
+        if(profile?.perfil!=='admin') q=q.eq('tecnico_id',session.user.id)
+        const [or,cr]=await Promise.all([q,supabase.from('clientes').select('id,nome').order('nome')])
         if(or.error)throw or.error
-        setOs(or.data||[]);setClientes(cr.data||[])
-        await cacheOrdensServico(or.data||[]);await cacheClientes(cr.data||[])
+        setOs(or.data||[])
+        await cacheOrdensServico(or.data||[])
+        if(!cr.error){setClientes(cr.data||[]);await cacheClientes(cr.data||[])}
+        else setClientes(await getCachedClientes())
       }else{
         setOs(await getCachedOrdensServico());setClientes(await getCachedClientes())
       }
+    }catch(e){
+      console.error('Falha ao atualizar indicadores do dashboard',e)
+      setErro('Não foi possível atualizar os indicadores. Confira a conexão e toque em Atualizar.')
+      const cached=await getCachedOrdensServico()
+      if(cached?.length)setOs(cached)
     }finally{setLoading(false)}
   }
-  useEffect(()=>{carregar()},[profile.perfil])
+  useEffect(()=>{
+    carregar()
+    const atualizar=()=>{if(!document.hidden)carregar()}
+    window.addEventListener('focus',atualizar)
+    document.addEventListener('visibilitychange',atualizar)
+    window.addEventListener('fortal:os-updated',atualizar)
+    return()=>{window.removeEventListener('focus',atualizar);document.removeEventListener('visibilitychange',atualizar);window.removeEventListener('fortal:os-updated',atualizar)}
+  },[profile?.perfil,session?.user?.id])
 
   const filtradas=useMemo(()=>{
     const now=new Date()
@@ -51,7 +69,8 @@ export default function DashboardReal({supabase,profile,session,onQuickCreate,on
     })
   },[os,periodo,cliente])
 
-  const count=s=>filtradas.filter(x=>s.includes(x.status)).length
+  const statusNormalizado=x=>String(x.status||'').trim().toLowerCase().replaceAll(' ','_')
+  const count=s=>filtradas.filter(x=>s.includes(statusNormalizado(x))).length
   const abertas=count(['aberta','agendada','em_atendimento','aguardando_material','aguardando_orcamento'])
   const concluidas=count(['concluida'])
   const pendentes=count(['aguardando_material','aguardando_orcamento'])
@@ -64,6 +83,7 @@ export default function DashboardReal({supabase,profile,session,onQuickCreate,on
     </div>
     <NewsCarousel/>
 
+    {erro&&<p role="alert" style={{color:'#fbbf24',marginBottom:12}}>{erro}</p>}
     <div className="dashboardFilters">
       <div><Filter size={15}/><select value={periodo} onChange={e=>setPeriodo(e.target.value)}>
         <option value="hoje">Hoje</option><option value="mes">Este mês</option>
