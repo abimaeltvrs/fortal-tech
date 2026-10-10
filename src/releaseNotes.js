@@ -1,6 +1,7 @@
 // Atualize este arquivo a cada nova versão publicada.
 export const APP_VERSION = '1.15.2'
 export const RELEASE_NOTES = [
+  {version:'1.15.8',date:'2026-10-09',title:'Correção dos textos do orçamento em PDF',changes:['Corrigido texto sobreposto ao cabeçalho.', 'Ajustadas quebras de linha e de página no PDF do orçamento.']},
   {version:'1.15.7',date:'2026-10-09',title:'Correção no salvamento de orçamentos',changes:['Corrigido envio indevido do relacionamento clientes ao Supabase.','Edição e recuperação de rascunhos preservam apenas os campos do orçamento.']},
   {version:'1.15.4',date:'2026-10-09',title:'OS em PDF com layout profissional',changes:['Novo cabeçalho e rodapé preto e dourado, com logo e contatos oficiais.','Novo destaque de identificação e status da OS.','Seções, tabelas e fotografias reorganizadas com controle de quebra de página.']},
   {version:'1.15.3',date:'2026-10-09',title:'Logo e contatos oficiais nos PDFs',changes:['Cabeçalho dos PDFs com a logomarca oficial FORTAL TECH.','Contato padronizado: fortaltech2026@gmail.com, (21) 98384-3349 e Fortaleza.','Mantida a paleta preto, grafite, dourado e branco.']},

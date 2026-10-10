@@ -474,12 +474,21 @@ export default function Orcamentos({supabase,profile,session}){
       if(error)throw error
       const doc=new jsPDF({unit:'mm',format:'a4'})
       pdfHeader(doc,'ORÇAMENTO • PROPOSTA COMERCIAL')
-      let y=40
+      // Respeitar o cabeçalho de 40 mm e manter rótulos/valores sem sobreposição.
+      let y=47
       const line=(l,v)=>{
-        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(l+':',14,y)
-        doc.setFont('helvetica','normal')
-        const t=doc.splitTextToSize(String(v||'-'),140)
-        doc.text(t,55,y);y+=Math.max(6,t.length*4)
+        const text=String(v??'').trim()||'-'
+        const label=doc.splitTextToSize(`${l}:`,38)
+        const value=doc.splitTextToSize(text,139)
+        const lines=Math.max(label.length,value.length)
+        const blockHeight=Math.max(6,lines*4.4+1)
+        if(y+blockHeight>doc.internal.pageSize.getHeight()-22){
+          doc.addPage();y=18
+        }
+        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(31,34,38)
+        doc.text(label,14,y)
+        doc.setFont('helvetica','normal');doc.text(value,55,y)
+        y+=blockHeight
       }
 
       line('Orçamento',o.numero)
@@ -493,7 +502,7 @@ export default function Orcamentos({supabase,profile,session}){
       if(o.os_id) line('OS relacionada',ordens.find(x=>x.id===o.os_id)?.numero||'-')
 
       autoTable(doc,{
-        startY:y+3,
+        startY:y+6,
         head:[['Tipo','Descrição','Qtd.','Unid.','Valor unit.','Subtotal']],
         body:(rows||[]).map(x=>[
           x.tipo==='material'?'Material':'Serviço',
@@ -508,26 +517,22 @@ export default function Orcamentos({supabase,profile,session}){
           ['','','','','Desconto',money(o.desconto)],
           ['','','','','TOTAL',money(o.total)]
         ],
-        styles:{fontSize:8,cellPadding:2},
+        styles:{...pdfTableTheme.styles,fontSize:8,cellPadding:2},
         headStyles:pdfTableTheme.headStyles,
+        alternateRowStyles:pdfTableTheme.alternateRowStyles,
         footStyles:pdfTableTheme.footStyles,
-        margin:{left:14,right:14}
+        margin:{left:14,right:14,top:18,bottom:21}
       })
 
       y=doc.lastAutoTable.finalY+9
+      const ensureSpace=(needed=10)=>{
+        if(y+needed>doc.internal.pageSize.getHeight()-20){doc.addPage();y=18}
+      }
       const metodo=({pix:'Pix',debito:'Cartão de débito',credito:'Cartão de crédito'})[o.metodo_pagamento]||o.metodo_pagamento||'-'
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('Forma de pagamento:',14,y)
-      doc.setFont('helvetica','normal');doc.text(`${metodo}${o.metodo_pagamento==='credito'&&Number(o.parcelas||1)>1?` • ${o.parcelas}x`:''}`,55,y);y+=7
-      if(o.forma_pagamento){
-        doc.setFont('helvetica','bold');doc.text('Condições:',14,y)
-        doc.setFont('helvetica','normal');doc.text(o.forma_pagamento,55,y);y+=7
-      }
-      if(o.observacoes){
-        doc.setFont('helvetica','bold');doc.text('Observações:',14,y);y+=5
-        doc.setFont('helvetica','normal')
-        const lines=doc.splitTextToSize(o.observacoes,180)
-        doc.text(lines,14,y)
-      }
+      ensureSpace(8)
+      line('Forma de pagamento',`${metodo}${o.metodo_pagamento==='credito'&&Number(o.parcelas||1)>1?` • ${o.parcelas}x`:''}`)
+      if(o.forma_pagamento)line('Condições',o.forma_pagamento)
+      if(o.observacoes)line('Observações',o.observacoes)
 
       pdfFooter(doc,o.numero)
       return doc
