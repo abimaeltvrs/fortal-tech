@@ -976,36 +976,58 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       }
 
       const doc=new jsPDF({unit:'mm',format:'a4'})
-      const pageW=210
-      let y=16
-
+      const pageW=210,contentBottom=275
+      let y=48
+      const newPage=()=>{doc.addPage();y=17}
+      const ensure=(height=9)=>{if(y+height>contentBottom)newPage()}
       const line=(label,value)=>{
-        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(`${label}:`,14,y)
-        doc.setFont('helvetica','normal')
-        const txt=doc.splitTextToSize(String(value||'-'),135)
-        doc.text(txt,55,y); y+=Math.max(6,txt.length*4.2)
+        doc.setFont('helvetica','normal');doc.setFontSize(8.7)
+        const labelWidth=42
+        const txt=doc.splitTextToSize(String(value??'-')||'-',126)
+        const height=Math.max(6,txt.length*4.5+2)
+        ensure(height)
+        doc.setTextColor(...PDF_COLORS.ink);doc.setFont('helvetica','bold')
+        doc.text(`${label}:`,17,y)
+        doc.setFont('helvetica','normal');doc.text(txt,17+labelWidth,y)
+        y+=height
       }
       const section=(title)=>{
-        if(y>270){doc.addPage();y=16}
-        y+=2
-        doc.setFillColor(...PDF_COLORS.dark)
-        doc.rect(14,y-4,182,8,'F')
-        doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10)
-        doc.text(title,17,y+1)
-        doc.setTextColor(25,25,25)
-        y+=10
+        ensure(17)
+        y+=3
+        doc.setFillColor(...PDF_COLORS.dark);doc.roundedRect(14,y-4,182,10,1.2,1.2,'F')
+        doc.setFillColor(...PDF_COLORS.gold);doc.rect(14,y-4,2,10,'F')
+        doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9.3)
+        doc.text(title,19,y+2.5)
+        doc.setTextColor(...PDF_COLORS.ink)
+        y+=13
       }
       const paragraph=(label,value)=>{
-        if(!value) return
-        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(label,14,y);y+=4
-        doc.setFont('helvetica','normal')
-        const lines=doc.splitTextToSize(String(value),180)
-        if(y+lines.length*4.3>280){doc.addPage();y=16}
-        doc.text(lines,14,y);y+=lines.length*4.3+3
+        if(!value)return
+        const text=String(value)
+        const lines=doc.splitTextToSize(text,174)
+        const headingHeight=label?6:0
+        let pos=0
+        while(pos<lines.length){
+          ensure(headingHeight+8)
+          if(label&&pos===0){doc.setFont('helvetica','bold');doc.setFontSize(8.7);doc.setTextColor(...PDF_COLORS.ink);doc.text(label,17,y);y+=5}
+          const count=Math.max(1,Math.floor((contentBottom-y)/4.5))
+          const chunk=lines.slice(pos,pos+count)
+          doc.setFont('helvetica','normal');doc.setFontSize(8.7);doc.text(chunk,17,y)
+          y+=chunk.length*4.5+3;pos+=chunk.length
+          if(pos<lines.length)newPage()
+        }
       }
-
-      pdfHeader(doc,'ORDEM DE SERVIÇO • RELATÓRIO TÉCNICO')
-      y=38
+      pdfHeader(doc,'ORDEM DE SERVIÇO  |  RELATÓRIO TÉCNICO')
+      doc.setFillColor(247,247,247);doc.roundedRect(14,45,182,19,2,2,'F')
+      doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(...PDF_COLORS.dark)
+      doc.text('ORDEM DE SERVIÇO',18,53)
+      doc.setFontSize(8.8);doc.setTextColor(...PDF_COLORS.muted)
+      doc.text(`Nº ${os.numero||'-'}`,18,59)
+      const statusLabel=String(os.status||'-').replaceAll('_',' ').toUpperCase()
+      doc.setFillColor(...PDF_COLORS.gold);doc.roundedRect(153,48,39,11,2,2,'F')
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...PDF_COLORS.dark)
+      doc.text(doc.splitTextToSize(statusLabel,35).slice(0,2),172.5,52,{align:'center'})
+      y=72
 
       line('Nº da OS',os.numero)
       line('Data',dataBR(os.data_visita))
@@ -1043,8 +1065,9 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           body:rows,
           styles:{fontSize:7.5,cellPadding:2,overflow:'linebreak'},
           headStyles:pdfTableTheme.headStyles,
+          alternateRowStyles:pdfTableTheme.alternateRowStyles,
+          margin:{left:14,right:14,top:17,bottom:22},
           columnStyles:{0:{cellWidth:47},1:{cellWidth:28},2:{cellWidth:77},3:{cellWidth:28}},
-          margin:{left:14,right:14}
         })
         y=doc.lastAutoTable.finalY+5
 
@@ -1085,8 +1108,11 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           foot:[['','','','','TOTAL',money(mats.reduce((s,m)=>s+Number(m.quantidade||0)*Number(m.preco_unitario||0),0))]],
           styles:{fontSize:7.5,cellPadding:1.8},
           headStyles:pdfTableTheme.headStyles,
+          alternateRowStyles:pdfTableTheme.alternateRowStyles,
+          margin:{left:14,right:14,top:17,bottom:22},
           footStyles:pdfTableTheme.footStyles,
-          margin:{left:14,right:14}
+          alternateRowStyles:pdfTableTheme.alternateRowStyles,
+          margin:{left:14,right:14,top:17,bottom:22},
         })
         y=doc.lastAutoTable.finalY+6
       }else{
@@ -1119,43 +1145,49 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
 
       const fotosPDF=children.fotos||[]
       if(fotosPDF.length){
-        if(y>225){doc.addPage();y=16}
-        pdfSection++; section(`${pdfSection}. REGISTRO FOTOGRÁFICO`)
-        for(const foto of fotosPDF.slice(0,6)){
+        pdfSection++;section(`${pdfSection}. REGISTRO FOTOGRÁFICO`)
+        let col=0
+        for(const foto of fotosPDF.slice(0,12)){
           try{
             let src=foto.preview_data||foto.preview_url||''
             if(!src&&foto.arquivo_path&&navigator.onLine){
               const {data}=await supabase.storage.from('os-arquivos').createSignedUrl(foto.arquivo_path,600)
               src=data?.signedUrl||''
             }
-            if(src){
-              const img=await new Promise((resolve,reject)=>{
-                const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src
-              })
-              const canvas=document.createElement('canvas')
-              const maxW=900
-              const scale=Math.min(1,maxW/img.width)
-              canvas.width=img.width*scale;canvas.height=img.height*scale
-              canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
-              const dataUrl=canvas.toDataURL('image/jpeg',0.72)
-              if(y>225){doc.addPage();y=16}
-              doc.addImage(dataUrl,'JPEG',14,y,58,42)
-              doc.setFontSize(8);doc.setTextColor(80)
-              doc.text(String(foto.tipo||'foto').toUpperCase(),76,y+8)
-              y+=47
-            }
-          }catch{}
+            if(!src)continue
+            const img=await new Promise((resolve,reject)=>{
+              const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src
+            })
+            const canvas=document.createElement('canvas'),maxW=900,scale=Math.min(1,maxW/img.width)
+            canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale))
+            canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
+            const dataUrl=canvas.toDataURL('image/jpeg',.78)
+            if(col===0)ensure(65)
+            const x=col===0?16:109
+            doc.setFillColor(247,247,247);doc.roundedRect(x,y,85,59,1.5,1.5,'F')
+            const ratio=img.width/img.height
+            let dw=79,dh=48
+            if(ratio>dw/dh)dh=dw/ratio;else dw=dh*ratio
+            doc.addImage(dataUrl,'JPEG',x+(85-dw)/2,y+2+(48-dh)/2,dw,dh)
+            doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...PDF_COLORS.ink)
+            const caption=String(foto.legenda||foto.descricao||foto.tipo||'Registro fotográfico')
+            doc.text(doc.splitTextToSize(caption,78).slice(0,2),x+4,y+53)
+            col++
+            if(col===2){col=0;y+=64}
+          }catch(error){console.warn('Foto não incluída no PDF:',error)}
         }
+        if(col===1)y+=64
       }
 
       const ass=children.assinaturas||[]
       const ac=ass.find(x=>x.tipo==='cliente')
       const at=ass.find(x=>x.tipo==='tecnico')
-      if(y>235){doc.addPage();y=16}
+      ensure(75)
       pdfSection++; section(`${pdfSection}. ACEITE DO SERVIÇO`)
       doc.setFontSize(8);doc.setTextColor(40)
       doc.text('Declaro que acompanhei a execução dos serviços descritos nesta Ordem de Serviço e fui informado sobre as condições, serviços, pendências e recomendações registradas.',14,y,{maxWidth:180})
       y+=14
+      ensure(46)
       if(ac?.assinatura_data){
         try{doc.addImage(ac.assinatura_data,'PNG',14,y,70,25)}catch{}
       }
