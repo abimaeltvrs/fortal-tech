@@ -980,40 +980,59 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       let y=48
       const newPage=()=>{doc.addPage();y=17}
       const ensure=(height=9)=>{if(y+height>contentBottom)newPage()}
+      // Blocos de texto com altura medida, evitando sobreposição entre rótulos e valores.
+      const pdfText=value=>{
+        const raw=String(value??'-')||'-'
+        // Corrige sequências UTF-8 interpretadas incorretamente, quando vierem do banco.
+        if(!/[ÃÂ][\x80-\xBF]/.test(raw))return raw
+        try{return decodeURIComponent(escape(raw))}catch{return raw}
+      }
       const line=(label,value)=>{
-        doc.setFont('helvetica','normal');doc.setFontSize(8.7)
-        const labelWidth=42
-        const txt=doc.splitTextToSize(String(value??'-')||'-',126)
-        const height=Math.max(6,txt.length*4.5+2)
+        const text=pdfText(value)
+        const left=17,right=193,labelW=44,gap=3,lh=4.6
+        doc.setFontSize(8.7);doc.setFont('helvetica','bold')
+        const labelLines=doc.splitTextToSize(`${label}:`,labelW-2)
+        doc.setFont('helvetica','normal')
+        const valueLines=doc.splitTextToSize(text,right-left-labelW-gap)
+        const rows=Math.max(labelLines.length,valueLines.length)
+        const height=rows*lh+3
         ensure(height)
-        doc.setTextColor(...PDF_COLORS.ink);doc.setFont('helvetica','bold')
-        doc.text(`${label}:`,17,y)
-        doc.setFont('helvetica','normal');doc.text(txt,17+labelWidth,y)
+        doc.setTextColor(...PDF_COLORS.ink)
+        doc.setFont('helvetica','bold');doc.text(labelLines,left,y)
+        doc.setFont('helvetica','normal');doc.text(valueLines,left+labelW+gap,y)
         y+=height
       }
       const section=(title)=>{
-        ensure(17)
-        y+=3
+        ensure(18)
+        y+=4
         doc.setFillColor(...PDF_COLORS.dark);doc.roundedRect(14,y-4,182,10,1.2,1.2,'F')
         doc.setFillColor(...PDF_COLORS.gold);doc.rect(14,y-4,2,10,'F')
         doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9.3)
         doc.text(title,19,y+2.5)
         doc.setTextColor(...PDF_COLORS.ink)
-        y+=13
+        y+=14
       }
       const paragraph=(label,value)=>{
-        if(!value)return
-        const text=String(value)
+        if(value===null||value===undefined||String(value).trim()==='')return
+        const text=pdfText(value)
+        const lh=4.6
+        doc.setFontSize(8.7);doc.setFont('helvetica','normal')
         const lines=doc.splitTextToSize(text,174)
-        const headingHeight=label?6:0
+        if(label){
+          ensure(9)
+          doc.setFont('helvetica','bold');doc.setTextColor(...PDF_COLORS.ink)
+          doc.text(label,17,y)
+          y+=5.5
+        }
         let pos=0
         while(pos<lines.length){
-          ensure(headingHeight+8)
-          if(label&&pos===0){doc.setFont('helvetica','bold');doc.setFontSize(8.7);doc.setTextColor(...PDF_COLORS.ink);doc.text(label,17,y);y+=5}
-          const count=Math.max(1,Math.floor((contentBottom-y)/4.5))
-          const chunk=lines.slice(pos,pos+count)
-          doc.setFont('helvetica','normal');doc.setFontSize(8.7);doc.text(chunk,17,y)
-          y+=chunk.length*4.5+3;pos+=chunk.length
+          ensure(lh+2)
+          const capacity=Math.max(1,Math.floor((contentBottom-y-2)/lh))
+          const chunk=lines.slice(pos,pos+capacity)
+          doc.setFont('helvetica','normal');doc.setFontSize(8.7);doc.setTextColor(...PDF_COLORS.ink)
+          doc.text(chunk,17,y,{lineHeightFactor:1.3})
+          y+=chunk.length*lh+3
+          pos+=chunk.length
           if(pos<lines.length)newPage()
         }
       }
@@ -1111,8 +1130,6 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           alternateRowStyles:pdfTableTheme.alternateRowStyles,
           margin:{left:14,right:14,top:17,bottom:22},
           footStyles:pdfTableTheme.footStyles,
-          alternateRowStyles:pdfTableTheme.alternateRowStyles,
-          margin:{left:14,right:14,top:17,bottom:22},
         })
         y=doc.lastAutoTable.finalY+6
       }else{
@@ -1122,7 +1139,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       pdfSection++; section(`${pdfSection}. PENDÊNCIAS / RECOMENDAÇÕES`)
       paragraph('Pendências identificadas',os.pendencias)
       paragraph('Recomendações técnicas',os.recomendacoes)
-      line('Necessita orçamento adicional',os.necessita_orcamento?'SIM':'NÃO')
+      line('Orçamento adicional',os.necessita_orcamento?'SIM':'NÃO')
       paragraph('Descrição do orçamento recomendado',os.descricao_orcamento)
       line('Prazo recomendado para correção',os.prazo_correcao)
 

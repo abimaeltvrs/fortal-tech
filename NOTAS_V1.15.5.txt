@@ -1,0 +1,1 @@
+V1.15.5: correção de sobreposição de textos nas OS, ajuste de rótulos extensos, espaçamento de seções e tratamento de caracteres incorretos quando possível. Validar visualmente os PDFs no app. Sem SQL.
