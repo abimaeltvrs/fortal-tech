@@ -1,6 +1,7 @@
 // Atualize este arquivo a cada nova versão publicada.
 export const APP_VERSION = '1.15.2'
 export const RELEASE_NOTES = [
+  {version:'1.15.3',date:'2026-10-09',title:'Logo e contatos oficiais nos PDFs',changes:['Cabeçalho dos PDFs com a logomarca oficial FORTAL TECH.','Contato padronizado: fortaltech2026@gmail.com, (21) 98384-3349 e Fortaleza.','Mantida a paleta preto, grafite, dourado e branco.']},
   {version:'1.15.2',date:'2026-10-09',title:'PDFs profissionais',changes:['Identidade visual unificada em OS, Orçamentos, Relatórios e Histórico do Cliente.','Logo oficial, cabeçalhos grafite e dourado, e rodapés paginados.']},
   {version:'1.15.1',date:'2026-10-09',title:'Novidades e histórico de versões',changes:[
     'Notificações de atualizações do aplicativo com versão e resumo das mudanças.',
