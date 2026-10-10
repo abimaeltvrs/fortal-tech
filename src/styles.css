@@ -2405,3 +2405,15 @@ input:focus,select:focus,textarea:focus,
 
 /* V1.15: histórico inteligente das ordens de serviço */
 .osSmartHistory{padding:12px;border:1px solid var(--border,#454545);border-radius:12px}.osSmartHistoryList{display:grid;gap:8px;margin-top:10px}.osSmartHistoryItem{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px;border-radius:9px;background:rgba(130,130,130,.08)}.osSmartHistoryItem>div{min-width:0;overflow-wrap:anywhere}.osSmartHistoryItem small{display:block;margin-top:4px;opacity:.8}.osSmartHistoryItem button{flex-shrink:0}@media(max-width:600px){.osSmartHistoryItem{align-items:flex-start;flex-direction:column}}
+
+/* Histórico e avisos de atualização */
+.releaseArea{padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.1)}
+.releaseNotice{border:1px solid rgba(230,185,58,.4);border-radius:12px;padding:13px;background:rgba(230,185,58,.06)}
+.releaseHeading{display:flex;align-items:center;gap:8px;color:#f1c65a;flex-wrap:wrap}
+.releaseNotice p{margin:8px 0;color:inherit}
+.releaseNotice ul,.releaseEntry ul{margin:8px 0;padding-left:20px;line-height:1.5;font-size:13px}
+.releaseNotice button,.releaseHistoryLink,.releaseBack{cursor:pointer;border:1px solid rgba(230,185,58,.4);border-radius:8px;padding:9px 12px;background:transparent;color:#f1c65a;margin-top:6px}
+.releaseHistoryLink{width:100%;text-align:center}
+.releaseBack{display:flex;align-items:center;gap:6px;margin:10px}
+.releaseEntry{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.09)}
+.releaseEntry b{display:block}.releaseEntry small{opacity:.7}
