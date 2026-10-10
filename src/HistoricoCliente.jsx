@@ -1,3 +1,4 @@
+import {pdfHeader,pdfFooter,pdfTableTheme,PDF_COLORS} from './pdfTheme'
 import React,{useEffect,useMemo,useState} from 'react'
 import {X,ClipboardList,CalendarDays,Receipt,Package,AlertTriangle,FileDown} from 'lucide-react'
 import jsPDF from 'jspdf'
@@ -28,10 +29,7 @@ export default function HistoricoCliente({supabase,cliente,onClose}){
    const endereco=[cliente.endereco,cliente.numero,cliente.complemento,cliente.bairro,cliente.cidade,cliente.uf,cliente.cep].filter(Boolean).join(', ')
    let y=16
 
-   doc.setFillColor(8,17,31);doc.rect(0,0,210,30,'F')
-   doc.setTextColor(19,185,129);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FORTAL TECH',14,13)
-   doc.setTextColor(255,255,255);doc.setFontSize(11);doc.text('RELATÓRIO / HISTÓRICO DO CLIENTE',14,21)
-   doc.setTextColor(30,30,30);y=39
+   pdfHeader(doc,'HISTÓRICO DE ATENDIMENTOS DO CLIENTE');y=41
 
    const line=(label,value)=>{
      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(label+':',14,y)
@@ -67,7 +65,7 @@ export default function HistoricoCliente({supabase,cliente,onClose}){
        head:[['OS','Data','Atendimento','Status','Descrição']],
        body:filtro.map(x=>[x.numero,br(x.data_visita),x.tipo_atendimento||'-',lbl[x.status]||x.status,x.motivo||'-']),
        styles:{fontSize:7,cellPadding:1.7,overflow:'linebreak'},
-       headStyles:{fillColor:[15,28,46]},
+       headStyles:pdfTableTheme.headStyles,
        columnStyles:{0:{cellWidth:28},1:{cellWidth:22},2:{cellWidth:35},3:{cellWidth:31},4:{cellWidth:66}},
        margin:{left:14,right:14}
      })
@@ -88,8 +86,8 @@ export default function HistoricoCliente({supabase,cliente,onClose}){
        body:mats,
        foot:[['','','','TOTAL',money(totalMateriais)]],
        styles:{fontSize:7,cellPadding:1.7},
-       headStyles:{fillColor:[15,28,46]},
-       footStyles:{fillColor:[19,185,129],textColor:[3,17,12],fontStyle:'bold'},
+       headStyles:pdfTableTheme.headStyles,
+       footStyles:pdfTableTheme.footStyles,
        margin:{left:14,right:14}
      })
    }
@@ -100,6 +98,7 @@ export default function HistoricoCliente({supabase,cliente,onClose}){
      doc.text(`FORTAL TECH • Histórico de ${cliente.nome} • Página ${p}/${pages}`,105,292,{align:'center'})
    }
    const safe=(cliente.nome||'cliente').replace(/[^a-zA-Z0-9À-ÿ _-]/g,'').replace(/\s+/g,'_')
+   pdfFooter(doc)
    doc.save(`FORTAL_TECH_HISTORICO_${safe}.pdf`)
  }
  return <div className="modalBackdrop"><div className="modal historyModal">

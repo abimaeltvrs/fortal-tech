@@ -1,3 +1,4 @@
+import {pdfHeader,pdfFooter,pdfTableTheme,PDF_COLORS} from './pdfTheme'
 import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,FileText,Search,Pencil,Trash2,X,Save,FileDown,
@@ -463,11 +464,7 @@ export default function Orcamentos({supabase,profile,session}){
       const {data:rows,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id)
       if(error)throw error
       const doc=new jsPDF({unit:'mm',format:'a4'})
-      doc.setFillColor(8,17,31);doc.rect(0,0,210,31,'F')
-      doc.setTextColor(19,185,129);doc.setFont('helvetica','bold');doc.setFontSize(19);doc.text('FORTAL TECH',14,13)
-      doc.setTextColor(255,255,255);doc.setFontSize(12);doc.text('ORÇAMENTO / PROPOSTA COMERCIAL',14,22)
-      doc.setTextColor(30,30,30)
-
+      pdfHeader(doc,'ORÇAMENTO • PROPOSTA COMERCIAL')
       let y=40
       const line=(l,v)=>{
         doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(l+':',14,y)
@@ -503,8 +500,8 @@ export default function Orcamentos({supabase,profile,session}){
           ['','','','','TOTAL',money(o.total)]
         ],
         styles:{fontSize:8,cellPadding:2},
-        headStyles:{fillColor:[15,28,46]},
-        footStyles:{fillColor:[19,185,129],textColor:[3,17,12],fontStyle:'bold'},
+        headStyles:pdfTableTheme.headStyles,
+        footStyles:pdfTableTheme.footStyles,
         margin:{left:14,right:14}
       })
 
@@ -523,11 +520,7 @@ export default function Orcamentos({supabase,profile,session}){
         doc.text(lines,14,y)
       }
 
-      const pages=doc.getNumberOfPages()
-      for(let p=1;p<=pages;p++){
-        doc.setPage(p);doc.setFontSize(7);doc.setTextColor(120)
-        doc.text(`FORTAL TECH • ${o.numero} • Página ${p}/${pages}`,105,292,{align:'center'})
-      }
+      pdfFooter(doc,o.numero)
       return doc
   }
 

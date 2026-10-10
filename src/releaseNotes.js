@@ -1,6 +1,7 @@
 // Atualize este arquivo a cada nova versão publicada.
-export const APP_VERSION = '1.15.1'
+export const APP_VERSION = '1.15.2'
 export const RELEASE_NOTES = [
+  {version:'1.15.2',date:'2026-10-09',title:'PDFs profissionais',changes:['Identidade visual unificada em OS, Orçamentos, Relatórios e Histórico do Cliente.','Logo oficial, cabeçalhos grafite e dourado, e rodapés paginados.']},
   {version:'1.15.1',date:'2026-10-09',title:'Novidades e histórico de versões',changes:[
     'Notificações de atualizações do aplicativo com versão e resumo das mudanças.',
     'Histórico de versões disponível na Central de Notificações.',

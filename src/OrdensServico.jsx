@@ -1,3 +1,4 @@
+import {pdfHeader,pdfFooter,pdfTableTheme,PDF_COLORS} from './pdfTheme'
 import React,{useEffect,useMemo,useRef,useState} from 'react'
 import {
   Plus,ClipboardList,Search,X,Save,Trash2,Pencil,WifiOff,
@@ -987,7 +988,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       const section=(title)=>{
         if(y>270){doc.addPage();y=16}
         y+=2
-        doc.setFillColor(15,28,46)
+        doc.setFillColor(...PDF_COLORS.dark)
         doc.rect(14,y-4,182,8,'F')
         doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10)
         doc.text(title,17,y+1)
@@ -1003,12 +1004,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
         doc.text(lines,14,y);y+=lines.length*4.3+3
       }
 
-      doc.setFillColor(8,17,31);doc.rect(0,0,pageW,30,'F')
-      doc.setTextColor(19,185,129);doc.setFont('helvetica','bold');doc.setFontSize(18)
-      doc.text('FORTAL TECH',14,13)
-      doc.setTextColor(255,255,255);doc.setFontSize(11)
-      doc.text('ORDEM DE SERVIÇO - MANUTENÇÃO PREVENTIVA E CORRETIVA',14,21)
-      doc.setTextColor(30,30,30)
+      pdfHeader(doc,'ORDEM DE SERVIÇO • RELATÓRIO TÉCNICO')
       y=38
 
       line('Nº da OS',os.numero)
@@ -1046,7 +1042,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           head:[['Sistema','Verificado','Resultado','N/A']],
           body:rows,
           styles:{fontSize:7.5,cellPadding:2,overflow:'linebreak'},
-          headStyles:{fillColor:[15,28,46]},
+          headStyles:pdfTableTheme.headStyles,
           columnStyles:{0:{cellWidth:47},1:{cellWidth:28},2:{cellWidth:77},3:{cellWidth:28}},
           margin:{left:14,right:14}
         })
@@ -1088,8 +1084,8 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
           ]),
           foot:[['','','','','TOTAL',money(mats.reduce((s,m)=>s+Number(m.quantidade||0)*Number(m.preco_unitario||0),0))]],
           styles:{fontSize:7.5,cellPadding:1.8},
-          headStyles:{fillColor:[15,28,46]},
-          footStyles:{fillColor:[19,185,129],textColor:[3,17,12],fontStyle:'bold'},
+          headStyles:pdfTableTheme.headStyles,
+          footStyles:pdfTableTheme.footStyles,
           margin:{left:14,right:14}
         })
         y=doc.lastAutoTable.finalY+6
@@ -1174,12 +1170,7 @@ export default function OrdensServico({supabase,profile,session,setSyncStatus,op
       if(ac?.cargo)doc.text(ac.cargo,14,y+10)
 
 
-      const pages=doc.getNumberOfPages()
-      for(let p=1;p<=pages;p++){
-        doc.setPage(p)
-        doc.setFontSize(7);doc.setTextColor(120)
-        doc.text(`FORTAL TECH • ${os.numero} • Página ${p}/${pages}`,105,292,{align:'center'})
-      }
+      pdfFooter(doc,os.numero)
 
       const filename=`${os.numero}.pdf`
       const blob=doc.output('blob')

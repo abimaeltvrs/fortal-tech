@@ -1,3 +1,4 @@
+import {pdfHeader,pdfFooter,pdfTableTheme,PDF_COLORS} from './pdfTheme'
 import React,{useEffect,useMemo,useState} from 'react'
 import {
   BarChart3,ClipboardList,CheckCircle2,Clock3,BadgeDollarSign,
@@ -170,10 +171,7 @@ export default function Relatorios({supabase}){
 
   function gerarPDF(){
     const doc=new jsPDF({unit:'mm',format:'a4'})
-    doc.setFillColor(8,17,31);doc.rect(0,0,210,31,'F')
-    doc.setTextColor(19,185,129);doc.setFont('helvetica','bold');doc.setFontSize(19);doc.text('FORTAL TECH',14,13)
-    doc.setTextColor(255,255,255);doc.setFontSize(12);doc.text('RELATÓRIO GERENCIAL AVANÇADO',14,22)
-    doc.setTextColor(30,30,30)
+    pdfHeader(doc,'RELATÓRIO GERENCIAL')
     let y=40
     const line=(l,v)=>{doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.text(l+':',14,y);doc.setFont('helvetica','normal');doc.text(String(v),61,y);y+=5.5}
     line('Período',periodoTexto())
@@ -204,7 +202,7 @@ export default function Relatorios({supabase}){
           statusOS[x.status]||x.status
         ]),
         styles:{fontSize:6.8,cellPadding:1.5,overflow:'linebreak'},
-        headStyles:{fillColor:[15,28,46]},margin:{left:10,right:10}
+        headStyles:pdfTableTheme.headStyles,margin:{left:10,right:10}
       })
     }
     if(topMateriais.length){
@@ -217,6 +215,7 @@ export default function Relatorios({supabase}){
     }
     const pages=doc.getNumberOfPages()
     for(let p=1;p<=pages;p++){doc.setPage(p);doc.setFontSize(7);doc.setTextColor(120);doc.text(`FORTAL TECH • Relatório • Página ${p}/${pages}`,105,292,{align:'center'})}
+    pdfFooter(doc)
     doc.save(`FORTAL_TECH_RELATORIO_${new Date().toISOString().slice(0,10)}.pdf`)
   }
 
