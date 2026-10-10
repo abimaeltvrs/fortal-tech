@@ -3,7 +3,8 @@ import officialLogo from '../public/fortal-logo-pdf.jpg'
 export const PDF_COLORS={dark:[15,18,22],gold:[245,189,30],light:[247,247,247],ink:[31,34,38],muted:[95,101,110]}
 export function pdfHeader(doc,title,{compact=false}={}){
   const w=doc.internal.pageSize.getWidth(),h=compact?31:40
-  doc.setFillColor(...PDF_COLORS.dark);doc.rect(0,0,w,h,'F')
+  // Fundo preto puro igual ao fundo da imagem oficial: evita o efeito de logo colada.
+  doc.setFillColor(0,0,0);doc.rect(0,0,w,h,'F')
   doc.setFillColor(...PDF_COLORS.gold);doc.rect(0,h-1.5,w,1.5,'F')
   // Logo oficial, preservando a proporção da arte original.
   try{doc.addImage(officialLogo,'JPEG',9,3,compact?37:46,compact?24:32)}catch(e){

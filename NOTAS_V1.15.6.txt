@@ -1,0 +1,1 @@
+V1.15.6: fundo do cabeçalho dos PDFs alterado para preto puro (#000000), harmonizado com o fundo preto da logo oficial. Sem mudanças no conteúdo da OS e sem SQL.
