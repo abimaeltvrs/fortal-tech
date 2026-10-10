@@ -188,6 +188,15 @@ export default function Orcamentos({supabase,profile,session}){
   }
 
 
+  // Campos efetivamente persistidos em public.orcamentos.
+  // Objetos retornados por select com relacionamentos (ex.: clientes)
+  // nunca devem ser reenviados no upsert.
+  function camposDoFormulario(dados={}){
+    return Object.fromEntries(Object.keys(empty).map(chave=>[
+      chave, dados[chave] ?? empty[chave]
+    ]))
+  }
+
   function budgetDraftKey(){
     return edit?.id ? `orcamento:${edit.id}` : 'orcamento:new'
   }
@@ -198,7 +207,7 @@ export default function Orcamentos({supabase,profile,session}){
 
   function restoreBudgetDraft(data){
     if(!data)return
-    if(data.form)setForm(data.form)
+    if(data.form)setForm(camposDoFormulario(data.form))
     if(Array.isArray(data.itens))setItens(data.itens.map(normalizarItem))
     if(typeof data.osImportada==='string')setOsImportada(data.osImportada)
   }
@@ -251,7 +260,7 @@ export default function Orcamentos({supabase,profile,session}){
   async function editar(o){
     setEdit(o)
     setErro('')
-    setForm({...empty,...o})
+    setForm(camposDoFormulario(o))
     const {data,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id).order('id')
     if(error){setErro(error.message);return}
     setItens((data||[]).map(normalizarItem))
@@ -404,7 +413,7 @@ export default function Orcamentos({supabase,profile,session}){
     setSalvando(true)
     const id=edit?.id||crypto.randomUUID()
     const payload={
-      ...form,
+      ...camposDoFormulario(form),
       id,
       numero:edit?.numero||numero(),
       cliente_id:form.cliente_id,

@@ -1,0 +1,4 @@
+FORTAL TECH V1.15.7
+Corrige erro: Could not find the clientes column of orcamentos in the schema cache.
+Nao requer SQL.
+Commit: FORTAL TECH V1.15.7 - corrigir salvamento de orcamentos
