@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react'
 import {Users,Search,ShieldCheck,Wrench,UserCheck,UserX,RefreshCcw,Save} from 'lucide-react'
 
-const roleLabel={admin:'Administrador',tecnico:'Técnico'}
+const roleLabel={admin:'Administrador',tecnico:'Técnico',tecnico_reparo:'Técnico de Reparo Eletrônico'}
 const statusLabel={ativo:'Ativo',inativo:'Inativo'}
 
 export default function Usuarios({supabase,session,profile}){
@@ -31,7 +31,7 @@ export default function Usuarios({supabase,session,profile}){
       if(u.id===session.user.id && patch.status==='inativo'){
         throw new Error('Você não pode desativar o próprio usuário enquanto estiver conectado.')
       }
-      if(u.id===session.user.id && patch.perfil==='tecnico'){
+      if(u.id===session.user.id && patch.perfil!=='admin'){
         throw new Error('Para evitar perder o acesso administrativo, altere outro administrador primeiro.')
       }
 
@@ -108,6 +108,7 @@ export default function Usuarios({supabase,session,profile}){
                 >
                   <option value="admin">Administrador</option>
                   <option value="tecnico">Técnico</option>
+                  <option value="tecnico_reparo">Técnico de Reparo Eletrônico</option>
                 </select>
               </label>
 

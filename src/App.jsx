@@ -220,11 +220,12 @@ export default function App(){
 
   const visiblePages=useMemo(()=>{
     if(profile?.perfil==='admin')return pages
+    if(profile?.perfil==='tecnico_reparo')return pages.filter(p=>!['financeiro','relatorios','usuarios','configuracoes'].includes(p[0]))
     return pages.filter(p=>['dashboard','agenda','clientes','os','manuais'].includes(p[0]))
   },[profile?.perfil])
 
   useEffect(()=>{
-    if(profile?.perfil!=='admin' && ['orcamentos','financeiro','relatorios','usuarios','configuracoes'].includes(page)){
+    if(profile?.perfil!=='admin' && [...(profile?.perfil==='tecnico_reparo'?[]:['orcamentos']),'financeiro','relatorios','usuarios','configuracoes'].includes(page)){
       setPage('dashboard')
     }
   },[page,profile?.perfil])
@@ -235,8 +236,8 @@ export default function App(){
   if(!session)return <Login supabase={supabase}/>
   if(!profile)return <FortalSplash/>
 
-  const role=profile.perfil==='admin'?'ADMINISTRADOR':'TÉCNICO'
-  const visible=pages.filter(([id])=>profile.perfil==='admin'||!['financeiro','relatorios','usuarios','configuracoes','orcamentos'].includes(id))
+  const role=profile.perfil==='admin'?'ADMINISTRADOR':profile.perfil==='tecnico_reparo'?'TÉCNICO DE REPARO ELETRÔNICO':'TÉCNICO'
+  const visible=pages.filter(([id])=>profile.perfil==='admin'||!['financeiro','relatorios','usuarios','configuracoes',...(profile.perfil==='tecnico_reparo'?[]:['orcamentos'])].includes(id))
 
   return <div className="app">
     {quickSplash&&<FortalSplash quick/>}
@@ -263,7 +264,7 @@ export default function App(){
       <button onClick={()=>abrirCriacao('os')}><ClipboardList size={18}/><span><b>Nova OS</b><small>Criar ordem de serviço</small></span></button>
       <button onClick={()=>abrirCriacao('agenda')}><CalendarPlus size={18}/><span><b>Novo agendamento</b><small>Adicionar atendimento à agenda</small></span></button>
       <button onClick={()=>abrirCriacao('cliente')}><UserPlus size={18}/><span><b>Novo cliente</b><small>Cadastrar cliente ou condomínio</small></span></button>
-      {profile.perfil==='admin' && <button onClick={()=>abrirCriacao('orcamento')}><Receipt size={18}/><span><b>Novo orçamento</b><small>Criar proposta comercial</small></span></button>}
+      {['admin','tecnico_reparo'].includes(profile.perfil) && <button onClick={()=>abrirCriacao('orcamento')}><Receipt size={18}/><span><b>Novo orçamento</b><small>Criar proposta comercial</small></span></button>}
       {profile.perfil==='admin' && <button onClick={()=>abrirCriacao('financeiro')}><WalletMinimal size={18}/><span><b>Movimentação</b><small>Registrar entrada ou saída</small></span></button>}
     </div>}
 
@@ -304,7 +305,7 @@ export default function App(){
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={20}/><span>Início</span></button>
       <button className={page==='clientes'?'active':''} onClick={()=>setPage('clientes')}><Users size={20}/><span>Clientes</span></button>
       <button className={page==='os'?'active':''} onClick={()=>setPage('os')}><ClipboardList size={20}/><span>OS</span></button>
-      {profile?.perfil==='admin'?<button className={page==='orcamentos'?'active':''} onClick={()=>setPage('orcamentos')}><Receipt size={20}/><span>Orçamentos</span></button>:<button className={page==='agenda'?'active':''} onClick={()=>setPage('agenda')}><CalendarDays size={20}/><span>Agenda</span></button>}
+      {['admin','tecnico_reparo'].includes(profile?.perfil)?<button className={page==='orcamentos'?'active':''} onClick={()=>setPage('orcamentos')}><Receipt size={20}/><span>Orçamentos</span></button>:<button className={page==='agenda'?'active':''} onClick={()=>setPage('agenda')}><CalendarDays size={20}/><span>Agenda</span></button>}
       <button onClick={()=>setOpen(true)}><Menu size={20}/><span>Mais</span></button>
     </nav>
   </div>

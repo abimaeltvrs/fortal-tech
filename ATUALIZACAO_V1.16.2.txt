@@ -1,0 +1,12 @@
+FORTAL TECH V1.16.2 — Perfil Técnico de Reparo Eletrônico
+
+1. Execute supabase/v1.16.1_reparos.sql se ainda não executou.
+2. Execute supabase/v1.16.2_perfil_tecnico_reparo.sql.
+3. Publique o código atualizado no GitHub/Vercel.
+4. Peça ao técnico para criar a própria conta com winstonamaro66@gmail.com.
+5. Em Usuários, selecione o perfil Técnico de Reparo Eletrônico, ou execute o UPDATE comentado no fim do SQL.
+
+Permissões: clientes, OS (inclusive exclusão), orçamento de reparo (inclusive exclusão), custos e descontos, PDF, aprovação comercial. Sem acesso às páginas de Financeiro, Relatórios e administração.
+Aprovações feitas pelo técnico NÃO criam lançamentos financeiros automaticamente; um administrador deverá registrá-los depois.
+
+IMPORTANTE: o SQL não foi executado no banco real. Valide as políticas preexistentes, sobretudo de clientes, fotos/storage, financeiro e funções SECURITY DEFINER antes de colocar em produção. Faça backup do banco.

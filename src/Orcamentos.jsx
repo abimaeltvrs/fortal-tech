@@ -65,6 +65,7 @@ function precoVenda(i){
 function unidadeLabel(v){return unidades.find(x=>x[0]===v)?.[1]||v||'Unidade'}
 
 export default function Orcamentos({supabase,profile,session}){
+  const tecnicoReparo=profile?.perfil==='tecnico_reparo'
   const [lista,setLista]=useState([])
   const [clientes,setClientes]=useState([])
   const [ordens,setOrdens]=useState([])
@@ -235,7 +236,7 @@ export default function Orcamentos({supabase,profile,session}){
   }
 
   function novo(){
-    setModalidade('tradicional');setReparo({...reparoVazio})
+    setModalidade(tecnicoReparo?'reparo':'tradicional');setReparo({...reparoVazio})
     const hoje=new Date()
     const validade=new Date(hoje.getTime()+15*86400000)
     setEdit(null)
@@ -383,7 +384,7 @@ export default function Orcamentos({supabase,profile,session}){
       const {data,error}=await supabase.from('orcamentos').update(patch).eq('id',o.id).select().single()
       if(error)throw error
 
-      if(novoStatus==='aprovado'){
+      if(novoStatus==='aprovado'&&!tecnicoReparo){
         try{
           const result=await gerarFinanceiroDoOrcamento(data)
           setSucesso(result.created
@@ -399,7 +400,7 @@ export default function Orcamentos({supabase,profile,session}){
           throw new Error(`Falha ao lançar no Financeiro. O orçamento voltou para Aguardando aprovação. ${finError.message||''}`)
         }
       }else{
-        setSucesso(`Status do ${o.numero} atualizado.`)
+        setSucesso(tecnicoReparo&&novoStatus==='aprovado'?`Orçamento ${o.numero} aprovado. O lançamento financeiro permanece reservado ao administrador.`:`Status do ${o.numero} atualizado.`)
       }
       await carregar()
     }catch(e){
@@ -429,6 +430,7 @@ export default function Orcamentos({supabase,profile,session}){
     e.preventDefault()
     setErro('');setSucesso('')
     if(!form.cliente_id)return setErro('Selecione o cliente.')
+    if(tecnicoReparo&&modalidade!=='reparo')return setErro('Este perfil só pode criar orçamentos de reparo eletrônico.')
     if(modalidade==='reparo'&&!reparo.tipo_placa)return setErro('Selecione o tipo de placa.')
     if(!itens.length)return setErro('Adicione pelo menos um item ao orçamento.')
     if(itens.some(x=>!x.descricao.trim()))return setErro('Preencha a descrição de todos os itens.')
@@ -443,6 +445,7 @@ export default function Orcamentos({supabase,profile,session}){
       os_id:form.os_id||null,
       desconto:Number(form.desconto||0),
       total,
+      modalidade,
       metodo_pagamento:form.metodo_pagamento||'pix',
       parcelas:Math.max(1,Number(form.parcelas||1)),
       data_orcamento:form.data_orcamento||new Date().toISOString().slice(0,10),
@@ -762,7 +765,7 @@ export default function Orcamentos({supabase,profile,session}){
           <div className="repairModeSelector">
             <label>Modalidade do orçamento</label>
             <div className="repairModeButtons">
-              <button type="button" className={modalidade==='tradicional'?'selected':''} onClick={()=>setModalidade('tradicional')}>Tradicional</button>
+              <button type="button" disabled={tecnicoReparo} className={modalidade==='tradicional'?'selected':''} onClick={()=>setModalidade('tradicional')}>Tradicional</button>
               <button type="button" className={modalidade==='reparo'?'selected':''} onClick={()=>setModalidade('reparo')}>Reparo de placa eletrônica</button>
             </div>
           </div>
