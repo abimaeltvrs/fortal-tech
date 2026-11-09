@@ -1,0 +1,2 @@
+FORTAL TECH V1.16.3
+Orçamento de reparo: selecionar Outra e digitar um tipo de placa personalizado. Sem SQL adicional.

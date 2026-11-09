@@ -431,7 +431,7 @@ export default function Orcamentos({supabase,profile,session}){
     setErro('');setSucesso('')
     if(!form.cliente_id)return setErro('Selecione o cliente.')
     if(tecnicoReparo&&modalidade!=='reparo')return setErro('Este perfil só pode criar orçamentos de reparo eletrônico.')
-    if(modalidade==='reparo'&&!reparo.tipo_placa)return setErro('Selecione o tipo de placa.')
+    if(modalidade==='reparo'&&(!reparo.tipo_placa||reparo.tipo_placa==='Outra'))return setErro('Informe o tipo de placa, ou digite uma descrição em Outra.')
     if(!itens.length)return setErro('Adicione pelo menos um item ao orçamento.')
     if(itens.some(x=>!x.descricao.trim()))return setErro('Preencha a descrição de todos os itens.')
 
@@ -772,7 +772,7 @@ export default function Orcamentos({supabase,profile,session}){
           {modalidade==='reparo'&&<section className="osSection repairSection">
             <div className="sectionHead"><h3>Identificação e diagnóstico da placa</h3></div>
             <div className="formGrid">
-              <div className="field"><label>Tipo de placa *</label><select value={reparo.tipo_placa} onChange={e=>setReparo({...reparo,tipo_placa:e.target.value})}><option value="">Selecione...</option>{tiposPlaca.map(x=><option key={x}>{x}</option>)}</select></div>
+              <div className="field"><label>Tipo de placa *</label><select value={reparo.tipo_placa && !tiposPlaca.includes(reparo.tipo_placa)?'Outra':reparo.tipo_placa} onChange={e=>setReparo({...reparo,tipo_placa:e.target.value})}><option value="">Selecione...</option>{tiposPlaca.map(x=><option key={x}>{x}</option>)}</select>{(reparo.tipo_placa==='Outra'||(reparo.tipo_placa&&!tiposPlaca.includes(reparo.tipo_placa)))&&<input style={{marginTop:8}} placeholder="Digite o tipo de placa (ex.: placa de nobreak)" aria-label="Outro tipo de placa" value={reparo.tipo_placa==='Outra'?'':reparo.tipo_placa} onChange={e=>setReparo({...reparo,tipo_placa:e.target.value||'Outra'})}/>}</div>
               <div className="field"><label>Fabricante</label><input value={reparo.fabricante} onChange={e=>setReparo({...reparo,fabricante:e.target.value})}/></div>
               <div className="field"><label>Modelo</label><input value={reparo.modelo} onChange={e=>setReparo({...reparo,modelo:e.target.value})}/></div>
               <div className="field"><label>Número de série / identificação</label><input value={reparo.numero_serie} onChange={e=>setReparo({...reparo,numero_serie:e.target.value})}/></div>
