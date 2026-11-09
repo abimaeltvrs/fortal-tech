@@ -43,7 +43,7 @@ export default function ClientePerfil({cliente,onClose,supabase}){
         </section>
 
         <div className="profileActions">
-          {cliente.telefone&&<a className="ghost" href={`tel:${cliente.telefone}`}><Phone size={17}/> Ligar</a>}{whatsappUrl(cliente.telefone)&&<a className="ghost whatsappBtn" href={whatsappUrl(cliente.telefone)} target="_blank" rel="noopener noreferrer"><MessageCircle size={17}/> WhatsApp</a>}<button className="primary" onClick={()=>setHistorico(true)}><History size={17}/> Ver histórico completo</button>
+          <button type="button" className="ghost" onClick={()=>cliente.telefone?window.location.href=`tel:${String(cliente.telefone).replace(/[^\\d+]/g,'')}`:alert('Este cliente não possui telefone cadastrado. Abra Editar cliente para adicionar.') }><Phone size={17}/> Ligar</button><button type="button" className="ghost whatsappBtn" onClick={()=>whatsappUrl(cliente.telefone)?window.open(whatsappUrl(cliente.telefone),'_blank','noopener,noreferrer'):alert('Telefone ausente ou inválido para WhatsApp. Edite o cliente e informe DDD + número.') }><MessageCircle size={17}/> WhatsApp</button><button className="primary" onClick={()=>setHistorico(true)}><History size={17}/> Ver histórico completo</button>
         </div>
       </div>
     </div>
