@@ -1,5 +1,6 @@
+import {whatsappUrl} from './clienteLinks'
 import React,{useEffect,useState} from 'react'
-import {X,MapPin,Phone,Mail,Building2,UserRound,FileText,History} from 'lucide-react'
+import {X,MapPin,Phone,Mail,Building2,UserRound,FileText,History,MessageCircle} from 'lucide-react'
 import HistoricoCliente from './HistoricoCliente'
 
 export default function ClientePerfil({cliente,onClose,supabase}){
@@ -42,7 +43,7 @@ export default function ClientePerfil({cliente,onClose,supabase}){
         </section>
 
         <div className="profileActions">
-          <button className="primary" onClick={()=>setHistorico(true)}><History size={17}/> Ver histórico completo</button>
+          {cliente.telefone&&<a className="ghost" href={`tel:${cliente.telefone}`}><Phone size={17}/> Ligar</a>}{whatsappUrl(cliente.telefone)&&<a className="ghost whatsappBtn" href={whatsappUrl(cliente.telefone)} target="_blank" rel="noopener noreferrer"><MessageCircle size={17}/> WhatsApp</a>}<button className="primary" onClick={()=>setHistorico(true)}><History size={17}/> Ver histórico completo</button>
         </div>
       </div>
     </div>

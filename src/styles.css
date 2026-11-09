@@ -2417,3 +2417,6 @@ input:focus,select:focus,textarea:focus,
 .releaseBack{display:flex;align-items:center;gap:6px;margin:10px}
 .releaseEntry{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.09)}
 .releaseEntry b{display:block}.releaseEntry small{opacity:.7}
+
+/* V1.15.9 - CNPJ e contato WhatsApp */
+.cnpjSearchBtn{margin-top:8px;width:100%;justify-content:center}.cnpjFeedback{display:block;margin-top:8px;line-height:1.4;color:#e9c04c}.whatsappBtn{color:#25d366!important;border-color:rgba(37,211,102,.45)!important}.profileActions{flex-wrap:wrap}.profileActions a{display:inline-flex;align-items:center;gap:7px;text-decoration:none}

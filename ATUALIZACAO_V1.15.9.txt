@@ -1,0 +1,2 @@
+FORTAL TECH V1.15.9
+Consulta CNPJ via BrasilAPI (requer internet). Botão WhatsApp na lista e no perfil do cliente. Sem alterações SQL.
