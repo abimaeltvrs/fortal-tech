@@ -2420,3 +2420,11 @@ input:focus,select:focus,textarea:focus,
 
 /* V1.15.9 - CNPJ e contato WhatsApp */
 .cnpjSearchBtn{margin-top:8px;width:100%;justify-content:center}.cnpjFeedback{display:block;margin-top:8px;line-height:1.4;color:#e9c04c}.whatsappBtn{color:#25d366!important;border-color:rgba(37,211,102,.45)!important}.profileActions{flex-wrap:wrap}.profileActions a{display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+/* V1.16.1 - orçamento de reparo eletrônico */
+.repairModeSelector{padding:16px 0;margin:0 0 10px}.repairModeSelector>label{display:block;font-weight:700;margin-bottom:9px}
+.repairModeButtons{display:flex;flex-wrap:wrap;gap:8px}.repairModeButtons button{border:1px solid rgba(197,159,57,.35);background:transparent;color:inherit;padding:11px 14px;border-radius:10px;cursor:pointer}
+.repairModeButtons button.selected{background:rgba(212,174,55,.16);border-color:#d4ae37;color:#e5bb4b;font-weight:700}
+.repairSection{margin-bottom:16px}.repairCalculator{margin-top:15px;padding:15px;border:1px solid rgba(212,174,55,.3);border-radius:12px;background:rgba(212,174,55,.04)}
+.repairCalculator h4{margin:0 0 6px}.repairCalculator p,.repairCalculator small{opacity:.8;font-size:12px}
+.repairEstimate{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0}.repairEstimate strong{color:#d4ae37}
+@media(max-width:600px){.repairModeButtons button{flex:1 1 100%}}

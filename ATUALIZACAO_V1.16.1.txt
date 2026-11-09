@@ -1,0 +1,21 @@
+FORTAL TECH V1.16.1 — REPARO ELETRÔNICO
+
+ANTES DE PUBLICAR / USAR:
+1. Abra o Supabase > SQL Editor.
+2. Execute todo o conteúdo do arquivo supabase/v1.16.1_reparos.sql.
+3. Publique os arquivos no GitHub e aguarde o deploy da Vercel.
+
+ALTERAÇÕES:
+- Modalidade 'Reparo de placa eletrônica' no formulário de orçamento.
+- Tipo de placa, fabricante, modelo, número de série, defeito, diagnóstico e garantia.
+- Calculadora interna com custo de componentes, horas, valor/hora, custos adicionais e margem.
+- Botão para aplicar preço sugerido como item de serviço; revisar total antes de salvar.
+- PDF comercial inclui dados técnicos e garantia informada, sem custos internos.
+- Barra inferior do administrador: Orçamentos no lugar de Agenda. Agenda segue no menu Mais.
+- Histórico de versões atualizado.
+
+ATENÇÃO:
+- O preço sugerido não é aplicado automaticamente; use o botão e revise.
+- O período de garantia é um campo informativo e não substitui a garantia legal.
+- Fotografias, workflow de bancada e etiqueta de garantia ainda não foram implementados nesta etapa.
+- Build e conexão com Supabase devem ser testados após deploy.

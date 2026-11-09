@@ -1,6 +1,7 @@
 // Atualize este arquivo a cada nova versão publicada.
-export const APP_VERSION = '1.16.0'
+export const APP_VERSION = '1.16.1'
 export const RELEASE_NOTES = [
+  {version:'1.16.1',date:'2026-11-09',title:'Orçamento de reparo eletrônico',changes:['Nova modalidade de orçamento para placas eletrônicas com diagnóstico e identificação.','Calculadora interna de custos e preço sugerido, com garantia informada no PDF.','Atalho Orçamentos substitui Agenda na barra inferior para administradores.']},
   {version:'1.16.0',date:'2026-11-09',title:'Contatos de clientes existentes',changes:['Botões Ligar e WhatsApp sempre visíveis para clientes antigos e novos.','Ao faltar telefone, o cadastro pode ser corrigido diretamente pela lista.','Melhor tratamento de números com DDD e prefixo zero.']},
   {version:'1.15.9',date:'2026-11-09',title:'Cadastro inteligente e WhatsApp',changes:['Consulta pública de CNPJ com preenchimento assistido de dados cadastrais.','Botão WhatsApp na lista e no perfil do cliente.','Validação do telefone e preservação dos dados já informados.']},
   {version:'1.15.8',date:'2026-10-09',title:'Correção dos textos do orçamento em PDF',changes:['Corrigido texto sobreposto ao cabeçalho.', 'Ajustadas quebras de linha e de página no PDF do orçamento.']},

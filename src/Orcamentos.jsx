@@ -8,6 +8,17 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import {saveDraft,loadDraft,clearDraft,draftAgeLabel} from './drafts'
 
+const reparoVazio={tipo_placa:'',fabricante:'',modelo:'',numero_serie:'',defeito_relatado:'',diagnostico:'',horas:0,valor_hora:0,outros_custos:0,margem:30,garantia_dias:90,observacoes_tecnicas:''}
+const tiposPlaca=['Central de comando','Placa de cancela','Fonte eletrônica','Controladora de acesso','Inversor','Placa de portão','Placa de CFTV','Outra']
+const num=(v)=>Math.max(0,Number(v)||0)
+const textoReparo=(r)=>[
+  `Equipamento: ${r.tipo_placa||'Placa eletrônica'}`,
+  `Fabricante / Modelo: ${[r.fabricante,r.modelo].filter(Boolean).join(' / ')||'Não informado'}`,
+  `Identificação: ${r.numero_serie||'Não informada'}`,
+  `Defeito relatado: ${r.defeito_relatado||'A verificar'}`,
+  `Diagnóstico: ${r.diagnostico||'Sujeito à avaliação técnica'}`,
+  `Garantia informada: ${r.garantia_dias||0} dias (conforme condições e legislação aplicável)`
+].join('\n')
 const empty={
   cliente_id:'',os_id:'',data_orcamento:'',validade:'',
   status:'elaboracao',desconto:0,total:0,forma_pagamento:'',metodo_pagamento:'pix',parcelas:1,observacoes:''
@@ -61,6 +72,9 @@ export default function Orcamentos({supabase,profile,session}){
   const [modal,setModal]=useState(false)
   const [edit,setEdit]=useState(null)
   const [form,setForm]=useState(empty)
+  const [modalidade,setModalidade]=useState('tradicional')
+  const [reparo,setReparo]=useState(reparoVazio)
+  const [reparoVisual,setReparoVisual]=useState(null)
   const [itens,setItens]=useState([])
   const [erro,setErro]=useState('')
   const [sucesso,setSucesso]=useState('')
@@ -81,7 +95,7 @@ export default function Orcamentos({supabase,profile,session}){
     setDraftDirty(true)
     const t=setTimeout(()=>saveDraft(budgetDraftKey(),buildBudgetDraft()),450)
     return()=>clearTimeout(t)
-  },[modal,edit?.id,form,itens,osImportada])
+  },[modal,edit?.id,form,itens,osImportada,modalidade,reparo])
 
   async function carregar(){
     setErro('')
@@ -202,12 +216,14 @@ export default function Orcamentos({supabase,profile,session}){
   }
 
   function buildBudgetDraft(){
-    return {form,itens,osImportada}
+    return {form,itens,osImportada,modalidade,reparo}
   }
 
   function restoreBudgetDraft(data){
     if(!data)return
     if(data.form)setForm(camposDoFormulario(data.form))
+    if(data.modalidade)setModalidade(data.modalidade)
+    if(data.reparo)setReparo({...reparoVazio,...data.reparo})
     if(Array.isArray(data.itens))setItens(data.itens.map(normalizarItem))
     if(typeof data.osImportada==='string')setOsImportada(data.osImportada)
   }
@@ -219,6 +235,7 @@ export default function Orcamentos({supabase,profile,session}){
   }
 
   function novo(){
+    setModalidade('tradicional');setReparo({...reparoVazio})
     const hoje=new Date()
     const validade=new Date(hoje.getTime()+15*86400000)
     setEdit(null)
@@ -254,6 +271,8 @@ export default function Orcamentos({supabase,profile,session}){
     }
 
     setItensVisualizacao((data||[]).map(normalizarItem))
+    const {data:detalhe}=await supabase.from('orcamento_reparos').select('*').eq('orcamento_id',o.id).maybeSingle()
+    setReparoVisual(detalhe||null)
     setVisualizacao(o)
   }
 
@@ -261,6 +280,9 @@ export default function Orcamentos({supabase,profile,session}){
     setEdit(o)
     setErro('')
     setForm(camposDoFormulario(o))
+    const {data:detalhe}=await supabase.from('orcamento_reparos').select('*').eq('orcamento_id',o.id).maybeSingle()
+    setModalidade(detalhe?'reparo':'tradicional')
+    setReparo(detalhe?Object.fromEntries(Object.keys(reparoVazio).map(k=>[k,detalhe[k]??reparoVazio[k]])):{...reparoVazio})
     const {data,error}=await supabase.from('orcamento_itens').select('*').eq('orcamento_id',o.id).order('id')
     if(error){setErro(error.message);return}
     setItens((data||[]).map(normalizarItem))
@@ -407,6 +429,7 @@ export default function Orcamentos({supabase,profile,session}){
     e.preventDefault()
     setErro('');setSucesso('')
     if(!form.cliente_id)return setErro('Selecione o cliente.')
+    if(modalidade==='reparo'&&!reparo.tipo_placa)return setErro('Selecione o tipo de placa.')
     if(!itens.length)return setErro('Adicione pelo menos um item ao orçamento.')
     if(itens.some(x=>!x.descricao.trim()))return setErro('Preencha a descrição de todos os itens.')
 
@@ -428,6 +451,10 @@ export default function Orcamentos({supabase,profile,session}){
     }
 
     try{
+      if(modalidade==='reparo'){
+        const {error:checkErr}=await supabase.from('orcamento_reparos').select('orcamento_id').limit(1)
+        if(checkErr)throw new Error('Módulo de reparos indisponível. Execute primeiro o SQL v1.16.1_reparos.sql no Supabase. Detalhes: '+checkErr.message)
+      }
       const {data,error}=await supabase.from('orcamentos').upsert(payload,{onConflict:'id'}).select().single()
       if(error)throw error
 
@@ -447,6 +474,13 @@ export default function Orcamentos({supabase,profile,session}){
       const {error:itErr}=await supabase.from('orcamento_itens').insert(rows)
       if(itErr)throw itErr
 
+      if(modalidade==='reparo'){
+        const {error:reparoErr}=await supabase.from('orcamento_reparos').upsert({orcamento_id:id,...reparo,horas:num(reparo.horas),valor_hora:num(reparo.valor_hora),outros_custos:num(reparo.outros_custos),margem:num(reparo.margem),garantia_dias:Math.round(num(reparo.garantia_dias))},{onConflict:'orcamento_id'})
+        if(reparoErr)throw new Error('Dados do reparo: '+reparoErr.message+'. Execute o SQL de migração desta versão.')
+      }else if(edit){
+        const {error:removeErr}=await supabase.from('orcamento_reparos').delete().eq('orcamento_id',id)
+        if(removeErr)throw removeErr
+      }
       clearDraft(edit?.id ? `orcamento:${edit.id}` : 'orcamento:new')
       if(data?.id)clearDraft(`orcamento:${data.id}`)
       setDraftRecovered(null)
@@ -500,6 +534,15 @@ export default function Orcamentos({supabase,profile,session}){
       line('Telefone',cliente.telefone)
       line('Endereço',[cliente.endereco,cliente.numero,cliente.bairro,cliente.cidade,cliente.uf].filter(Boolean).join(', '))
       if(o.os_id) line('OS relacionada',ordens.find(x=>x.id===o.os_id)?.numero||'-')
+      const {data:reparoPdf}=await supabase.from('orcamento_reparos').select('*').eq('orcamento_id',o.id).maybeSingle()
+      if(reparoPdf){
+        line('Modalidade','Reparo de placa eletrônica')
+        line('Equipamento',`${reparoPdf.tipo_placa||'-'} — ${[reparoPdf.fabricante,reparoPdf.modelo].filter(Boolean).join(' / ')}`)
+        line('Identificação',reparoPdf.numero_serie)
+        line('Defeito relatado',reparoPdf.defeito_relatado)
+        line('Diagnóstico',reparoPdf.diagnostico)
+        line('Garantia informada',`${reparoPdf.garantia_dias||0} dias, observadas as condições legais`)
+      }
 
       autoTable(doc,{
         startY:y+6,
@@ -716,6 +759,37 @@ export default function Orcamentos({supabase,profile,session}){
         {erro&&<div className="warningBox modalError">{erro}</div>}
 
         <form onSubmit={salvar}>
+          <div className="repairModeSelector">
+            <label>Modalidade do orçamento</label>
+            <div className="repairModeButtons">
+              <button type="button" className={modalidade==='tradicional'?'selected':''} onClick={()=>setModalidade('tradicional')}>Tradicional</button>
+              <button type="button" className={modalidade==='reparo'?'selected':''} onClick={()=>setModalidade('reparo')}>Reparo de placa eletrônica</button>
+            </div>
+          </div>
+          {modalidade==='reparo'&&<section className="osSection repairSection">
+            <div className="sectionHead"><h3>Identificação e diagnóstico da placa</h3></div>
+            <div className="formGrid">
+              <div className="field"><label>Tipo de placa *</label><select value={reparo.tipo_placa} onChange={e=>setReparo({...reparo,tipo_placa:e.target.value})}><option value="">Selecione...</option>{tiposPlaca.map(x=><option key={x}>{x}</option>)}</select></div>
+              <div className="field"><label>Fabricante</label><input value={reparo.fabricante} onChange={e=>setReparo({...reparo,fabricante:e.target.value})}/></div>
+              <div className="field"><label>Modelo</label><input value={reparo.modelo} onChange={e=>setReparo({...reparo,modelo:e.target.value})}/></div>
+              <div className="field"><label>Número de série / identificação</label><input value={reparo.numero_serie} onChange={e=>setReparo({...reparo,numero_serie:e.target.value})}/></div>
+              <div className="field span2"><label>Defeito informado pelo cliente</label><textarea rows="2" value={reparo.defeito_relatado} onChange={e=>setReparo({...reparo,defeito_relatado:e.target.value})}/></div>
+              <div className="field span2"><label>Diagnóstico técnico</label><textarea rows="3" value={reparo.diagnostico} onChange={e=>setReparo({...reparo,diagnostico:e.target.value})}/></div>
+              <div className="field"><label>Prazo de garantia informado (dias)</label><input type="number" min="0" value={reparo.garantia_dias} onChange={e=>setReparo({...reparo,garantia_dias:e.target.value})}/></div>
+            </div>
+            <div className="repairCalculator">
+              <h4>Calculadora interna de reparo</h4>
+              <p>Custos e margem não aparecem no PDF do cliente.</p>
+              <div className="formGrid">
+                <div className="field"><label>Horas de trabalho</label><input type="number" min="0" step="0.25" value={reparo.horas} onChange={e=>setReparo({...reparo,horas:e.target.value})}/></div>
+                <div className="field"><label>Valor por hora (R$)</label><input type="number" min="0" step="0.01" value={reparo.valor_hora} onChange={e=>setReparo({...reparo,valor_hora:e.target.value})}/></div>
+                <div className="field"><label>Outros custos (R$)</label><input type="number" min="0" step="0.01" value={reparo.outros_custos} onChange={e=>setReparo({...reparo,outros_custos:e.target.value})}/></div>
+                <div className="field"><label>Margem desejada (%)</label><input type="number" min="0" max="95" step="1" value={reparo.margem} onChange={e=>setReparo({...reparo,margem:e.target.value})}/></div>
+              </div>
+              {(()=>{const custoPecas=itens.filter(i=>i.tipo==='material').reduce((a,i)=>a+num(i.quantidade)*num(i.custo_unitario),0);const base=custoPecas+num(reparo.horas)*num(reparo.valor_hora)+num(reparo.outros_custos);const preco=base/(1-Math.min(95,num(reparo.margem))/100);return <div className="repairEstimate"><span>Custo estimado: <b>{money(base)}</b></span><span>Preço sugerido: <strong>{money(preco)}</strong></span><button type="button" className="ghost" onClick={()=>{const semServicos=itens.filter(i=>i.tipo!=='servico');setItens([...semServicos,{id:crypto.randomUUID(),tipo:'servico',descricao:'Reparo eletrônico — diagnóstico, mão de obra e testes',quantidade:1,unidade:'serv',custo_unitario:0,acrescimo_percentual:0,valor_unitario:Math.max(0,preco-vendaMateriais)}])}}>Aplicar sugestão ao serviço</button></div>})()}
+              <small>A sugestão considera peças, mão de obra e outros custos. Confira o total antes de salvar.</small>
+            </div>
+          </section>}
           <div className="formGrid">
             <div className="field span2"><label>Cliente *</label>
               <select required value={form.cliente_id} onChange={e=>setForm({...form,cliente_id:e.target.value,os_id:''})}>
@@ -841,6 +915,7 @@ export default function Orcamentos({supabase,profile,session}){
           <strong>{money(visualizacao.total)}</strong>
         </div>
 
+        {reparoVisual&&<section className="osSection"><h3>Reparo de placa eletrônica</h3><div className="clientNotes" style={{whiteSpace:'pre-line'}}>{textoReparo(reparoVisual)}</div></section>}
         <div className="budgetViewInfo">
           <div><span>Cliente</span><b>{clientes.find(c=>c.id===visualizacao.cliente_id)?.nome||'Cliente'}</b></div>
           <div><span>Data</span><b>{br(visualizacao.data_orcamento)}</b></div>

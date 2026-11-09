@@ -304,7 +304,7 @@ export default function App(){
       <button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={20}/><span>Início</span></button>
       <button className={page==='clientes'?'active':''} onClick={()=>setPage('clientes')}><Users size={20}/><span>Clientes</span></button>
       <button className={page==='os'?'active':''} onClick={()=>setPage('os')}><ClipboardList size={20}/><span>OS</span></button>
-      <button className={page==='agenda'?'active':''} onClick={()=>setPage('agenda')}><CalendarDays size={20}/><span>Agenda</span></button>
+      {profile?.perfil==='admin'?<button className={page==='orcamentos'?'active':''} onClick={()=>setPage('orcamentos')}><Receipt size={20}/><span>Orçamentos</span></button>:<button className={page==='agenda'?'active':''} onClick={()=>setPage('agenda')}><CalendarDays size={20}/><span>Agenda</span></button>}
       <button onClick={()=>setOpen(true)}><Menu size={20}/><span>Mais</span></button>
     </nav>
   </div>
