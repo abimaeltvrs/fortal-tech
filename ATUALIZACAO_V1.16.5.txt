@@ -1,0 +1,7 @@
+FORTAL TECH V1.16.5
+1. Execute supabase/v1.16.5_backup_operacional.sql no SQL Editor.
+2. Publique o projeto no GitHub.
+3. Em Configurações, teste backup e prévia de restauração sem restaurar na produção.
+4. Alerta apenas quando banco >= 80% de 500 MB; backup manual disponível sempre.
+5. Restauração preserva registros existentes, não sobrescreve dados e não inclui Auth nem Financeiro.
+6. Não exclua fotos sem conferir que os caminhos estão presentes no backup.

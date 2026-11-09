@@ -1,6 +1,8 @@
 // Atualize este arquivo a cada nova versão publicada.
-export const APP_VERSION = '1.16.3'
+export const APP_VERSION = '1.16.5'
 export const RELEASE_NOTES = [
+  {version:'1.16.5',date:'2026-11-09',title:'Backup operacional e restauração',changes:['Backup ZIP de clientes, OS, orçamentos, históricos e fotos.','Restauração com prévia, preservação de registros existentes e confirmação.','Alerta de armazenamento apenas a partir de 80% do banco.']},
+  {version:'1.16.4',date:'2026-11-09',title:'Gerenciamento de armazenamento',changes:['Painel de consumo do Storage e banco em Configurações.','Backup ZIP de fotos e manuais com inventário.','Limpeza manual apenas de arquivos órfãos, após backup e confirmação.']},
   {version:'1.16.3',date:'2026-11-09',title:'Tipo de placa personalizado',changes:['Opção Outra permite digitar livremente o tipo de placa no orçamento eletrônico.','O tipo personalizado é preservado ao editar e aparece no PDF.']},
   {version:'1.16.2',date:'2026-11-09',title:'Técnico de Reparo Eletrônico',changes:['Novo perfil técnico especializado, com orçamentos e OS.','Permissões protegidas por políticas do Supabase; sem acesso financeiro ou administração.','Orçamentos de reparo podem ser aprovados sem criar lançamento financeiro automaticamente.']},
   {version:'1.16.1',date:'2026-11-09',title:'Orçamento de reparo eletrônico',changes:['Nova modalidade de orçamento para placas eletrônicas com diagnóstico e identificação.','Calculadora interna de custos e preço sugerido, com garantia informada no PDF.','Atalho Orçamentos substitui Agenda na barra inferior para administradores.']},

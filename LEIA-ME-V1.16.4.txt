@@ -1,0 +1,13 @@
+FORTAL TECH V1.16.4 — ARMAZENAMENTO
+
+1. Execute supabase/v1.16.4_armazenamento.sql no SQL Editor como proprietário.
+2. Publique o projeto completo no GitHub/Vercel. A nova dependência JSZip será instalada no build.
+3. Em Configurações > Armazenamento, clique Atualizar.
+4. Baixe o ZIP e verifique que ele abre antes de fazer limpeza.
+5. Analise órfãos, revise a lista e confirme EXCLUIR.
+
+BACKUP: ZIP com manifest.json e os arquivos físicos dos buckets os-arquivos e manuais-tecnicos, preservando caminhos. NÃO é backup do PostgreSQL, nem de contas, nem de permissões. Faça backup do banco separadamente no Supabase. Para restaurar, envie os arquivos aos buckets e caminhos originais; registros relacionados precisam existir no banco.
+
+CUIDADO: o detector de órfãos usa os_fotos e manuais_tecnicos. Se outros módulos guardarem arquivos nesses mesmos buckets sem essas tabelas, não execute a limpeza até atualizar o detector. A limpeza não é automática.
+
+O app já comprime imagens da OS a 900 px e JPEG 78%; a versão mantém esse comportamento, sem alterar a legibilidade das fotos técnicas.

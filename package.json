@@ -1,7 +1,7 @@
 {
   "name": "fortal-tech",
   "private": true,
-  "version": "1.16.3",
+  "version": "1.16.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,8 @@
     "dexie": "^4.0.11",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
-    "pdfjs-dist": "^5.4.149"
+    "pdfjs-dist": "^5.4.149",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

@@ -18,6 +18,7 @@ import Relatorios from './Relatorios'
 import Usuarios from './Usuarios'
 import Manuais from './Manuais'
 import InstallApp from './InstallApp'
+import Armazenamento from './Armazenamento'
 import fortalLogo from './assets/fortal-tech-logo.png'
 import {syncPendingChanges} from './sync'
 
@@ -297,6 +298,7 @@ export default function App(){
          page==='relatorios'?<Relatorios supabase={supabase}/>:
          page==='usuarios'?<Usuarios supabase={supabase} session={session} profile={profile}/>:
          page==='manuais'?<Manuais supabase={supabase} profile={profile}/>:
+         page==='configuracoes'?<Armazenamento supabase={supabase} profile={profile}/>:
          <Placeholder title={current?.[1]}/>}
       </div>
     </main>

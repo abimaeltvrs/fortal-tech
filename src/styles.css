@@ -2428,3 +2428,5 @@ input:focus,select:focus,textarea:focus,
 .repairCalculator h4{margin:0 0 6px}.repairCalculator p,.repairCalculator small{opacity:.8;font-size:12px}
 .repairEstimate{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0}.repairEstimate strong{color:#d4ae37}
 @media(max-width:600px){.repairModeButtons button{flex:1 1 100%}}
+
+.storageAdmin .storageBucket{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border,#333);flex-wrap:wrap}.storageBar{height:12px;border-radius:12px;background:#353535;overflow:hidden;margin:16px 0}.storageBar>div{height:100%;background:#eab308}.storageCandidates{max-height:210px;overflow:auto;font-size:12px;word-break:break-all;padding:12px;border:1px solid #555;border-radius:8px;margin:12px 0}.storageCandidates>div{padding:6px 0}.storageWarning{display:flex;gap:8px;align-items:center;margin:12px 0;color:#eab308}.storageAdmin .panel{margin-bottom:18px}.storageAdmin .panel>button{margin:10px 0}.storageAdmin .panel>input{display:block;margin:8px 0 12px;max-width:300px}.storageAdmin .muted{color:#a3a3a3;font-size:13px}
